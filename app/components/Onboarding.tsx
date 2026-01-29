@@ -25,6 +25,7 @@ import {
     Disc3,
     Loader2
 } from 'lucide-react';
+import { BackgroundBeams } from './ui/background-beams';
 import { ArtistProfile } from '../types';
 
 interface OnboardingProps {
@@ -191,10 +192,11 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onSkip }) =>
     const currentFact = STEP_FACTS[currentStep as keyof typeof STEP_FACTS] || STEP_FACTS.welcome;
 
     return (
-        <div className="min-h-screen w-full bg-visio-bg flex flex-col items-center justify-center p-6 relative overflow-hidden">
+        <div className="min-h-screen w-full bg-visio-bg flex flex-col items-center justify-center p-6 relative overflow-hidden font-outfit">
 
-            {/* Background gradient */}
-            <div className="absolute inset-0 bg-gradient-to-br from-visio-teal/5 via-transparent to-purple-500/5" />
+            {/* Background gradient & Beams */}
+            <div className="absolute inset-0 bg-gradient-to-br from-visio-teal/10 via-visio-bg to-purple-500/10 z-0" />
+            <BackgroundBeams className="opacity-40 z-0" />
 
             {/* Progress bar */}
             <div className="fixed top-0 left-0 right-0 h-1 bg-white/5 z-50">
@@ -441,7 +443,7 @@ const WelcomeStep = ({ onNext }: { onNext: () => void }) => (
             <Sparkles size={40} className="text-black" />
         </motion.div>
 
-        <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight text-glow">Welcome to Visio</h1>
+        <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight text-glow filter drop-shadow-lg">Welcome to Visio</h1>
         <p className="text-white/50 text-lg max-w-md mx-auto leading-relaxed mb-8">
             Let's set up your artist profile. This helps us find the perfect PR opportunities for you.
         </p>
@@ -481,7 +483,7 @@ const InputStep = ({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
-            className="w-full glass-input rounded-2xl p-6 text-white text-xl placeholder:text-white/20 text-center focus:border-visio-teal/50 focus:bg-white/5 focus:outline-none focus:ring-1 focus:ring-visio-teal/50 transition-all font-medium"
+            className="w-full glass-input rounded-2xl p-6 text-white text-3xl placeholder:text-white/20 text-center font-bold tracking-tight"
             autoFocus
         />
         <FactCard fact={fact} />
@@ -512,7 +514,7 @@ const InputStepWithHelp = ({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
-            className="w-full glass-input rounded-2xl p-6 text-white text-xl placeholder:text-white/20 text-center focus:border-visio-teal/50 focus:bg-white/5 focus:outline-none focus:ring-1 focus:ring-visio-teal/50 transition-all font-medium"
+            className="w-full glass-input rounded-2xl p-6 text-white text-2xl placeholder:text-white/20 text-center font-medium"
             autoFocus
         />
         <button
@@ -550,7 +552,7 @@ const TextAreaStepWithHelp = ({
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
             rows={4}
-            className="w-full glass-input rounded-2xl p-6 text-white text-lg placeholder:text-white/20 focus:border-visio-teal/50 focus:bg-white/5 focus:outline-none focus:ring-1 focus:ring-visio-teal/50 transition-all resize-none font-medium leading-relaxed"
+            className="w-full glass-input rounded-2xl p-6 text-white text-lg placeholder:text-white/20 resize-none font-medium leading-relaxed custom-scrollbar"
             autoFocus
         />
         <button
@@ -582,7 +584,7 @@ const BioStep = ({
             onChange={(e) => onChange(e.target.value)}
             placeholder="A short bio about your music journey..."
             rows={6}
-            className="w-full glass-input rounded-2xl p-6 text-white text-lg placeholder:text-white/20 focus:border-visio-teal/50 focus:bg-white/5 focus:outline-none focus:ring-1 focus:ring-visio-teal/50 transition-all resize-none font-medium leading-relaxed"
+            className="w-full glass-input rounded-2xl p-6 text-white text-lg placeholder:text-white/20 resize-none font-medium leading-relaxed custom-scrollbar"
             autoFocus
         />
         <button
@@ -624,7 +626,7 @@ const BioBuilderStep = ({
                     value={answers.musicJourney}
                     onChange={(e) => setAnswers({ ...answers, musicJourney: e.target.value })}
                     placeholder="e.g. Started making beats in my bedroom at 15..."
-                    className="w-full glass-input rounded-xl p-4 text-white placeholder:text-white/20 focus:border-visio-teal/50 focus:bg-white/5 focus:outline-none focus:ring-1 focus:ring-visio-teal/50 font-medium"
+                    className="w-full glass-input rounded-xl p-4 text-white placeholder:text-white/20 font-medium"
                     autoFocus
                 />
             </div>
@@ -635,7 +637,7 @@ const BioBuilderStep = ({
                     value={answers.inspiration}
                     onChange={(e) => setAnswers({ ...answers, inspiration: e.target.value })}
                     placeholder="e.g. 80s synth-pop, modern R&B, and African rhythms"
-                    className="w-full glass-input rounded-xl p-4 text-white placeholder:text-white/20 focus:border-visio-teal/50 focus:bg-white/5 focus:outline-none focus:ring-1 focus:ring-visio-teal/50 font-medium"
+                    className="w-full glass-input rounded-xl p-4 text-white placeholder:text-white/20 font-medium"
                 />
             </div>
             <div className="space-y-2">
@@ -645,7 +647,7 @@ const BioBuilderStep = ({
                     value={answers.uniqueAngle}
                     onChange={(e) => setAnswers({ ...answers, uniqueAngle: e.target.value })}
                     placeholder="e.g. I blend traditional instruments with electronic production"
-                    className="w-full glass-input rounded-xl p-4 text-white placeholder:text-white/20 focus:border-visio-teal/50 focus:bg-white/5 focus:outline-none focus:ring-1 focus:ring-visio-teal/50 font-medium"
+                    className="w-full glass-input rounded-xl p-4 text-white placeholder:text-white/20 font-medium"
                 />
             </div>
             <div className="space-y-2">
@@ -655,7 +657,7 @@ const BioBuilderStep = ({
                     value={answers.achievement}
                     onChange={(e) => setAnswers({ ...answers, achievement: e.target.value })}
                     placeholder="e.g. My debut EP hit 100K streams in the first week"
-                    className="w-full glass-input rounded-xl p-4 text-white placeholder:text-white/20 focus:border-visio-teal/50 focus:bg-white/5 focus:outline-none focus:ring-1 focus:ring-visio-teal/50 font-medium"
+                    className="w-full glass-input rounded-xl p-4 text-white placeholder:text-white/20 font-medium"
                 />
             </div>
         </div>
@@ -698,7 +700,7 @@ const LocationStep = ({
                 value={city}
                 onChange={(e) => onChange(e.target.value, country)}
                 placeholder="City"
-                className="w-full glass-input rounded-2xl p-6 text-white text-lg placeholder:text-white/20 text-center focus:border-visio-teal/50 focus:bg-white/5 focus:outline-none focus:ring-1 focus:ring-visio-teal/50 transition-all font-medium"
+                className="w-full glass-input rounded-2xl p-6 text-white text-lg placeholder:text-white/20 text-center font-medium"
                 autoFocus
             />
             <input
@@ -706,7 +708,7 @@ const LocationStep = ({
                 value={country}
                 onChange={(e) => onChange(city, e.target.value)}
                 placeholder="Country"
-                className="w-full glass-input rounded-2xl p-6 text-white text-lg placeholder:text-white/20 text-center focus:border-visio-teal/50 focus:bg-white/5 focus:outline-none focus:ring-1 focus:ring-visio-teal/50 transition-all font-medium"
+                className="w-full glass-input rounded-2xl p-6 text-white text-lg placeholder:text-white/20 text-center font-medium"
             />
         </div>
         <FactCard fact={fact} />
@@ -759,8 +761,8 @@ const MilestonesStep = ({
                     onClick={() => handleConnect('instagram')}
                     disabled={igFollowers > 0 || connecting === 'instagram'}
                     className={`relative group overflow-hidden rounded-2xl p-6 border transition-all duration-300 ${igFollowers > 0
-                            ? 'bg-visio-teal/10 border-visio-teal text-white'
-                            : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 text-white'
+                        ? 'bg-visio-teal/10 border-visio-teal text-white'
+                        : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 text-white'
                         }`}
                 >
                     <div className="flex flex-col items-center gap-3 relative z-10">
@@ -783,8 +785,8 @@ const MilestonesStep = ({
                     onClick={() => handleConnect('spotify')}
                     disabled={monthlyListeners > 0 || connecting === 'spotify'}
                     className={`relative group overflow-hidden rounded-2xl p-6 border transition-all duration-300 ${monthlyListeners > 0
-                            ? 'bg-green-500/10 border-green-500 text-white'
-                            : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 text-white'
+                        ? 'bg-green-500/10 border-green-500 text-white'
+                        : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 text-white'
                         }`}
                 >
                     <div className="flex flex-col items-center gap-3 relative z-10">

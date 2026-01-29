@@ -11,17 +11,6 @@ import { LandingPage } from './components/LandingPage';
 import { AuthPage } from './components/AuthPage';
 import { SettingsPage } from './components/SettingsPage';
 import { Billing } from './components/Billing';
-// ...
-const handleOnboardingSkip = () => {
-  localStorage.setItem('visio_onboarding_complete', 'true');
-  setShowOnboarding(false);
-  navigateTo('dashboard');
-};
-
-const handleLogout = () => {
-  localStorage.removeItem('visio_auth_token');
-  navigateTo('landing');
-};
 import ReasonPage from './reason/page';
 import ReachPage from './reach/page';
 import { Toast } from './components/Toast';
@@ -164,14 +153,14 @@ export default function Home() {
 
   const [artistProfile, setArtistProfile] = useState<ArtistProfile | null>(null);
 
-  // ... (inside useEffect load)
+
   useEffect(() => {
     const storedProfile = localStorage.getItem('visio_artist_profile');
     if (storedProfile) {
       setArtistProfile(JSON.parse(storedProfile));
     }
   }, []);
-  // ...
+
 
   const handleOnboardingComplete = (profile: ArtistProfile) => {
     localStorage.setItem('visio_artist_profile', JSON.stringify(profile));
