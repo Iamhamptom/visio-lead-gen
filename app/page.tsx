@@ -52,7 +52,7 @@ export default function Home() {
   const [subscription, setSubscription] = useState<Subscription>({
     tier: 'artist',
     status: 'active',
-    currentPeriodEnd: Date.now() + 1000 * 60 * 60 * 24 * 30, // +30 days
+    currentPeriodEnd: 0, // Will be set client-side
     interval: 'month'
   });
 
@@ -178,6 +178,14 @@ export default function Home() {
     setShowOnboarding(false);
     navigateTo('dashboard');
   };
+
+  // Set subscription date client-side to avoid hydration mismatch
+  useEffect(() => {
+    setSubscription(prev => ({
+      ...prev,
+      currentPeriodEnd: Date.now() + 1000 * 60 * 60 * 24 * 30 // +30 days
+    }));
+  }, []);
 
   // Load Persistence
   useEffect(() => {
