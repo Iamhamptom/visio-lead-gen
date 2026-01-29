@@ -42,7 +42,15 @@ export const MetricsInput: React.FC<MetricsInputProps> = ({ values, onChange }) 
     );
 };
 
-const InputRow = ({ label, icon, value, onChange, step }: any) => (
+interface InputRowProps {
+    label: string;
+    icon: React.ReactNode;
+    value: number;
+    onChange: (value: number) => void;
+    step: number;
+}
+
+const InputRow = ({ label, icon, value, onChange, step }: InputRowProps) => (
     <div className="flex flex-col gap-1">
         <label className="text-xs text-white/40 flex items-center gap-2">
             {icon} {label}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, Reorder } from 'framer-motion';
-import { Target, Users, MapPin, Calendar, DollarSign, Clock, Music, Mic2, Handshake, Newspaper, Sparkles, Search, Loader2, Plus, X, GripVertical, Save } from 'lucide-react';
+import { Target, Users, MapPin, Calendar, DollarSign, Clock, Music, Mic2, Handshake, Newspaper, Sparkles, Search, Loader2, Plus, X, GripVertical, Save, Check } from 'lucide-react';
 import { ArtistGoals, ArtistProfile } from '../types';
 import { ShinyButton } from './ui/ShinyButton';
 
@@ -127,7 +127,6 @@ export const GoalsObjectives: React.FC<GoalsObjectivesProps> = ({ profile, onUpd
                 </div>
                 <ShinyButton
                     text={isSaving ? "Saving..." : "Save Changes"}
-                    icon={isSaving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
                     onClick={handleSave}
                     className="bg-visio-teal text-black font-bold"
                 />
@@ -187,7 +186,7 @@ export const GoalsObjectives: React.FC<GoalsObjectivesProps> = ({ profile, onUpd
                                         ? `bg-gradient-to-br ${option.color} text-white`
                                         : 'bg-white/10 text-white/50'
                                         }`}>
-                                        {React.cloneElement(option.icon as React.ReactElement, { size: 20 })}
+                                        {React.cloneElement(option.icon as React.ReactElement<{ size?: number }>, { size: 20 })}
                                     </div>
                                     <span className={`text-sm font-medium ${goals.primaryGoal === option.value ? 'text-white' : 'text-white/60'}`}>
                                         {option.label}

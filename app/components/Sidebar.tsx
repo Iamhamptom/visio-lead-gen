@@ -19,7 +19,7 @@ import {
     Lightbulb,
     Calculator
 } from 'lucide-react';
-import { Campaign, ViewMode, Session, Subscription } from '../types';
+import { Campaign, ViewMode, Session, Subscription, ArtistProfile } from '../types';
 import { PLAN_LIMITS } from '../config/plans';
 
 interface SessionItemProps {

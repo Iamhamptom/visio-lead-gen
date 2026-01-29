@@ -179,6 +179,14 @@ export default function Home() {
     navigateTo('dashboard');
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('visio_auth_token');
+    localStorage.removeItem('visio_artist_profile');
+    localStorage.removeItem('visio_onboarding_complete');
+    setArtistProfile(null);
+    navigateTo('landing');
+  };
+
   // Set subscription date client-side to avoid hydration mismatch
   useEffect(() => {
     setSubscription(prev => ({
@@ -545,6 +553,7 @@ export default function Home() {
             onDeleteSession={handleDeleteSession}
             onShareSession={handleShareSession}
             subscription={subscription}
+            artistProfile={artistProfile}
           />
 
           {/* Main Content */}
@@ -603,19 +612,16 @@ export default function Home() {
               <LeadsGallery
                 leads={allLeads}
                 onSaveLead={handleSaveLead}
-                onBack={() => navigateTo('dashboard')}
               />
             ) : currentView === 'artist-portal' ? (
               <ArtistPortal
                 subscription={subscription}
                 onUpgrade={() => navigateTo('billing')}
-                onBack={() => navigateTo('dashboard')}
               />
             ) : currentView === 'billing' ? (
               <Billing
                 currentSubscription={subscription}
                 onUpgrade={handleUpgrade}
-                onBack={() => navigateTo('dashboard')}
               />
             ) : currentView === 'reason' ? (
               <ReasonPage onBack={() => navigateTo('dashboard')} />
@@ -624,6 +630,7 @@ export default function Home() {
             ) : currentView === 'settings' ? (
               <SettingsPage
                 subscription={subscription}
+                artistProfile={artistProfile}
                 onBack={() => navigateTo('dashboard')}
                 onNavigateHome={() => navigateTo('landing')}
                 onLogout={handleLogout}

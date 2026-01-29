@@ -163,7 +163,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
 const FeatureItem = ({ icon, title, desc }: { icon: React.ReactNode, title: string, desc: string }) => (
     <div className="flex flex-col gap-4 p-8 rounded-3xl glass-panel hover:bg-white/[0.06] transition-colors group">
         <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform duration-500">
-            {React.cloneElement(icon as React.ReactElement, { size: 24 })}
+            {React.cloneElement(icon as React.ReactElement<{ size?: number }>, { size: 24 })}
         </div>
         <div>
             <h3 className="font-bold text-white text-xl mb-2 tracking-tight group-hover:text-visio-teal transition-colors">{title}</h3>

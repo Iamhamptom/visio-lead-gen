@@ -11,7 +11,6 @@ export type ViewMode =
     | 'leads'
     | 'artist-portal'
     | 'billing'
-    | 'billing'
     | 'reason'
     | 'reach'
     | 'settings';
@@ -31,6 +30,8 @@ export interface SocialLinks {
     twitter?: string;
     linkedin?: string;
     tiktok?: string;
+    youtube?: string;
+    website?: string;
 }
 
 export interface Lead {
