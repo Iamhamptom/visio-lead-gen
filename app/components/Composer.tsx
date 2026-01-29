@@ -1,0 +1,189 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { Send, Paperclip, Sparkles, Mic, Zap, Briefcase, Rocket, ChevronDown } from 'lucide-react';
+
+export type AITier = 'instant' | 'business' | 'enterprise';
+
+interface ComposerProps {
+    onSend: (text: string, tier: AITier) => void;
+    isLoading: boolean;
+    pendingPrompt?: string | null;
+    onPromptUsed?: () => void;
+}
+
+const TIER_CONFIG = {
+    instant: {
+        label: 'Instant',
+        icon: Zap,
+        color: 'text-white/70',
+        bgColor: 'bg-white/5',
+        borderColor: 'border-white/10',
+        description: 'Fast responses (Free)'
+    },
+    business: {
+        label: 'Business',
+        icon: Briefcase,
+        color: 'text-white/70',
+        bgColor: 'bg-white/5',
+        borderColor: 'border-white/10',
+        description: 'Detailed analysis'
+    },
+    enterprise: {
+        label: 'Enterprise',
+        icon: Rocket,
+        color: 'text-white',
+        bgColor: 'bg-white/10',
+        borderColor: 'border-white/20',
+        description: 'Full capabilities + Priority'
+    }
+};
+
+export const Composer: React.FC<ComposerProps> = ({ onSend, isLoading, pendingPrompt, onPromptUsed }) => {
+    const [input, setInput] = useState('');
+    const [tier, setTier] = useState<AITier>('instant');
+    const [showTierMenu, setShowTierMenu] = useState(false);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const tierMenuRef = useRef<HTMLDivElement>(null);
+
+    // Handle pending prompt from command menu
+    useEffect(() => {
+        if (pendingPrompt) {
+            setInput(pendingPrompt);
+            onPromptUsed?.();
+            // Focus the textarea
+            setTimeout(() => textareaRef.current?.focus(), 100);
+        }
+    }, [pendingPrompt, onPromptUsed]);
+
+    const handleSubmit = () => {
+        if (!input.trim() || isLoading) return;
+        onSend(input, tier);
+        setInput('');
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSubmit();
+        }
+    };
+
+    // Auto-resize
+    useEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
+        }
+    }, [input]);
+
+    // Close tier menu on outside click
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (tierMenuRef.current && !tierMenuRef.current.contains(e.target as Node)) {
+                setShowTierMenu(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const currentTier = TIER_CONFIG[tier];
+    const TierIcon = currentTier.icon;
+
+    return (
+        <div className="w-full max-w-4xl mx-auto px-4 pb-6">
+            <div className="relativePath group">
+
+                {/* Gradient Border Effect */}
+                <div className="absolute -inset-[1px] bg-gradient-to-r from-visio-teal/40 via-visio-accent/40 to-visio-teal/40 rounded-3xl opacity-0 group-focus-within:opacity-100 transition duration-500 blur-sm"></div>
+
+                <div className="relative bg-[#0A0A0A] border border-white/10 rounded-3xl flex flex-col shadow-2xl">
+
+                    {/* Tier Selector Bar */}
+                    <div className="flex items-center justify-between px-4 pt-3 pb-1 border-b border-white/5">
+                        <div className="relative" ref={tierMenuRef}>
+                            <button
+                                onClick={() => setShowTierMenu(!showTierMenu)}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${currentTier.bgColor} ${currentTier.color} border ${currentTier.borderColor} hover:scale-105`}
+                            >
+                                <TierIcon size={14} />
+                                <span>{currentTier.label}</span>
+                                <ChevronDown size={12} className={`transition-transform ${showTierMenu ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {/* Tier Dropdown */}
+                            {showTierMenu && (
+                                <div className="absolute bottom-full left-0 mb-2 bg-[#1a1a1a] border border-white/10 rounded-xl overflow-hidden shadow-2xl z-50 min-w-[200px] animate-in fade-in slide-in-from-bottom-2 duration-150">
+                                    {(Object.keys(TIER_CONFIG) as AITier[]).map((t) => {
+                                        const config = TIER_CONFIG[t];
+                                        const Icon = config.icon;
+                                        const isActive = tier === t;
+                                        return (
+                                            <button
+                                                key={t}
+                                                onClick={() => { setTier(t); setShowTierMenu(false); }}
+                                                className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${isActive ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                                            >
+                                                <div className={`p-1.5 rounded-lg ${config.bgColor}`}>
+                                                    <Icon size={16} className={config.color} />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className={`text-sm font-medium ${isActive ? 'text-white' : 'text-white/80'}`}>{config.label}</p>
+                                                    <p className="text-[10px] text-white/40">{config.description}</p>
+                                                </div>
+                                                {isActive && (
+                                                    <div className="w-2 h-2 rounded-full bg-white" />
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+
+                        <span className="text-[10px] text-white/20 font-medium">
+                            {tier === 'instant' ? 'Fast Mode' : tier === 'business' ? 'Deep Analysis' : 'Priority Processing'}
+                        </span>
+                    </div>
+
+                    {/* Input Area */}
+                    <div className="flex items-end p-2">
+                        <button className="p-3 text-white/40 hover:text-visio-accent transition-colors rounded-full hover:bg-white/5">
+                            <Paperclip size={20} />
+                        </button>
+
+                        <textarea
+                            ref={textareaRef}
+                            rows={1}
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            placeholder="Ask Visio to find leads, brainstorm campaigns..."
+                            className="flex-1 bg-transparent text-white border-0 focus:ring-0 resize-none py-3 px-2 max-h-40 placeholder:text-white/20 outline-none"
+                            disabled={isLoading}
+                        />
+
+                        <div className="flex items-center gap-1 pb-1">
+                            <button className="p-2 text-white/40 hover:text-white transition-colors rounded-full hover:bg-white/5">
+                                <Mic size={18} />
+                            </button>
+                            <button
+                                onClick={handleSubmit}
+                                disabled={!input.trim() || isLoading}
+                                className={`p-2 rounded-full transition-all duration-300 ${input.trim() && !isLoading
+                                    ? 'bg-white text-black hover:scale-105'
+                                    : 'bg-white/5 text-white/20'
+                                    }`}
+                            >
+                                {isLoading ? <Sparkles size={18} className="animate-spin" /> : <Send size={18} />}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <p className="text-center text-[10px] text-white/20 mt-3 font-medium">
+                    Visio AI can make mistakes. Please verify important contact information.
+                </p>
+            </div>
+        </div>
+    );
+};

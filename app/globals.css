@@ -1,0 +1,122 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --background: 0 0% 3%;
+    --foreground: 0 0% 98%;
+
+    --card: 0 0% 3%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 3%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 142 70% 50%;
+    --primary-foreground: 144 100% 10%;
+
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 50%;
+
+    --accent: 0 0% 12%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 12%;
+    --input: 0 0% 12%;
+    --ring: 142 70% 50%;
+  }
+}
+
+@theme {
+  --color-visio-bg: #050505;
+  --color-visio-card: rgba(255, 255, 255, 0.03);
+  --color-visio-border: rgba(255, 255, 255, 0.08);
+  --color-visio-accent: #B6F09C;
+  --color-visio-teal: #608A94;
+  --color-visio-sage: #6B8F5F;
+
+  --image-glass-gradient: linear-gradient(145deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%);
+  --image-glow-gradient: radial-gradient(circle at 50% 50%, rgba(107, 143, 95, 0.15) 0%, transparent 70%);
+
+  --font-outfit: 'Outfit', sans-serif;
+
+  --animate-float: float 6s ease-in-out infinite;
+
+  @keyframes float {
+
+    0%,
+    100% {
+      transform: translateY(0px);
+    }
+
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+}
+
+/* Custom Utilities that might not be in v4 automatic map yet but used in skin */
+@utility text-visio-teal {
+  color: var(--color-visio-teal);
+}
+
+@utility bg-visio-bg {
+  background-color: var(--color-visio-bg);
+}
+
+/* Glassmorphism Utilities */
+@utility glass-panel {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+@utility glass-input {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+@utility text-glow {
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+/* ... add others if strict mapping fails, but Tailwind v4 usually maps colors automatically to classes like text-visio-teal */
+
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  background-color: var(--color-visio-bg);
+  color: #ffffff;
+  font-family: var(--font-outfit), system-ui, sans-serif;
+  overflow: hidden;
+  /* App-like feel */
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
