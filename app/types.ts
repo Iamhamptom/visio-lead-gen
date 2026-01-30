@@ -58,7 +58,10 @@ export interface Message {
     timestamp: number;
     leads?: Lead[];
     isThinking?: boolean;
+    mode?: AgentMode;
 }
+
+export type AgentMode = 'chat' | 'research';
 
 export interface Campaign {
     id: string;

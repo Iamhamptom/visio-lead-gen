@@ -14,7 +14,7 @@ import { Billing } from './components/Billing';
 import ReasonPage from './reason/page';
 import ReachPage from './reach/page';
 import { Toast } from './components/Toast';
-import { Message, Role, Campaign, ViewMode, Lead, Session, ArtistProfile, Subscription, SubscriptionTier } from './types';
+import { Message, Role, Campaign, ViewMode, Lead, Session, ArtistProfile, Subscription, SubscriptionTier, AgentMode } from './types';
 import { AITier } from './components/Composer';
 import { Menu } from 'lucide-react';
 import { BackgroundBeams } from './components/ui/background-beams';
@@ -338,7 +338,7 @@ export default function Home() {
     setToastMessage("Share link copied to clipboard");
   };
 
-  const handleSendMessage = async (text: string, tier: AITier = 'instant') => {
+  const handleSendMessage = async (text: string, tier: AITier = 'instant', mode: AgentMode = 'chat') => {
     const activeSessionIndex = sessions.findIndex(s => s.id === activeSessionId);
     if (activeSessionIndex === -1) return;
 
@@ -383,7 +383,8 @@ export default function Home() {
         content: '',
         timestamp: Date.now(),
         isThinking: true,
-        tier: tier // Pass tier for reasoning display
+        tier: tier, // Pass tier for reasoning display
+        mode: mode // Pass mode for UI text
       }]
     };
     updatedSessions[activeSessionIndex] = sessionWithThinking;
@@ -408,7 +409,8 @@ export default function Home() {
           message: text,
           conversationHistory: historyForApi,
           artistContext,
-          tier
+          tier,
+          mode
         })
       });
 

@@ -10,7 +10,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 // - Voice: Professional yet personable. Uses "we" language. Strategic rationale.
 // ============================================================================
 
-export const GENERATE_SYSTEM_PROMPT = (context?: any) => {
+export const GENERATE_SYSTEM_PROMPT = (context?: any, allowJson: boolean = true) => {
     // Parse connected platforms for natural references
     const connectedPlatforms = context?.connectedAccounts
         ? Object.entries(context.connectedAccounts)
@@ -49,7 +49,7 @@ Gently suggest connecting platforms when relevant. Example: "Quick thought - con
 ${context.goals.upcomingRelease ? `- Upcoming Release: "${context.goals.upcomingRelease.title}" (${context.goals.upcomingRelease.type}) on ${context.goals.upcomingRelease.date}` : ''}
 ` : '';
 
-    return `# VISIO - Your PR & Strategy Concierge
+    const basePrompt = `# VISIO - Your PR & Strategy Concierge
 
 ## 🎭 YOUR CHARACTER
 You are **Visio**, a seasoned PR strategist with 12 years in music/entertainment. You previously ran PR at Columbia Records and have an MBA from NYU Stern. You've worked with artists from emerging indie acts to platinum sellers.
@@ -97,7 +97,11 @@ ${goalsContext}
 - **< 10k Followers**: Target emerging blogs, local curators, niche playlists, community radio
 - **10k - 100k**: Mid-tier magazines, regional festivals, brand collaborations, editorial playlists
 - **> 100k**: Major publications, headline slots, luxury brand deals, official playlists
+`;
 
+    if (!allowJson) return basePrompt;
+
+    return `${basePrompt}
 ## Response Format
 Respond with a JSON object. The "message" should be in your warm, strategic voice.
 
@@ -133,11 +137,11 @@ export function createGeminiClient(tier: 'instant' | 'business' | 'enterprise' =
 
     const genAI = new GoogleGenerativeAI(apiKey);
 
-    // Model selection based on tier - using latest Gemini models
+    // Model selection based on tier - using stable Gemini models
     const modelName = tier === 'enterprise'
-        ? 'gemini-2.5-pro-preview-05-06'  // Smartest, most capable model
+        ? 'gemini-2.5-pro'  // Most intelligent, supports 1M context with thinking
         : tier === 'business'
-            ? 'gemini-2.5-flash-preview-04-17'  // Fast but still very capable
+            ? 'gemini-2.5-flash'  // Fast mid-size model with thinking
             : 'gemini-2.0-flash';  // Instant - fastest responses
 
     return genAI.getGenerativeModel({ model: modelName });
@@ -158,11 +162,13 @@ export interface ParsedIntent {
 }
 
 // Parse user message into structured intent
+// Parse user message into structured intent
 export async function parseIntent(
     userMessage: string,
     conversationHistory: { role: string; content: string }[] = [],
     artistContext?: any,
-    tier: 'instant' | 'business' | 'enterprise' = 'instant'
+    tier: 'instant' | 'business' | 'enterprise' = 'instant',
+    mode: 'chat' | 'research' = 'research' // Default to research for backward compatibility, but we pass it explicitly now
 ): Promise<ParsedIntent> {
     try {
         const model = createGeminiClient(tier);
@@ -172,13 +178,38 @@ export async function parseIntent(
             ? `\n\nPrevious conversation:\n${conversationHistory.map(m => `${m.role}: ${m.content}`).join('\n')}`
             : '';
 
-        const systemPrompt = GENERATE_SYSTEM_PROMPT(artistContext);
-        const prompt = `${systemPrompt}${historyText}\n\nUser: ${userMessage}\n\nRespond with ONLY valid JSON:`;
+        // If CHAT mode, no JSON needed. Faster, cleaner.
+        const isChatMode = mode === 'chat';
+        const systemPrompt = GENERATE_SYSTEM_PROMPT(artistContext, !isChatMode);
+
+        let prompt;
+        if (isChatMode) {
+            prompt = `${systemPrompt}${historyText}\n\nUser: ${userMessage}\n\nRespond directly to the user as Visio. Do NOT use JSON. Keep it conversational.`;
+        } else {
+            prompt = `${systemPrompt}${historyText}\n\nUser: ${userMessage}\n\nRespond with ONLY valid JSON:`;
+        }
 
         const result = await model.generateContent(prompt);
         const response = result.response.text();
 
-        // Extract JSON from response (handle potential markdown wrapping)
+        // Optimized Return for Chat Mode
+        if (isChatMode) {
+            return {
+                // Technically 'chat', but 'search' with no filters works if we map it right, or better: just 'continue' or 'clarify'.  
+                // Actually, if we return action: 'search' with no filters, route.ts might trigger logic.
+                // Let's use 'clarify' as a safe "just text" fallback or 'search' with empty filters.
+                // Looking at route.ts, 'search' triggers logic only if filtering.
+                // Ideally we should add 'chat' action, but sticking to existing types:
+                // 'clarify' logs "Needs clarification" but returns the message.
+                // 'search' without filters works too.
+                action: 'clarify',
+                filters: {},
+                limit: 0,
+                message: response // This is the plain text response
+            };
+        }
+
+        // JSON Parsing for Research Mode
         let jsonStr = response.trim();
         if (jsonStr.startsWith('```')) {
             jsonStr = jsonStr.replace(/```json?\n?/g, '').replace(/```/g, '').trim();

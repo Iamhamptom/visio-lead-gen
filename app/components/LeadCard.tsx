@@ -10,7 +10,8 @@ import {
     Download,
     Plus,
     Check,
-    Video
+    Video,
+    Send
 } from 'lucide-react';
 import { cn } from '@/lib/utils'; // Using our new utility
 import { ShinyButton } from './ui/ShinyButton'; // Showing off our new tool
@@ -141,6 +142,12 @@ export const LeadCard: React.FC<LeadCardProps> = ({ lead, onSave }) => {
                         Export
                     </button>
                     {/* Using our Premium ShinyButton style logic for the main CTA if desired, or matching style */}
+                    <button
+                        className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-visio-teal to-visio-sage text-black font-bold py-2 rounded-lg text-sm shadow-[0_0_15px_rgba(45,212,191,0.2)] hover:shadow-[0_0_20px_rgba(45,212,191,0.4)] transition-all hover:scale-[1.02] active:scale-95"
+                    >
+                        <Send size={16} />
+                        Outreach
+                    </button>
                     <button
                         onClick={handleSave}
                         disabled={isSaved}

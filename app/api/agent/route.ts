@@ -94,7 +94,7 @@ function parseBasicIntent(message: string, lastState?: any): ParsedIntent {
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { message, conversationHistory = [], lastSearchState, artistContext, tier = 'instant' } = body;
+        const { message, conversationHistory = [], lastSearchState, artistContext, tier = 'instant', mode = 'chat' } = body;
 
         // Legacy support: if old 'query' field is used
         const userMessage = message || body.query;
@@ -118,19 +118,46 @@ export async function POST(request: NextRequest) {
             enterprise: '🚀 Enterprise Mode'
         };
         logs.push(`${tierLabels[tier as keyof typeof tierLabels] || tierLabels.instant}`);
+        logs.push(mode === 'research' ? '🔬 Research Mode Active' : '💬 Chat Mode Active');
 
         // Check if Gemini API is available
         const hasGemini = !!process.env.GEMINI_API_KEY;
 
-        if (hasGemini) {
-            // Use AI to parse intent with tier
-            logs.push('🧠 Visio: Analyzing your request...');
-            intent = await parseIntent(userMessage, conversationHistory, artistContext, tier as 'instant' | 'business' | 'enterprise');
-            logs.push(`📋 Strategy: ${intent.action}`);
+        if (mode === 'research') {
+            // FORCE RESEARCH MODE
+            // We can still use Gemini to parse *filters* (country, genre) but the action is forced to 'search'
+            logs.push('🧠 Visio: Analyzing research parameters...');
+
+            if (hasGemini) {
+                intent = await parseIntent(userMessage, conversationHistory, artistContext, tier as any, 'research'); // Use existing parser for filters
+            } else {
+                intent = parseBasicIntent(userMessage, lastSearchState);
+            }
+
+            // OVERRIDE: Force action to search, enforce limits
+            intent.action = 'search';
+
+            // Limit Logic: 100 for Enterprise, 30 for others
+            const limit = tier === 'enterprise' ? 100 : 30;
+            intent.limit = limit;
+            logs.push(`🎯 Target: Finding top ${limit} leads`);
+
         } else {
-            // Fallback: basic keyword parsing
-            logs.push('⚠️ AI offline - using basic mode');
-            intent = parseBasicIntent(userMessage, lastSearchState);
+            // CHAT MODE (Default)
+            if (hasGemini) {
+                // Use AI to parse intent with tier
+                logs.push('🧠 Visio: Analyzing your request...');
+                intent = await parseIntent(userMessage, conversationHistory, artistContext, tier as 'instant' | 'business' | 'enterprise', mode as 'chat' | 'research');
+
+                // If the user explicitly asks to "find leads" or "search", we honor it.
+                // Otherwise, the prompt should naturally lean towards chat.
+                // We'll trust the parser, but we can add a nudge if needed.
+                logs.push(`📋 Strategy: ${intent.action}`);
+            } else {
+                // Fallback: basic keyword parsing
+                logs.push('⚠️ AI offline - using basic mode');
+                intent = parseBasicIntent(userMessage, lastSearchState);
+            }
         }
 
         // Handle different actions

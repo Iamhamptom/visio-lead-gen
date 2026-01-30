@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Paperclip, Sparkles, Mic, Zap, Briefcase, Rocket, ChevronDown } from 'lucide-react';
 
+import { AgentMode } from '@/app/types';
+
 export type AITier = 'instant' | 'business' | 'enterprise';
 
 interface ComposerProps {
-    onSend: (text: string, tier: AITier) => void;
+    onSend: (text: string, tier: AITier, mode: AgentMode) => void;
     isLoading: boolean;
     pendingPrompt?: string | null;
     onPromptUsed?: () => void;
@@ -40,6 +42,7 @@ const TIER_CONFIG = {
 export const Composer: React.FC<ComposerProps> = ({ onSend, isLoading, pendingPrompt, onPromptUsed }) => {
     const [input, setInput] = useState('');
     const [tier, setTier] = useState<AITier>('instant');
+    const [mode, setMode] = useState<AgentMode>('chat');
     const [showTierMenu, setShowTierMenu] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const tierMenuRef = useRef<HTMLDivElement>(null);
@@ -56,7 +59,7 @@ export const Composer: React.FC<ComposerProps> = ({ onSend, isLoading, pendingPr
 
     const handleSubmit = () => {
         if (!input.trim() || isLoading) return;
-        onSend(input, tier);
+        onSend(input, tier, mode);
         setInput('');
     };
 
@@ -140,9 +143,23 @@ export const Composer: React.FC<ComposerProps> = ({ onSend, isLoading, pendingPr
                             )}
                         </div>
 
-                        <span className="text-[10px] text-white/20 font-medium">
-                            {tier === 'instant' ? 'Fast Mode' : tier === 'business' ? 'Deep Analysis' : 'Priority Processing'}
-                        </span>
+                        {/* Mode Toggle */}
+                        <div className="flex bg-white/5 rounded-lg p-1 border border-white/5">
+                            <button
+                                onClick={() => setMode('chat')}
+                                className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${mode === 'chat' ? 'bg-visio-teal/20 text-visio-teal shadow-sm' : 'text-white/40 hover:text-white/60'
+                                    }`}
+                            >
+                                Chat
+                            </button>
+                            <button
+                                onClick={() => setMode('research')}
+                                className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${mode === 'research' ? 'bg-visio-accent/20 text-visio-accent shadow-sm' : 'text-white/40 hover:text-white/60'
+                                    }`}
+                            >
+                                Research
+                            </button>
+                        </div>
                     </div>
 
                     {/* Input Area */}

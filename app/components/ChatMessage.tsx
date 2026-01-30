@@ -35,7 +35,18 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSaveLead })
     const [reasoningStep, setReasoningStep] = useState(0);
 
     const tier = (message as any).tier || 'instant';
-    const steps = REASONING_STEPS[tier as keyof typeof REASONING_STEPS] || REASONING_STEPS.instant;
+    const mode = message.mode || 'chat'; // Get mode (default to chat if missing)
+
+    // Override steps for Chat Mode
+    const steps = useMemo(() => {
+        if (mode === 'chat') {
+            return [
+                { icon: Brain, text: 'Thinking...' },
+                { icon: Sparkles, text: 'Typing...' }
+            ];
+        }
+        return REASONING_STEPS[tier as keyof typeof REASONING_STEPS] || REASONING_STEPS.instant;
+    }, [tier, mode]);
 
     // Cycle through reasoning steps when thinking
     useEffect(() => {
