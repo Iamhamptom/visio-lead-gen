@@ -10,7 +10,6 @@ export type ViewMode =
     | 'overview' // New Dashboard Overview
     | 'dashboard' // Chat Interface
     | 'leads'
-    | 'artist-portal'
     | 'billing'
     | 'reason'
     | 'reach'
@@ -250,4 +249,3 @@ export interface BatchReachResult {
     };
     timestamp: number;
 }
-

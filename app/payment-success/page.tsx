@@ -57,7 +57,7 @@ function PaymentSuccessContent() {
             setCountdown(prev => {
                 if (prev <= 1) {
                     clearInterval(timer);
-                    window.location.href = '/artist-portal';
+                    window.location.href = '/settings';
                     return 0;
                 }
                 return prev - 1;
@@ -128,10 +128,10 @@ function PaymentSuccessContent() {
 
                 {/* Redirect */}
                 <a
-                    href="/artist-portal"
+                    href="/settings"
                     className="inline-flex items-center gap-2 bg-white text-black px-8 py-4 rounded-xl font-bold hover:scale-105 transition-transform"
                 >
-                    Go to Dashboard
+                    Open Settings
                     <ArrowRight size={18} />
                 </a>
 

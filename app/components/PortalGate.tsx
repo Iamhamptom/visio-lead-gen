@@ -21,19 +21,17 @@ export const PortalGate: React.FC<PortalGateProps> = ({ onRefresh, isLoading = f
                     <h2 className="text-2xl font-bold text-white mb-3 font-outfit">Unlock Your PR Assistant</h2>
 
                     <p className="text-white/60 mb-8 leading-relaxed">
-                        To generate media leads and strategy, Visio needs to know your <span className="text-white font-medium">Sonic DNA</span> and <span className="text-white font-medium">Brand Identity</span>. Manage this in your Artist Portal.
+                        To generate media leads and strategy, Visio needs to know your <span className="text-white font-medium">Sonic DNA</span> and <span className="text-white font-medium">Brand Identity</span>. Complete your profile in Settings to unlock results.
                     </p>
 
                     <div className="flex flex-col w-full gap-3">
-                        <a
-                            href="https://portal.visio.ai"
-                            target="_blank"
-                            rel="noopener noreferrer"
+                        <button
+                            onClick={() => { window.location.href = '/settings'; }}
                             className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-visio-teal to-visio-sage text-black font-bold py-3.5 rounded-xl hover:shadow-[0_0_20px_rgba(45,212,191,0.3)] transition-all transform hover:-translate-y-0.5"
                         >
-                            Build My Artist Portal
+                            Open Profile Settings
                             <ExternalLink size={16} />
-                        </a>
+                        </button>
 
                         <button
                             onClick={onRefresh}
@@ -48,7 +46,7 @@ export const PortalGate: React.FC<PortalGateProps> = ({ onRefresh, isLoading = f
                             ) : (
                                 <>
                                     <RefreshCw size={16} />
-                                    I've Updated My Portal
+                                    I have Updated My Portal
                                 </>
                             )}
                         </button>

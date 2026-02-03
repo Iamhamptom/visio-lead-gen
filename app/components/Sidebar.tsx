@@ -13,12 +13,9 @@ import {
     ChevronDown,
     ChevronRight,
     Inbox,
-
-    Music,
     CreditCard,
     Lightbulb,
-    Calculator,
-    ExternalLink
+    Calculator
 } from 'lucide-react';
 import { Campaign, ViewMode, Session, Subscription, ArtistProfile } from '../types';
 import { PLAN_LIMITS } from '../config/plans';
@@ -380,18 +377,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <span className="font-medium">Billing & Plans</span>
                 </button>
 
-                <a
-                    href="https://portal.visio.ai"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-white/5 text-white/50 hover:text-white hover:bg-white/5"
-                >
-                    <div className="p-1 rounded-md bg-white/10">
-                        <Music size={14} />
-                    </div>
-                    <span className="font-medium">Artist Portal</span>
-                    <ExternalLink size={12} className="ml-auto opacity-50" />
-                </a>
             </div>
 
             {/* Plan Usage Widget */}

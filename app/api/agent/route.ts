@@ -115,6 +115,26 @@ export async function POST(request: NextRequest) {
         // FETCH GOD MODE CONTEXT
         const artistContext = await getContextPack();
 
+        // HARD GATE: Require artist profile (PortalGate)
+        if (!artistContext) {
+            return NextResponse.json({
+                error: 'portal_required',
+                message: 'Please set up your Artist Portal to continue.'
+            }, { status: 403 });
+        }
+
+        // HARD GATE: Failsafe when critical fields are missing
+        const missing: string[] = [];
+        if (!artistContext.identity?.genre) missing.push('Genre');
+        if (!artistContext.location?.country) missing.push('Target Location');
+        if (missing.length) {
+            return NextResponse.json({
+                error: 'data_gap',
+                missing,
+                message: `Artist Portal is missing: ${missing.join(', ')}. Please update it before I can search.`
+            }, { status: 409 });
+        }
+
         const logs: string[] = [];
         let leads: LeadResponse[] = [];
         let intent: ParsedIntent;

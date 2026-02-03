@@ -27,18 +27,7 @@ export default function RootLayout({
         <AuthProvider>
           {children}
         </AuthProvider>
-        {/* Crisp Chat Widget */}
-        <script
-          type="text/javascript"
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.$crisp=[];window.CRISP_WEBSITE_ID="0a1a5138-7e8d-4762-9b3b-f37982ba7d95";
-              (function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();
-            `
-          }}
-        />
       </body>
     </html>
   );
 }
-

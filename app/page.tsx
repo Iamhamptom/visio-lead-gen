@@ -5,7 +5,6 @@ import { Sidebar } from './components/Sidebar';
 import { ChatMessage } from './components/ChatMessage';
 import { Composer } from './components/Composer';
 import { LeadsGallery } from './components/LeadsGallery';
-import { ArtistPortal } from './components/ArtistPortal';
 import { PortalGate } from './components/PortalGate';
 import { LandingPage } from './components/LandingPage';
 import { AuthPage } from './components/AuthPage';
@@ -119,7 +118,7 @@ export default function Home() {
       else if (path === '/overview') targetView = 'overview';
       else if (path === '/auth' || path === '/login' || path === '/signin') targetView = 'auth';
       else if (path === '/onboarding') targetView = 'onboarding';
-      else if (path === '/artist-portal') targetView = 'artist-portal';
+      else if (path === '/artist-portal') targetView = 'settings'; // Portal deferred; route to settings
       else if (path === '/billing') targetView = 'billing';
       else if (path === '/settings') targetView = 'settings';
       else if (path === '/reason') targetView = 'reason';
@@ -308,10 +307,6 @@ export default function Home() {
       setToastMessage('📝 Draft mode activated');
     };
 
-    const handleNavigateArtistPortal = () => {
-      navigateTo('artist-portal');
-    };
-
     const handleNavigateInbox = () => {
       navigateTo('dashboard');
     };
@@ -325,7 +320,6 @@ export default function Home() {
     window.addEventListener(COMMAND_ACTIONS.CREATE_CAMPAIGN, handleCreateCampaign);
     window.addEventListener(COMMAND_ACTIONS.FIND_INFLUENCERS, handleFindInfluencers);
     window.addEventListener(COMMAND_ACTIONS.DRAFT_PITCH, handleDraftPitch);
-    window.addEventListener(COMMAND_ACTIONS.NAVIGATE_ARTIST_PORTAL, handleNavigateArtistPortal);
     window.addEventListener(COMMAND_ACTIONS.NAVIGATE_INBOX, handleNavigateInbox);
     window.addEventListener('visio:develop-campaign', handleDevelopCampaign);
 
@@ -333,7 +327,6 @@ export default function Home() {
       window.removeEventListener(COMMAND_ACTIONS.CREATE_CAMPAIGN, handleCreateCampaign);
       window.removeEventListener(COMMAND_ACTIONS.FIND_INFLUENCERS, handleFindInfluencers);
       window.removeEventListener(COMMAND_ACTIONS.DRAFT_PITCH, handleDraftPitch);
-      window.removeEventListener(COMMAND_ACTIONS.NAVIGATE_ARTIST_PORTAL, handleNavigateArtistPortal);
       window.removeEventListener(COMMAND_ACTIONS.NAVIGATE_INBOX, handleNavigateInbox);
       window.removeEventListener('visio:develop-campaign', handleDevelopCampaign);
     };
@@ -485,14 +478,13 @@ export default function Home() {
         content: m.content
       }));
 
-      // Get Artist Context
       const res = await fetch('/api/agent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: text,
           conversationHistory: historyForApi,
-          artistContext: artistProfile, // Use state instead of localStorage
+          artistContext: artistProfile, // Ignored by backend (source of truth is server fetch)
           tier,
           mode
         })
@@ -500,18 +492,30 @@ export default function Home() {
 
       const data = await res.json();
 
+      // Handle Portal/Failsafe server gates gracefully
+      if (!res.ok) {
+        const errorMsg = data?.message || 'Portal setup required.';
+        const finalMessages = sessionWithThinking.messages.map(msg => {
+          if (msg.id === tempId) {
+            return { ...msg, content: errorMsg, isThinking: false };
+          }
+          return msg;
+        });
+        const finalSession = { ...sessionWithThinking, messages: finalMessages };
+        updatedSessions[activeSessionIndex] = finalSession;
+        setSessions([...updatedSessions]);
+        setToastMessage(errorMsg);
+        setIsLoading(false);
+        return;
+      }
+
       // 4. Update Final
       const finalMessages = sessionWithThinking.messages.map(msg => {
         if (msg.id === tempId) {
-          // If the backend returns leads, try to format them into the message content or separate field
-          // Our ChatMessage component expects leads in `msg.leads` or embedded JSON block.
-          // The backend API returns { message: string, leads: Lead[] }
-
-          // We'll attach leads directly to the message object
           return {
             ...msg,
             content: data.message || "Done.",
-            leads: data.leads || [], // Attach leads here
+            leads: data.leads || [],
             isThinking: false
           };
         }
@@ -560,8 +564,7 @@ export default function Home() {
     await updateSubscription(newDetails);
 
     setToastMessage(`Upgraded to ${tier} plan!`);
-    setToastMessage(`Upgraded to ${tier} plan!`);
-    navigateTo('artist-portal'); // Or back to dashboard
+    navigateTo('settings'); // Direct users to profile/settings
   };
 
   // --- Derived Data ---
@@ -720,7 +723,7 @@ export default function Home() {
                           setArtistProfile(profile);
                           setToastMessage("Profile Found! Unlocking...");
                         } else {
-                          setToastMessage("Still no profile found. Please complete setup in Portal.");
+                          setToastMessage("Still no profile found. Please complete setup in Settings.");
                         }
                         setIsLoading(false);
                       }}
@@ -750,11 +753,6 @@ export default function Home() {
               <LeadsGallery
                 leads={allLeads}
                 onSaveLead={handleSaveLead}
-              />
-            ) : currentView === 'artist-portal' ? (
-              <ArtistPortal
-                subscription={subscription}
-                onUpgrade={() => navigateTo('billing')}
               />
             ) : currentView === 'billing' ? (
               <Billing

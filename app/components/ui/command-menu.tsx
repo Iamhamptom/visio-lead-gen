@@ -10,7 +10,6 @@ export const COMMAND_ACTIONS = {
     CREATE_CAMPAIGN: 'visio:create-campaign',
     FIND_INFLUENCERS: 'visio:find-influencers',
     DRAFT_PITCH: 'visio:draft-pitch',
-    NAVIGATE_ARTIST_PORTAL: 'visio:navigate-artist-portal',
     NAVIGATE_INBOX: 'visio:navigate-inbox',
     NAVIGATE_SETTINGS: 'visio:navigate-settings',
 };
@@ -113,12 +112,6 @@ export function CommandMenu() {
                                         onSelect={() => handleAction(COMMAND_ACTIONS.NAVIGATE_INBOX)}
                                     >
                                         Inbox
-                                    </Item>
-                                    <Item
-                                        icon={<User />}
-                                        onSelect={() => handleAction(COMMAND_ACTIONS.NAVIGATE_ARTIST_PORTAL)}
-                                    >
-                                        Artist Portal
                                     </Item>
                                     <Item
                                         icon={<Settings />}

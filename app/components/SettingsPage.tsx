@@ -123,6 +123,22 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                     </button>
                 </div>
 
+                {/* Support */}
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-6 flex items-center justify-between">
+                    <div className="space-y-1">
+                        <h3 className="font-bold text-lg">Support & Help</h3>
+                        <p className="text-white/60 text-sm">Live chat is temporarily removed. Reach us via email and we’ll respond promptly.</p>
+                        <p className="text-white/70 text-sm font-mono">support@visio.ai</p>
+                    </div>
+                    <a
+                        href="mailto:support@visio.ai"
+                        className="inline-flex items-center gap-2 bg-visio-teal text-black px-4 py-2 rounded-xl font-semibold hover:bg-visio-teal/90 transition-colors"
+                    >
+                        Email Support
+                        <ArrowUpRight size={16} />
+                    </a>
+                </div>
+
                 {/* Profile Section */}
                 <div className="space-y-6">
                     <h2 className="text-xl font-bold border-b border-white/10 pb-4">Personal Information</h2>

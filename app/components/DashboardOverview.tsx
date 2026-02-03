@@ -118,30 +118,6 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                         </div>
                     </div>
                 </div>
-
-                {/* Artist Portal */}
-                <div className="bg-gradient-to-br from-white/5 to-transparent border border-white/5 rounded-2xl p-6 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-32 bg-purple-500/5 blur-3xl rounded-full translate-x-10 -translate-y-10 group-hover:bg-purple-500/10 transition-all duration-700" />
-
-                    <div className="relative z-10 space-y-4">
-                        <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-400">
-                            <Music size={24} />
-                        </div>
-                        <div>
-                            <h3 className="text-xl font-bold text-white mb-2">Artist Portal</h3>
-                            <p className="text-sm text-white/50 mb-6 max-w-sm">
-                                Manage your profile, EPK, releases, and connect your social accounts for deeper insights.
-                            </p>
-                            <button
-                                onClick={() => onNavigate('artist-portal')}
-                                className="flex items-center gap-2 bg-white/10 text-white px-5 py-2.5 rounded-xl font-medium hover:bg-white/20 transition-colors"
-                            >
-                                <ArrowRight size={18} />
-                                Go to Portal
-                            </button>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     );
