@@ -613,7 +613,7 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-screen w-full bg-visio-bg overflow-hidden text-white font-outfit relative">
+    <div className="flex min-h-screen w-full bg-visio-bg overflow-x-hidden text-white font-outfit relative">
 
       {/* Toast Notification */}
       {toastMessage && (
@@ -672,7 +672,7 @@ export default function Home() {
           )}
 
           {/* Main Content */}
-          <main className="flex-1 flex flex-col md:ml-64 relative z-10 h-full bg-visio-bg/50">
+          <main className="flex-1 flex flex-col md:ml-64 relative z-10 h-full min-h-0 bg-visio-bg/50">
 
             {/* Mobile Header */}
             <header className="md:hidden flex items-center justify-between p-4 border-b border-white/5 bg-black/40 backdrop-blur-md sticky top-0 z-20">
