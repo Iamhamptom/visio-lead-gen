@@ -91,10 +91,15 @@ function parseBasicIntent(message: string, lastState?: any): ParsedIntent {
 // Local performExaSearch removed. Using lib/search.ts instead.
 
 
+import { getContextPack } from '@/lib/god-mode';
+
+// ... (existing imports)
+
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { message, conversationHistory = [], lastSearchState, artistContext, tier = 'instant', mode = 'chat' } = body;
+        // REMOVE artistContext from body - we fetch it server-side now (Source of Truth)
+        const { message, conversationHistory = [], lastSearchState, tier = 'instant', mode = 'chat' } = body;
 
         // Legacy support: if old 'query' field is used
         const userMessage = message || body.query;
@@ -106,6 +111,9 @@ export async function POST(request: NextRequest) {
                 leads: []
             }, { status: 400 });
         }
+
+        // FETCH GOD MODE CONTEXT
+        const artistContext = await getContextPack();
 
         const logs: string[] = [];
         let leads: LeadResponse[] = [];
@@ -119,6 +127,8 @@ export async function POST(request: NextRequest) {
         };
         logs.push(`${tierLabels[tier as keyof typeof tierLabels] || tierLabels.instant}`);
         logs.push(mode === 'research' ? '🔬 Research Mode Active' : '💬 Chat Mode Active');
+        if (!artistContext) logs.push('⚠️ No Artist Portal Context Found');
+        else logs.push(`👤 Context Loaded: ${artistContext.identity.name}`);
 
         // Check if Gemini API is available
         const hasGemini = !!process.env.GEMINI_API_KEY;
@@ -129,7 +139,7 @@ export async function POST(request: NextRequest) {
             logs.push('🧠 Visio: Analyzing research parameters...');
 
             if (hasGemini) {
-                intent = await parseIntent(userMessage, conversationHistory, artistContext, tier as any, 'research'); // Use existing parser for filters
+                intent = await parseIntent(userMessage, conversationHistory, artistContext || undefined, tier as any, 'research'); // Use existing parser for filters
             } else {
                 intent = parseBasicIntent(userMessage, lastSearchState);
             }
@@ -147,7 +157,7 @@ export async function POST(request: NextRequest) {
             if (hasGemini) {
                 // Use AI to parse intent with tier
                 logs.push('🧠 Visio: Analyzing your request...');
-                intent = await parseIntent(userMessage, conversationHistory, artistContext, tier as 'instant' | 'business' | 'enterprise', mode as 'chat' | 'research');
+                intent = await parseIntent(userMessage, conversationHistory, artistContext || undefined, tier as 'instant' | 'business' | 'enterprise', mode as 'chat' | 'research');
 
                 // If the user explicitly asks to "find leads" or "search", we honor it.
                 // Otherwise, the prompt should naturally lean towards chat.
@@ -221,6 +231,11 @@ export async function POST(request: NextRequest) {
 
             case 'unavailable': {
                 logs.push('❌ Request out of scope/unavailable');
+                break;
+            }
+
+            case 'data_gap': {
+                logs.push('⚠️ Failsafe Triggered: Missing Portal Data');
                 break;
             }
         }

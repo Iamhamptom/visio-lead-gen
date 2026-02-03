@@ -6,7 +6,7 @@ import { ChatMessage } from './components/ChatMessage';
 import { Composer } from './components/Composer';
 import { LeadsGallery } from './components/LeadsGallery';
 import { ArtistPortal } from './components/ArtistPortal';
-import { Onboarding } from './components/Onboarding';
+import { PortalGate } from './components/PortalGate';
 import { LandingPage } from './components/LandingPage';
 import { AuthPage } from './components/AuthPage';
 import { SettingsPage } from './components/SettingsPage';
@@ -138,11 +138,10 @@ export default function Home() {
         // Logged In
         if (!hasCompletedOnboarding && !hasProfile) {
           // Force onboarding if not done
-          if (targetView !== 'onboarding') {
-            navigateTo('onboarding');
-            return;
+          // Force portal gate check if not done
+          if (targetView !== 'auth' && targetView !== 'landing') {
+            // We'll handle the gate inside the dashboard view or main layout
           }
-          setCurrentView('onboarding');
         } else {
           // Fully setup
           if (targetView === 'landing' || targetView === 'auth') {
@@ -184,14 +183,14 @@ export default function Home() {
       setArtistProfile(profile);
     }
 
-    // Only skip onboarding if BOTH profile exists AND onboarding is marked complete
-    if (profile && hasCompletedOnboarding) {
+    // Only check if profile exists
+    if (profile) {
+      setArtistProfile(profile);
       navigateTo('overview');
     } else {
-      // Either no profile or onboarding not complete - go to onboarding
-      console.log("Onboarding not complete, redirecting to onboarding");
-      navigateTo('onboarding');
-      setCurrentView('onboarding');
+      // No profile found - let them go to overview but they will be gated
+      console.log("No profile found, will show gate");
+      navigateTo('overview');
     }
   };
 
@@ -202,49 +201,6 @@ export default function Home() {
   // Artist profile loaded in main effect above
 
 
-  const handleOnboardingComplete = async (profile: ArtistProfile) => {
-    // Save to Supabase
-    await Promise.all([
-      saveArtistProfile(profile),
-      saveOnboardingComplete()
-    ]);
-
-    setArtistProfile(profile);
-    setShowOnboarding(false);
-    setToastMessage(`Welcome, ${profile.name}! Your profile is ready.`);
-    navigateTo('overview');
-  };
-
-
-
-  const handleOnboardingSkip = async () => {
-    // 1. Create a placeholder profile so checks pass
-    const placeholderProfile: ArtistProfile = {
-      name: "New Artist",
-      genre: "",
-      description: "",
-      socials: {},
-      connectedAccounts: {},
-      similarArtists: [],
-      milestones: { instagramFollowers: 0, monthlyListeners: 0 },
-      location: { city: "", country: "" },
-      promotionalFocus: "Streaming",
-      careerHighlights: [],
-      lifeHighlights: [],
-      desiredCommunities: []
-    };
-
-    // 2. Save both
-    await Promise.all([
-      saveArtistProfile(placeholderProfile),
-      saveOnboardingComplete()
-    ]);
-
-    // 3. Update State
-    setArtistProfile(placeholderProfile);
-    setShowOnboarding(false);
-    navigateTo('overview');
-  };
 
   const handleLogout = async () => {
     await signOut(); // Supabase sign out
@@ -676,20 +632,6 @@ export default function Home() {
         <div className="flex-1 w-full h-full overflow-y-auto">
           <AuthPage key={authMode} onComplete={handleAuthComplete} initialMode={authMode} />
         </div>
-      ) : currentView === 'onboarding' ? (
-        <div className="flex-1 w-full h-full overflow-y-auto">
-          <Onboarding
-            userEmail={user?.email}
-            onComplete={(profile) => {
-              handleOnboardingComplete(profile);
-              // NavigateTo is handled in handler
-            }}
-            onSkip={() => {
-              handleOnboardingSkip();
-              // NavigateTo is handled in handler
-            }}
-          />
-        </div>
       ) : (
         <>
           <Sidebar
@@ -767,13 +709,31 @@ export default function Home() {
             ) : currentView === 'dashboard' ? (
               <>
                 {/* Chat Area - Adjusted padding for fixed headers */}
-                <div className="flex-1 min-h-0 overflow-y-auto px-4 md:px-0 pb-32">
-                  <div className="max-w-3xl mx-auto flex flex-col pt-6 space-y-6">
-                    {activeMessages.map((msg) => (
-                      <ChatMessage key={msg.id} message={msg} onSaveLead={handleSaveLead} />
-                    ))}
-                    <div ref={messagesEndRef} className="h-4" />
-                  </div>
+                {/* Chat Area - Adjusted padding for fixed headers */}
+                <div className="flex-1 min-h-0 overflow-y-auto px-4 md:px-0 pb-32 relative">
+                  {!artistProfile ? (
+                    <PortalGate
+                      onRefresh={async () => {
+                        setIsLoading(true);
+                        const profile = await loadArtistProfile();
+                        if (profile) {
+                          setArtistProfile(profile);
+                          setToastMessage("Profile Found! Unlocking...");
+                        } else {
+                          setToastMessage("Still no profile found. Please complete setup in Portal.");
+                        }
+                        setIsLoading(false);
+                      }}
+                      isLoading={isLoading}
+                    />
+                  ) : (
+                    <div className="max-w-3xl mx-auto flex flex-col pt-6 space-y-6">
+                      {activeMessages.map((msg) => (
+                        <ChatMessage key={msg.id} message={msg} onSaveLead={handleSaveLead} />
+                      ))}
+                      <div ref={messagesEndRef} className="h-4" />
+                    </div>
+                  )}
                 </div>
 
                 {/* Footer / Composer */}
@@ -795,7 +755,6 @@ export default function Home() {
               <ArtistPortal
                 subscription={subscription}
                 onUpgrade={() => navigateTo('billing')}
-                onRedoOnboarding={() => navigateTo('onboarding')}
               />
             ) : currentView === 'billing' ? (
               <Billing

@@ -17,7 +17,8 @@ import {
     Music,
     CreditCard,
     Lightbulb,
-    Calculator
+    Calculator,
+    ExternalLink
 } from 'lucide-react';
 import { Campaign, ViewMode, Session, Subscription, ArtistProfile } from '../types';
 import { PLAN_LIMITS } from '../config/plans';
@@ -379,18 +380,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <span className="font-medium">Billing & Plans</span>
                 </button>
 
-                <button
-                    onClick={() => onNavigate('artist-portal')}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all border ${activeView === 'artist-portal'
-                        ? 'bg-visio-accent/10 border-visio-accent/20 text-visio-accent shadow-[0_0_15px_rgba(182,240,156,0.1)]'
-                        : 'border-white/5 text-white/50 hover:text-white hover:bg-white/5'
-                        }`}
+                <a
+                    href="https://portal.visio.ai"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-white/5 text-white/50 hover:text-white hover:bg-white/5"
                 >
-                    <div className={`p-1 rounded-md ${activeView === 'artist-portal' ? 'bg-visio-accent text-black' : 'bg-white/10'}`}>
+                    <div className="p-1 rounded-md bg-white/10">
                         <Music size={14} />
                     </div>
                     <span className="font-medium">Artist Portal</span>
-                </button>
+                    <ExternalLink size={12} className="ml-auto opacity-50" />
+                </a>
             </div>
 
             {/* Plan Usage Widget */}

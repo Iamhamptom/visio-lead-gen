@@ -51,7 +51,7 @@ const DEFAULT_RELEASES: any[] = [];
 // Sample EPK files
 const DEFAULT_FILES: any[] = [];
 
-export const ArtistPortal = ({ subscription, onUpgrade, onRedoOnboarding }: { subscription?: Subscription, onUpgrade: () => void, onRedoOnboarding: () => void }) => {
+export const ArtistPortal = ({ subscription, onUpgrade }: { subscription?: Subscription, onUpgrade: () => void }) => {
     const [activeTab, setActiveTab] = useState<'dashboard' | 'brand' | 'goals' | 'profile' | 'media' | 'releases' | 'connections'>('dashboard');
     const [isSaving, setIsSaving] = useState(false);
     const [profile, setProfile] = useState<ArtistProfile>(DEFAULT_PROFILE);
@@ -211,13 +211,6 @@ export const ArtistPortal = ({ subscription, onUpgrade, onRedoOnboarding }: { su
                     >
                         <ExternalLink size={14} />
                         View Public Profile
-                    </button>
-                    <button
-                        onClick={onRedoOnboarding}
-                        className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors text-sm font-medium flex items-center gap-2"
-                    >
-                        <Calendar size={14} />
-                        Redo Questionnaire
                     </button>
                     <ShinyButton
                         text={isSaving ? "Saving..." : "Save Changes"}
