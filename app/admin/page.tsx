@@ -83,7 +83,7 @@ export default function AdminPage() {
             });
 
             setRecentSearches(logs || []);
-            setUsers(profiles?.map(p => ({
+            setUsers(profiles?.map((p: any) => ({
                 id: p.id,
                 email: 'View in Supabase', // Profile table might not have email, auth does
                 subscription_tier: p.subscription_tier || 'Free',

@@ -24,7 +24,7 @@ export const GENERATE_SYSTEM_PROMPT = (context?: ContextPack, allowJson: boolean
     const story = context?.story || { summary: '' };
 
     // 2. Data Health Check (For Failsafe)
-    const missingFields = [];
+    const missingFields: string[] = [];
     if (!identity.genre) missingFields.push('Genre');
     if (!location.country) missingFields.push('Target Location');
 
