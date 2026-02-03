@@ -7,7 +7,8 @@ export type ViewMode =
     | 'landing'
     | 'auth'
     | 'onboarding'
-    | 'dashboard'
+    | 'overview' // New Dashboard Overview
+    | 'dashboard' // Chat Interface
     | 'leads'
     | 'artist-portal'
     | 'billing'
@@ -15,7 +16,7 @@ export type ViewMode =
     | 'reach'
     | 'settings';
 
-export type SubscriptionTier = 'artist' | 'label' | 'agency' | 'enterprise';
+export type SubscriptionTier = 'artist' | 'starter' | 'artiste' | 'starter_label' | 'label' | 'agency' | 'enterprise';
 
 export interface Subscription {
     tier: SubscriptionTier;
@@ -32,6 +33,7 @@ export interface SocialLinks {
     tiktok?: string;
     youtube?: string;
     website?: string;
+    email?: string;
 }
 
 export interface Lead {
@@ -107,6 +109,7 @@ export interface ArtistProfile {
     careerHighlights?: string[];
     lifeHighlights?: string[];
     desiredCommunities?: string[];
+    referralSource?: string;
 }
 
 export interface ArtistGoals {

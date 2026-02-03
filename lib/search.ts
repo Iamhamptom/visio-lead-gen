@@ -1,4 +1,5 @@
 import Exa from 'exa-js';
+import { performGoogleSearch } from './serper';
 
 export interface SearchResult {
     id: number;
@@ -8,19 +9,15 @@ export interface SearchResult {
     source?: string;
     company?: string;
     title?: string;
+    imageUrl?: string;
+    date?: string;
 }
 
-export async function performSmartExaSearch(query: string, country: string = 'ZA'): Promise<SearchResult[]> {
-    const apiKey = process.env.EXA_API_KEY;
-    if (!apiKey) {
-        console.warn('EXA_API_KEY not configured');
-        return [];
-    }
-
-    const exa = new Exa(apiKey);
+export async function performSmartSearch(query: string, country: string = 'ZA'): Promise<SearchResult[]> {
+    const exaApiKey = process.env.EXA_API_KEY;
+    const serperApiKey = process.env.SERPER_API_KEY;
 
     // Smart Context Enforcement
-    // We want to avoid ambiguous terms (e.g., "drill" -> construction vs music)
     let richQuery = query;
     const lowerQ = query.toLowerCase();
 
@@ -47,28 +44,68 @@ export async function performSmartExaSearch(query: string, country: string = 'ZA
         else richQuery = `${richQuery} in ${country}`;
     }
 
-    console.log(`[Exa] Executing Smart Search: "${richQuery}" (Original: "${query}")`);
+    console.log(`[MetaSearch] Executing "${richQuery}"`);
 
-    try {
-        const result = await exa.searchAndContents(richQuery, {
-            type: 'neural',
-            useAutoprompt: true,
-            numResults: 10,
-            text: true,
-        });
+    const promises: Promise<SearchResult[]>[] = [];
 
-        return result.results.map((r: any, i: number) => ({
-            id: -(i + 1), // Negative IDs for external results
-            name: r.title || 'Unknown',
-            url: r.url,
-            snippet: r.text?.substring(0, 200) + '...' || '',
-            source: 'Exa Neural Search (Live Web)',
-            company: r.author || '',
-            title: 'Web Result'
-        }));
-
-    } catch (e) {
-        console.error('Exa search failed:', e);
-        return [];
+    // 1. Exa (Neural)
+    if (exaApiKey) {
+        promises.push((async () => {
+            try {
+                const exa = new Exa(exaApiKey);
+                const result = await exa.searchAndContents(richQuery, {
+                    type: 'neural',
+                    useAutoprompt: true,
+                    numResults: 8,
+                    text: true,
+                });
+                return result.results.map((r: any, i: number) => ({
+                    id: -(i + 1),
+                    name: r.title || 'Unknown',
+                    url: r.url,
+                    snippet: r.text?.substring(0, 200) + '...' || '',
+                    source: 'Exa Neural',
+                    company: r.author || '',
+                    title: 'Web Result'
+                }));
+            } catch (e) {
+                console.error('Exa search failed:', e);
+                return [];
+            }
+        })());
+    } else {
+        console.warn('EXA_API_KEY missing, skipping neural search');
     }
+
+    // 2. Serper (Google)
+    if (serperApiKey) {
+        promises.push((async () => {
+            const googleResults = await performGoogleSearch(richQuery, country);
+            return googleResults.map((r, i) => ({
+                id: -(100 + i), // Different ID range
+                name: r.title,
+                url: r.link,
+                snippet: r.snippet,
+                source: 'Google',
+                imageUrl: r.imageUrl,
+                date: r.date
+            }));
+        })());
+    } else {
+        console.warn('SERPER_API_KEY missing, skipping Google search');
+    }
+
+    // Wait for all
+    const results = await Promise.all(promises);
+    const flatResults = results.flat();
+
+    // Deduplicate by URL
+    const seenUrls = new Set();
+    const uniqueResults = flatResults.filter(r => {
+        if (seenUrls.has(r.url)) return false;
+        seenUrls.add(r.url);
+        return true;
+    });
+
+    return uniqueResults;
 }

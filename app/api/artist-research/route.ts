@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import Exa from 'exa-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const exa = new Exa(process.env.EXA_API_KEY || '');
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+// Lazily init in handler to avoid build-time errors if keys missing
+// const exa = new Exa(process.env.EXA_API_KEY || '');
+// const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 export async function POST(request: NextRequest) {
     try {
@@ -12,6 +13,21 @@ export async function POST(request: NextRequest) {
         if (!artistName) {
             return NextResponse.json({ error: 'Artist name is required' }, { status: 400 });
         }
+
+        const exaKey = process.env.EXA_API_KEY;
+        const geminiKey = process.env.GEMINI_API_KEY;
+
+        if (!exaKey || !geminiKey) {
+            // Graceful fallback if keys not configured (e.g. during build or lite mode)
+            console.warn('Missing API keys for artist-research');
+            return NextResponse.json({
+                summary: `This feature requires API keys (Exa & Gemini). Please configure them in your settings. Mocking result for "${artistName}".`,
+                sources: []
+            });
+        }
+
+        const exa = new Exa(exaKey);
+        const genAI = new GoogleGenerativeAI(geminiKey);
 
         // Search for artist mentions using Exa
         const searchQuery = `"${artistName}" ${genre || ''} artist musician music`;
@@ -31,7 +47,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Prepare context for AI analysis
-        const sourcesContext = searchResults.results.map((r, i) =>
+        const sourcesContext = searchResults.results.map((r: any, i: number) =>
             `Source ${i + 1}: ${r.title}\nURL: ${r.url}\nContent: ${r.text || 'N/A'}`
         ).join('\n\n');
 
@@ -56,7 +72,7 @@ ${sourcesContext}`;
 
         return NextResponse.json({
             summary,
-            sources: searchResults.results.map(r => ({ title: r.title, url: r.url })),
+            sources: searchResults.results.map((r: any) => ({ title: r.title, url: r.url })),
         });
 
     } catch (error) {

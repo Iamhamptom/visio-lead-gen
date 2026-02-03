@@ -4,6 +4,8 @@ import { LeadCard } from './LeadCard';
 import { VisioOrb } from './VisioOrb';
 import { Bot, User, Brain, Search, Target, Sparkles, BarChart3 } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface ChatMessageProps {
     message: Message;
@@ -163,11 +165,58 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSaveLead })
                         </div>
                     ) : (
                         <>
-                            <div className={`px-5 py-3 rounded-2xl backdrop-blur-sm text-sm leading-relaxed whitespace-pre-wrap shadow-sm ${isUser
+                            <div className={`px-5 py-3 rounded-2xl backdrop-blur-sm text-sm leading-relaxed shadow-sm ${isUser
                                 ? 'bg-white text-black rounded-tr-none'
                                 : 'bg-white/5 border border-white/10 text-white/90 rounded-tl-none'
                                 }`}>
-                                {parsedContent.text}
+                                {isUser ? (
+                                    <div className="whitespace-pre-wrap">{parsedContent.text}</div>
+                                ) : (
+                                    <div className="markdown-content">
+                                        <ReactMarkdown
+                                            remarkPlugins={[remarkGfm]}
+                                            components={{
+                                                p: ({ node, ...props }) => <p className="mb-4 last:mb-0 text-white/90 leading-relaxed text-[15px]" {...props} />,
+
+                                                // Lists
+                                                ul: ({ node, ...props }) => <ul className="list-disc pl-6 mb-4 space-y-2 text-white/90" {...props} />,
+                                                ol: ({ node, ...props }) => <ol className="list-decimal pl-6 mb-4 space-y-2 text-white/90" {...props} />,
+                                                li: ({ node, ...props }) => <li className="pl-1" {...props} />,
+
+                                                // Headings
+                                                h1: ({ node, ...props }) => <h1 className="text-2xl font-bold text-white mb-4 mt-6 border-b border-white/10 pb-2" {...props} />,
+                                                h2: ({ node, ...props }) => <h2 className="text-xl font-bold text-visio-teal/90 mb-3 mt-5" {...props} />,
+                                                h3: ({ node, ...props }) => <h3 className="text-lg font-semibold text-white mb-2 mt-4" {...props} />,
+
+                                                // Formatting
+                                                strong: ({ node, ...props }) => <strong className="font-bold text-white" {...props} />,
+                                                em: ({ node, ...props }) => <em className="text-visio-accent not-italic" {...props} />,
+
+                                                // Code
+                                                code: ({ node, ...props }) => {
+                                                    const { className, children } = props as any;
+                                                    const match = /language-(\w+)/.exec(className || '');
+                                                    return match ? (
+                                                        <code className="block bg-black/50 border border-white/10 p-4 rounded-xl my-4 font-mono text-sm overflow-x-auto text-visio-teal" {...props} />
+                                                    ) : (
+                                                        <code className="bg-white/10 px-1.5 py-0.5 rounded font-mono text-xs text-visio-accent" {...props} />
+                                                    );
+                                                },
+
+                                                // Quotes
+                                                blockquote: ({ node, ...props }) => <blockquote className="border-l-4 border-visio-teal/50 pl-4 py-1 italic my-4 text-white/60 bg-white/5 rounded-r-lg" {...props} />,
+
+                                                // Tables
+                                                table: ({ node, ...props }) => <div className="overflow-x-auto my-4 rounded-lg border border-white/10"><table className="min-w-full divide-y divide-white/10 bg-black/20" {...props} /></div>,
+                                                th: ({ node, ...props }) => <th className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider bg-white/10" {...props} />,
+                                                td: ({ node, ...props }) => <td className="px-4 py-3 whitespace-nowrap text-sm text-white/80 border-t border-white/5" {...props} />,
+                                                a: ({ node, ...props }) => <a className="text-visio-teal hover:text-white underline underline-offset-4 transition-colors" target="_blank" rel="noopener noreferrer" {...props} />,
+                                            }}
+                                        >
+                                            {parsedContent.text}
+                                        </ReactMarkdown>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Render Leads if they exist */}
@@ -189,7 +238,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSaveLead })
                     </span>
                 </div>
 
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };

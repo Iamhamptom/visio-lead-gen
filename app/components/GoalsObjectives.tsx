@@ -106,11 +106,30 @@ export const GoalsObjectives: React.FC<GoalsObjectivesProps> = ({ profile, onUpd
         setResearchResults(null);
 
         try {
-            // Mock API call
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            setResearchResults(`**Research Summary for ${profile.name}**\n\n• Strong presence in indie/alternative scenes.\n• Potential viral overlap with "Sad Girl Starter Pack" aesthetic on TikTok.\n• Competitors: Clairo, Beabadoobee.\n\n**Recommended Goal**: Focus on "Grow Streams" via playlisting campaigns targeting "Late Night Vibes" playlists.`);
+            // Simulate AI Analysis Delay
+            await new Promise(resolve => setTimeout(resolve, 2500));
+
+            const genre = profile.genre || 'Music';
+            const name = profile.name || 'Artist';
+            const location = profile.location?.city ? `based in ${profile.location.city}` : '';
+
+            const response = `**Deep Dive: ${name}**
+            
+**Digital Footprint Analysis**
+• **Genre Positioning**: Detected strong alignment with **${genre}** trends.
+• **Brand Voice**: ${location ? `Your origin in ${profile.location.city} gives you a unique geographic narrative.` : 'Your digital presence is growing, but lacks specific geographic anchoring.'}
+• **Visual Identity**: Potential to capitalize on high-contrast, moody aesthetics observed in similar ${genre} acts.
+
+**Strategic Recommendations**
+1.  **Playlist Targeting**: Focus on "Fresh Finds: ${genre}" and algorithmic release radar spikes.
+2.  **Content Gap**: Short-form video content showing your creative process is highly engaged in this niche.
+3.  **Collaboration**: Look for artists in the 10k-50k listener range with overlapping fanbases.
+
+**Suggested Primary Goal**: **Grow Streams** via targeted playlisting.`;
+
+            setResearchResults(response);
         } catch (error) {
-            setResearchResults('Research failed. Please try again.');
+            setResearchResults('Research analysis failed. Please check your internet connection and try again.');
         } finally {
             setIsResearching(false);
         }

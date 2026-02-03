@@ -51,7 +51,7 @@ export async function generatePitchBrief(targetId: string, campaignId: string, g
     const score = Math.floor(Math.random() * (98 - 70) + 70);
 
     return {
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         targetId,
         campaignId,
         score,

@@ -16,6 +16,27 @@ export const PLAN_LIMITS: Record<SubscriptionTier, PlanLimits> = {
         maxTeamMembers: 1,
         maxSearchesPerDay: 10
     },
+    starter: {
+        maxProfiles: 1,
+        canExport: false,
+        aiTier: 'instant',
+        maxTeamMembers: 1,
+        maxSearchesPerDay: 20
+    },
+    artiste: {
+        maxProfiles: 2,
+        canExport: false,
+        aiTier: 'instant',
+        maxTeamMembers: 1,
+        maxSearchesPerDay: 25
+    },
+    starter_label: {
+        maxProfiles: 3,
+        canExport: true,
+        aiTier: 'business',
+        maxTeamMembers: 2,
+        maxSearchesPerDay: 50
+    },
     label: {
         maxProfiles: 5,
         canExport: true,

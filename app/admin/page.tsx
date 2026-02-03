@@ -1,350 +1,198 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import {
-    Users,
-    BarChart3,
-    Settings,
-    Shield,
-    Search,
-    MoreHorizontal,
-    ArrowUpRight,
-    DollarSign,
-    TrendingUp,
-    Activity,
-    UserCheck,
-    CreditCard
-} from 'lucide-react';
-import {
-    LineChart,
-    Line,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    ResponsiveContainer,
-    AreaChart,
-    Area
-} from 'recharts';
+import React, { useEffect, useState } from 'react';
+import { useAuth } from '@/lib/auth-context';
+import { supabase } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
+import { Loader2, Users, Search, BarChart3, ShieldAlert } from 'lucide-react';
+import { motion } from 'framer-motion';
 
-// Mock Data
-const USER_DATA = [
-    { id: '1', name: 'Neon Horizon', email: 'neon@example.com', plan: 'Artist', status: 'Active', joined: '2 days ago', spend: '$0' },
-    { id: '2', name: 'Atlas Mgmt', email: 'team@atlas.co', plan: 'Agency', status: 'Active', joined: '1 week ago', spend: '$249' },
-    { id: '3', name: 'Sony Music SA', email: 'reps@sony.com', plan: 'Enterprise', status: 'Active', joined: '2 weeks ago', spend: '$2,500' },
-    { id: '4', name: 'Indie Collective', email: 'collect@indie.co', plan: 'Label', status: 'Past Due', joined: '1 month ago', spend: '$99' },
-    { id: '5', name: 'Sarah J', email: 'sarah@gmail.com', plan: 'Artist', status: 'Trialing', joined: '2 hours ago', spend: '$0' },
-];
+// Types
+interface AdminStats {
+    totalUsers: number;
+    totalSearches: number;
+    activeSubs: number;
+}
 
-const REVENUE_DATA = [
-    { name: 'Jan', revenue: 4000, users: 240 },
-    { name: 'Feb', revenue: 3000, users: 1398 },
-    { name: 'Mar', revenue: 2000, users: 3800 },
-    { name: 'Apr', revenue: 2780, users: 3908 },
-    { name: 'May', revenue: 1890, users: 4800 },
-    { name: 'Jun', revenue: 2390, users: 3800 },
-    { name: 'Jul', revenue: 3490, users: 4300 },
-];
+interface SearchLog {
+    id: string;
+    query: string;
+    country: string;
+    results_count: number;
+    created_at: string;
+    user_email?: string;
+}
 
-const ADMIN_EMAILS = ['hampton@hgaradio.co.za', 'admin@visio.ai'];
+interface UserProfile {
+    id: string;
+    email: string; // We might not get this from profiles depending on schema
+    subscription_tier: string;
+    created_at: string;
+}
 
-export default function AdminDashboard() {
-    const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'settings'>('overview');
-    const [isAdmin, setIsAdmin] = useState(false);
+export default function AdminPage() {
+    const { user, loading } = useAuth();
+    const router = useRouter();
+    const [stats, setStats] = useState<AdminStats>({ totalUsers: 0, totalSearches: 0, activeSubs: 0 });
+    const [recentSearches, setRecentSearches] = useState<SearchLog[]>([]);
+    const [users, setUsers] = useState<UserProfile[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isAdmin, setIsAdmin] = useState(false);
+
+    // simple email check for MVP security
+    const ADMIN_EMAILS = ['hamptonmusicgroup@gmail.com', 'admin@visio.ai'];
 
     useEffect(() => {
-        // Mock Admin Check
-        // In real app, check session/token
-        // For verify, we'll assume the developer is admin or we check specific email
-        // Just setting to true for verify for now, or check localStorage
-        const userEmail = 'hampton@hgaradio.co.za'; // Mock current user
-        if (ADMIN_EMAILS.includes(userEmail)) {
-            setIsAdmin(true);
+        if (!loading) {
+            if (!user || !ADMIN_EMAILS.includes(user.email || '')) {
+                // Redirect or show access denied
+                // router.push('/'); // Uncomment to enforce
+                // For demo, we might allow it or just show state
+                setIsAdmin(ADMIN_EMAILS.includes(user?.email || ''));
+            } else {
+                setIsAdmin(true);
+            }
+            fetchData();
         }
-        setIsLoading(false);
-    }, []);
+    }, [user, loading]);
 
-    if (isLoading) return <div className="min-h-screen bg-visio-bg flex items-center justify-center text-white">Loading...</div>;
+    const fetchData = async () => {
+        try {
+            // 1. Fetch Stats
+            const { count: userCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true });
+            const { count: searchCount } = await supabase.from('search_logs').select('*', { count: 'exact', head: true });
 
-    if (!isAdmin) return (
-        <div className="min-h-screen bg-visio-bg flex items-center justify-center text-white">
-            <div className="text-center space-y-4">
-                <Shield size={48} className="mx-auto text-red-500" />
+            // 2. Fetch Recent Searches
+            const { data: logs } = await supabase
+                .from('search_logs')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(20);
+
+            // 3. Fetch Users (Profiles)
+            const { data: profiles } = await supabase
+                .from('profiles')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(20);
+
+            setStats({
+                totalUsers: userCount || 0,
+                totalSearches: searchCount || 0,
+                activeSubs: 0 // Need sub status query
+            });
+
+            setRecentSearches(logs || []);
+            setUsers(profiles?.map(p => ({
+                id: p.id,
+                email: 'View in Supabase', // Profile table might not have email, auth does
+                subscription_tier: p.subscription_tier || 'Free',
+                created_at: p.created_at
+            })) || []);
+
+        } catch (e) {
+            console.error('Admin fetch error:', e);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    if (loading || isLoading) {
+        return <div className="min-h-screen bg-black flex items-center justify-center text-white"><Loader2 className="animate-spin" /></div>;
+    }
+
+    if (!isAdmin) {
+        return (
+            <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white p-4">
+                <ShieldAlert size={48} className="text-red-500 mb-4" />
                 <h1 className="text-2xl font-bold">Access Denied</h1>
-                <p className="text-white/50">You do not have permission to view this page.</p>
+                <p className="text-white/50 mt-2">You do not have permission to view this page.</p>
+                <button onClick={() => router.push('/')} className="mt-6 px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20">Go Home</button>
             </div>
-        </div>
-    );
+        );
+    }
 
     return (
-        <div className="min-h-screen bg-visio-bg text-white font-outfit flex">
-
-            {/* Sidebar */}
-            <aside className="w-64 border-r border-white/5 bg-black/20 p-6 flex flex-col">
-                <div className="flex items-center gap-3 mb-10">
-                    <div className="w-8 h-8 rounded bg-gradient-to-br from-visio-teal to-visio-accent flex items-center justify-center text-black font-bold">V</div>
-                    <span className="font-bold text-xl">Visio Admin</span>
+        <div className="min-h-screen bg-[#0A0A0A] text-white p-8 font-outfit">
+            <header className="mb-10 flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-visio-teal to-visio-sage">Admin Dashboard</h1>
+                    <p className="text-white/40 mt-1">Platform overview and logs</p>
                 </div>
+                <div className="px-3 py-1 bg-visio-teal/10 rounded-full border border-visio-teal/20 text-visio-teal text-xs font-mono">
+                    LIVE MODE
+                </div>
+            </header>
 
-                <nav className="space-y-2 flex-1">
-                    <SidebarItem
-                        icon={BarChart3}
-                        label="Overview"
-                        active={activeTab === 'overview'}
-                        onClick={() => setActiveTab('overview')}
-                    />
-                    <SidebarItem
-                        icon={Users}
-                        label="Users"
-                        active={activeTab === 'users'}
-                        onClick={() => setActiveTab('users')}
-                    />
-                    <SidebarItem
-                        icon={Settings}
-                        label="Settings"
-                        active={activeTab === 'settings'}
-                        onClick={() => setActiveTab('settings')}
-                    />
-                </nav>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                <StatsCard icon={<Users className="text-blue-400" />} label="Total Users" value={stats.totalUsers} />
+                <StatsCard icon={<Search className="text-purple-400" />} label="Total Searches" value={stats.totalSearches} />
+                <StatsCard icon={<BarChart3 className="text-green-400" />} label="Avg Searches/User" value={(stats.totalSearches / (stats.totalUsers || 1)).toFixed(1)} />
+            </div>
 
-                <div className="pt-6 border-t border-white/5">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-visio-accent flex items-center justify-center text-black font-bold">H</div>
-                        <div>
-                            <p className="font-bold text-sm">Hampton</p>
-                            <p className="text-xs text-white/50">Super Admin</p>
-                        </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Recent Searches */}
+                <div className="bg-white/5 border border-white/5 rounded-2xl p-6">
+                    <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+                        <Search size={20} className="text-visio-teal" />
+                        Live Search Feed
+                    </h2>
+                    <div className="space-y-4">
+                        {recentSearches.map((log) => (
+                            <div key={log.id} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
+                                <div>
+                                    <p className="font-medium text-white/90">"{log.query}"</p>
+                                    <p className="text-xs text-white/40">{new Date(log.created_at).toLocaleString()}</p>
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-xs font-mono bg-white/10 px-2 py-1 rounded">{log.country}</span>
+                                    <p className="text-xs text-white/40 mt-1">{log.results_count} hits</p>
+                                </div>
+                            </div>
+                        ))}
+                        {recentSearches.length === 0 && <p className="text-white/30 text-center py-4">No searches recorded yet.</p>}
                     </div>
                 </div>
-            </aside>
 
-            {/* Main Content */}
-            <main className="flex-1 overflow-y-auto">
-                <header className="h-20 border-b border-white/5 flex items-center justify-between px-8 bg-black/20 sticky top-0 z-10 backdrop-blur-md">
-                    <h1 className="text-xl font-bold capitalize">{activeTab}</h1>
-                    <div className="flex items-center gap-4">
-                        <div className="relative">
-                            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
-                            <input
-                                type="text"
-                                placeholder="Search..."
-                                className="bg-white/5 border border-white/10 rounded-full pl-10 pr-4 py-2 text-sm text-white focus:outline-none focus:border-visio-accent"
-                            />
-                        </div>
-                        <button className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors">
-                            <Settings size={16} />
-                        </button>
+                {/* Recent Users */}
+                <div className="bg-white/5 border border-white/5 rounded-2xl p-6">
+                    <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+                        <Users size={20} className="text-visio-sage" />
+                        Recent Signups
+                    </h2>
+                    <div className="space-y-4">
+                        {users.map((u) => (
+                            <div key={u.id} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-xs ml-0">
+                                        {u.id.substring(0, 2)}
+                                    </div>
+                                    <div>
+                                        <p className="font-medium text-white/80 font-mono text-sm">{u.id.slice(0, 8)}...</p>
+                                        <p className="text-xs text-white/40">{new Date(u.created_at).toLocaleDateString()}</p>
+                                    </div>
+                                </div>
+                                <span className={`text-xs px-2 py-1 rounded border ${u.subscription_tier !== 'Free' ? 'bg-visio-teal/20 border-visio-teal/30 text-visio-teal' : 'bg-white/5 border-white/10 text-white/40'}`}>
+                                    {u.subscription_tier}
+                                </span>
+                            </div>
+                        ))}
                     </div>
-                </header>
-
-                <div className="p-8">
-                    {activeTab === 'overview' && <OverviewTab />}
-                    {activeTab === 'users' && <UsersTab />}
-                    {activeTab === 'settings' && <SettingsTab />}
                 </div>
-            </main>
+            </div>
         </div>
     );
 }
 
-// Tabs
-
-const OverviewTab = () => (
-    <div className="space-y-8">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <StatCard
-                label="Total Revenue"
-                value="$12,450"
-                change="+12%"
-                icon={DollarSign}
-                color="text-green-400"
-            />
-            <StatCard
-                label="Active Users"
-                value="1,240"
-                change="+5%"
-                icon={Users}
-                color="text-blue-400"
-            />
-            <StatCard
-                label="New Signups"
-                value="145"
-                change="+18%"
-                icon={UserCheck}
-                color="text-visio-accent"
-            />
-            <StatCard
-                label="Churn Rate"
-                value="2.4%"
-                change="-0.5%"
-                icon={Activity}
-                color="text-purple-400"
-            />
+const StatsCard = ({ icon, label, value }: { icon: any, label: string, value: string | number }) => (
+    <div className="bg-white/5 border border-white/5 p-6 rounded-2xl flex items-center gap-4 hover:bg-white/10 transition-colors">
+        <div className="p-3 bg-white/5 rounded-xl">
+            {icon}
         </div>
-
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                <h3 className="text-lg font-bold mb-6">Revenue Growth</h3>
-                <div className="h-80 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={REVENUE_DATA}>
-                            <defs>
-                                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
-                                    <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
-                                </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                            <XAxis dataKey="name" stroke="rgba(255,255,255,0.5)" />
-                            <YAxis stroke="rgba(255,255,255,0.5)" />
-                            <Tooltip
-                                contentStyle={{ backgroundColor: '#1A1A1A', borderColor: 'rgba(255,255,255,0.1)', color: '#FFF' }}
-                            />
-                            <Area type="monotone" dataKey="revenue" stroke="#8884d8" fillOpacity={1} fill="url(#colorRevenue)" />
-                        </AreaChart>
-                    </ResponsiveContainer>
-                </div>
-            </div>
-
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                <h3 className="text-lg font-bold mb-6">User Acquisition</h3>
-                <div className="h-80 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={REVENUE_DATA}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                            <XAxis dataKey="name" stroke="rgba(255,255,255,0.5)" />
-                            <YAxis stroke="rgba(255,255,255,0.5)" />
-                            <Tooltip
-                                contentStyle={{ backgroundColor: '#1A1A1A', borderColor: 'rgba(255,255,255,0.1)', color: '#FFF' }}
-                            />
-                            <Line type="monotone" dataKey="users" stroke="#00FFE0" strokeWidth={2} />
-                        </LineChart>
-                    </ResponsiveContainer>
-                </div>
-            </div>
-        </div>
-    </div>
-);
-
-const UsersTab = () => (
-    <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
-        <table className="w-full text-left">
-            <thead className="bg-black/20 border-b border-white/10">
-                <tr>
-                    <th className="p-4 text-xs font-bold uppercase text-white/50">User</th>
-                    <th className="p-4 text-xs font-bold uppercase text-white/50">Plan</th>
-                    <th className="p-4 text-xs font-bold uppercase text-white/50">Status</th>
-                    <th className="p-4 text-xs font-bold uppercase text-white/50">Spend</th>
-                    <th className="p-4 text-xs font-bold uppercase text-white/50">Joined</th>
-                    <th className="p-4 text-xs font-bold uppercase text-white/50 text-right">Actions</th>
-                </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-                {USER_DATA.map((user) => (
-                    <tr key={user.id} className="hover:bg-white/5 transition-colors">
-                        <td className="p-4">
-                            <div>
-                                <p className="font-bold text-white">{user.name}</p>
-                                <p className="text-xs text-white/50">{user.email}</p>
-                            </div>
-                        </td>
-                        <td className="p-4">
-                            <span className={`
-                                px-2 py-1 rounded text-xs font-medium
-                                ${user.plan === 'Enterprise' ? 'bg-purple-500/20 text-purple-300' :
-                                    user.plan === 'Agency' ? 'bg-visio-accent/20 text-visio-accent' :
-                                        'bg-white/10 text-white/70'}
-                            `}>
-                                {user.plan}
-                            </span>
-                        </td>
-                        <td className="p-4">
-                            <div className="flex items-center gap-2">
-                                <div className={`w-1.5 h-1.5 rounded-full ${user.status === 'Active' ? 'bg-green-400' : user.status === 'Trialing' ? 'bg-blue-400' : 'bg-red-400'}`} />
-                                <span className="text-sm text-white/70">{user.status}</span>
-                            </div>
-                        </td>
-                        <td className="p-4 text-white/70">{user.spend}</td>
-                        <td className="p-4 text-white/50 text-sm">{user.joined}</td>
-                        <td className="p-4 text-right">
-                            <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/50 hover:text-white">
-                                <MoreHorizontal size={16} />
-                            </button>
-                        </td>
-                    </tr>
-                ))}
-            </tbody>
-        </table>
-    </div>
-);
-
-const SettingsTab = () => (
-    <div className="max-w-2xl space-y-8">
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-            <h3 className="text-xl font-bold mb-4">Platform Configuration</h3>
-            <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-black/20 rounded-xl">
-                    <div>
-                        <p className="font-medium text-white">Maintenance Mode</p>
-                        <p className="text-sm text-white/50">Disable access for non-admins</p>
-                    </div>
-                    <div className="w-12 h-6 bg-white/10 rounded-full relative cursor-pointer">
-                        <div className="w-4 h-4 bg-white/50 rounded-full absolute top-1 left-1" />
-                    </div>
-                </div>
-                <div className="flex items-center justify-between p-4 bg-black/20 rounded-xl">
-                    <div>
-                        <p className="font-medium text-white">New Signups</p>
-                        <p className="text-sm text-white/50">Allow new users to register</p>
-                    </div>
-                    <div className="w-12 h-6 bg-green-500/20 rounded-full relative cursor-pointer border border-green-500/50">
-                        <div className="w-4 h-4 bg-green-400 rounded-full absolute top-1 right-1" />
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-            <h3 className="text-xl font-bold mb-4">Payout Settings</h3>
-            <p className="text-white/50 mb-6">Configure Stitch integration for automated payouts.</p>
-            <button className="flex items-center gap-2 bg-visio-accent text-black px-4 py-2 rounded-lg font-bold">
-                <CreditCard size={16} />
-                Manage Banking
-            </button>
-        </div>
-    </div>
-);
-
-// Components
-
-const SidebarItem = ({ icon: Icon, label, active, onClick }: { icon: any, label: string, active: boolean, onClick: () => void }) => (
-    <button
-        onClick={onClick}
-        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${active ? 'bg-white/10 text-white font-medium' : 'text-white/50 hover:text-white hover:bg-white/5'}`}
-    >
-        <Icon size={18} />
-        {label}
-    </button>
-);
-
-const StatCard = ({ label, value, change, icon: Icon, color }: { label: string, value: string, change: string, icon: any, color: string }) => (
-    <div className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-colors">
-        <div className="flex items-start justify-between mb-4">
-            <div>
-                <p className="text-white/50 text-sm font-medium uppercase tracking-wider mb-1">{label}</p>
-                <h3 className="text-3xl font-bold text-white">{value}</h3>
-            </div>
-            <div className={`p-2 rounded-lg bg-black/20 ${color}`}>
-                <Icon size={20} />
-            </div>
-        </div>
-        <div className="flex items-center gap-1 text-sm">
-            <TrendingUp size={14} className={change.startsWith('+') ? 'text-green-400' : 'text-red-400'} />
-            <span className={change.startsWith('+') ? 'text-green-400' : 'text-red-400'}>{change}</span>
-            <span className="text-white/30 ml-1">vs last month</span>
+        <div>
+            <p className="text-white/40 text-sm font-medium">{label}</p>
+            <p className="text-3xl font-bold text-white mt-1">{value}</p>
         </div>
     </div>
 );

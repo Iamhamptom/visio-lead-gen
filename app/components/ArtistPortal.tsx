@@ -1,5 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Upload, Music, Save, Youtube, Instagram, Twitter, Globe, FileUser, Disc, Check, Link as LinkIcon, BarChart3, Target, X, Plus, Trash2, Play, Calendar, ExternalLink } from 'lucide-react';
+import { loadArtistProfile, saveArtistProfile } from '@/lib/data-service';
 import { VisioOrb } from './VisioOrb';
 import { ArtistProfile, ArtistAnalytics, MetricPoint, ArtistGoals } from '../types';
 import { ShinyButton } from './ui/ShinyButton';
@@ -10,60 +11,34 @@ import { Subscription, SubscriptionTier } from '../types';
 import { PLAN_LIMITS } from '../config/plans';
 import { UpgradeModal } from './UpgradeModal';
 
-// Mock Analytics Generator
-const generateTimeSeries = (days: number, startVal: number, volatility: number): MetricPoint[] => {
-    const data: MetricPoint[] = [];
-    let current = startVal;
-    const now = new Date();
-    for (let i = days; i >= 0; i--) {
-        const date = new Date(now);
-        date.setDate(date.getDate() - i);
-        current = current + (Math.random() - 0.3) * volatility;
-        data.push({ date: date.toISOString().split('T')[0], value: Math.max(0, Math.floor(current)) });
-    }
-    return data;
-};
+// Mock Generator Removed
 
-const MOCK_ANALYTICS: ArtistAnalytics = {
-    totalFollowers: 124500,
-    totalReach: 850000,
-    totalStreams: 2100000,
+const ZERO_ANALYTICS: ArtistAnalytics = {
+    totalFollowers: 0,
+    totalReach: 0,
+    totalStreams: 0,
     instagram: {
-        followers: 45000,
-        reach: generateTimeSeries(30, 2000, 500),
-        posts: [
-            { id: '1', image: 'https://images.unsplash.com/photo-1514525253440-b393452e8d26?w=500&h=500&fit=crop', likes: 1200, comments: 45 },
-            { id: '2', image: 'https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=500&h=500&fit=crop', likes: 2100, comments: 89 },
-            { id: '3', image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500&h=500&fit=crop', likes: 3500, comments: 120 },
-        ]
+        followers: 0,
+        reach: [],
+        posts: []
     },
     spotify: {
-        monthlyListeners: 85000,
-        streams: generateTimeSeries(30, 15000, 2000),
-        topRegions: [
-            { region: 'London, UK', listeners: 12500 },
-            { region: 'Los Angeles, USA', listeners: 8900 },
-            { region: 'Berlin, DE', listeners: 6200 },
-            { region: 'Sydney, AU', listeners: 4100 },
-            { region: 'Paris, FR', listeners: 3800 },
-        ],
-        playlists: [
-            { name: 'Synthwave Essentials', followers: 250000 },
-            { name: 'Night Drive', followers: 120000 },
-            { name: 'Retro Future', followers: 85000 },
-        ]
+        monthlyListeners: 0,
+        streams: [],
+        topRegions: [],
+        playlists: []
     }
 };
 
 const DEFAULT_PROFILE: ArtistProfile = {
-    name: "Neon Horizon",
-    genre: "Synthwave",
-    description: "Cape Town based synthwave project.",
+    name: "",
+    genre: "",
+    description: "",
     socials: { instagram: "", twitter: "", youtube: "", website: "" },
     connectedAccounts: {},
-    similarArtists: ["The Midnight", "Timecop1983"],
-    milestones: { instagramFollowers: 1200, monthlyListeners: 5000 },
-    location: { city: "Cape Town", country: "ZA" },
+    similarArtists: [],
+    milestones: { instagramFollowers: 0, monthlyListeners: 0 },
+    location: { city: "", country: "" },
     promotionalFocus: "Streaming",
     careerHighlights: [],
     lifeHighlights: [],
@@ -71,20 +46,16 @@ const DEFAULT_PROFILE: ArtistProfile = {
 };
 
 // Sample releases
-const DEFAULT_RELEASES = [
-    { id: '1', title: 'Summer Vibes', type: 'Single', releaseDate: '2026-01-15', coverArt: 'https://images.unsplash.com/photo-1514525253440-b393452e8d26?w=300&h=300&fit=crop', streams: 45000 },
-    { id: '2', title: 'Neon Dreams EP', type: 'EP', releaseDate: '2025-11-20', coverArt: 'https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=300&h=300&fit=crop', streams: 120000 },
-];
+const DEFAULT_RELEASES: any[] = [];
 
 // Sample EPK files
-const DEFAULT_FILES = [
-    { id: '1', name: 'Neon_Horizon_EPK_2025.pdf', size: '2.4 MB', uploadDate: 'Jan 20, 2026' }
-];
+const DEFAULT_FILES: any[] = [];
 
-export const ArtistPortal = ({ subscription, onUpgrade }: { subscription?: Subscription, onUpgrade: () => void }) => {
+export const ArtistPortal = ({ subscription, onUpgrade, onRedoOnboarding }: { subscription?: Subscription, onUpgrade: () => void, onRedoOnboarding: () => void }) => {
     const [activeTab, setActiveTab] = useState<'dashboard' | 'brand' | 'goals' | 'profile' | 'media' | 'releases' | 'connections'>('dashboard');
     const [isSaving, setIsSaving] = useState(false);
     const [profile, setProfile] = useState<ArtistProfile>(DEFAULT_PROFILE);
+    const [analytics, setAnalytics] = useState<ArtistAnalytics>(ZERO_ANALYTICS);
     const [showPublicProfile, setShowPublicProfile] = useState(false);
     const [uploadedFiles, setUploadedFiles] = useState(DEFAULT_FILES);
     const [releases, setReleases] = useState(DEFAULT_RELEASES);
@@ -111,24 +82,29 @@ export const ArtistPortal = ({ subscription, onUpgrade }: { subscription?: Subsc
 
 
     // Load from Storage
-    React.useEffect(() => {
-        const saved = localStorage.getItem('visio_artist_profile');
-        if (saved) {
-            try { setProfile(JSON.parse(saved)); } catch (e) { }
-        }
+    useEffect(() => {
+        const load = async () => {
+            const saved = await loadArtistProfile();
+            if (saved) {
+                setProfile(saved);
+            }
+        };
+        load();
     }, []);
 
-    const handleSave = () => {
+    const handleSave = async () => {
         setIsSaving(true);
-        localStorage.setItem('visio_artist_profile', JSON.stringify(profile));
+        const success = await saveArtistProfile(profile);
 
         // Trigger update event for main chat to pick up changes
         window.dispatchEvent(new Event('artistProfileUpdated'));
 
-        setTimeout(() => {
-            setIsSaving(false);
+        setIsSaving(false);
+        if (success) {
             alert('Profile saved! Context updated.');
-        }, 1000);
+        } else {
+            alert('Failed to save profile. Please try again.');
+        }
     };
 
     // Mock Connect Handler
@@ -170,7 +146,7 @@ export const ArtistPortal = ({ subscription, onUpgrade }: { subscription?: Subsc
         if (files && files.length > 0) {
             const file = files[0];
             const newFile = {
-                id: Date.now().toString(),
+                id: crypto.randomUUID(),
                 name: file.name,
                 size: (file.size / (1024 * 1024)).toFixed(1) + ' MB',
                 uploadDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -196,7 +172,7 @@ export const ArtistPortal = ({ subscription, onUpgrade }: { subscription?: Subsc
     // Add release handler
     const handleAddRelease = (newRelease: { title: string; type: string; releaseDate: string }) => {
         const release = {
-            id: Date.now().toString(),
+            id: crypto.randomUUID(),
             ...newRelease,
             coverArt: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&h=300&fit=crop',
             streams: 0
@@ -236,6 +212,18 @@ export const ArtistPortal = ({ subscription, onUpgrade }: { subscription?: Subsc
                         <ExternalLink size={14} />
                         View Public Profile
                     </button>
+                    <button
+                        onClick={onRedoOnboarding}
+                        className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors text-sm font-medium flex items-center gap-2"
+                    >
+                        <Calendar size={14} />
+                        Redo Questionnaire
+                    </button>
+                    <ShinyButton
+                        text={isSaving ? "Saving..." : "Save Changes"}
+                        onClick={handleSave}
+                        className="bg-visio-teal text-black font-bold"
+                    />
                 </div>
             </div>
 
@@ -320,9 +308,9 @@ export const ArtistPortal = ({ subscription, onUpgrade }: { subscription?: Subsc
 
             {/* Content Area */}
             <div className="mt-8">
-                {activeTab === 'dashboard' && <ArtistDashboard />}
+                {activeTab === 'dashboard' && <ArtistDashboard analytics={analytics} />}
 
-                {activeTab === 'brand' && <BrandOverview profile={profile} analytics={MOCK_ANALYTICS} />}
+                {activeTab === 'brand' && <BrandOverview profile={profile} analytics={analytics} />}
 
                 {activeTab === 'goals' && (
                     <GoalsObjectives

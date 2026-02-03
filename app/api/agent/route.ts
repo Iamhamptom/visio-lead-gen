@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { parseIntent, ParsedIntent } from '@/lib/gemini';
 import { getLeadsByCountry, filterLeads, getDatabaseSummary, DBLead, FilterOptions } from '@/lib/db';
-import { performSmartExaSearch } from '@/lib/search';
+import { performSmartSearch } from '@/lib/search';
 
 // ... (keep interface definitions and helper functions like normalizeCountry, mapLeadsToResponse if needed, 
 // OR just include the full file content if you are doing a full overwrite. Assuming full overwrite based on tool usage)
@@ -193,7 +193,7 @@ export async function POST(request: NextRequest) {
                     const status = country === 'ZA' ? 'expand' : 'external';
                     logs.push(status === 'expand' ? '🌐 Expanding search to the web...' : `🌐 Searching external sources in ${country}...`);
 
-                    const exaLeads = await performSmartExaSearch(intent.filters?.searchTerm || userMessage, country);
+                    const exaLeads = await performSmartSearch(intent.filters?.searchTerm || userMessage, country);
                     // Map SearchResult to LeadResponse structure 
                     const mappedExaLeads: LeadResponse[] = exaLeads.map(lead => ({
                         ...lead,

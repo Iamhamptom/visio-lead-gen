@@ -254,25 +254,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-visio-teal/20 to-visio-sage/20 border border-visio-teal/30 hover:border-visio-teal/50 text-visio-accent py-3 rounded-xl transition-all shadow-lg shadow-visio-teal/5 group"
                     >
                         <Plus size={18} className="group-hover:rotate-90 transition-transform duration-300" />
-                        <span className="font-medium">New Research</span>
+                        <span className="font-medium">Consult & Chat</span>
                     </button>
-
-                    <div className="grid grid-cols-2 gap-2 mt-2">
-                        <button
-                            onClick={() => onNavigate('reason')}
-                            className="flex flex-col items-center justify-center gap-1 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-visio-teal/30 p-2 rounded-xl transition-all group"
-                        >
-                            <Lightbulb size={16} className="text-visio-accent group-hover:scale-110 transition-transform" />
-                            <span className="text-[10px] text-white/60 font-medium">Pitch Brief</span>
-                        </button>
-                        <button
-                            onClick={() => onNavigate('reach')}
-                            className="flex flex-col items-center justify-center gap-1 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-visio-teal/30 p-2 rounded-xl transition-all group"
-                        >
-                            <Calculator size={16} className="text-visio-accent group-hover:scale-110 transition-transform" />
-                            <span className="text-[10px] text-white/60 font-medium">Calculator</span>
-                        </button>
-                    </div>
                 </div>
 
                 {/* Global Views */}
@@ -285,9 +268,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     />
                     <NavItem
                         icon={<LayoutGrid size={18} />}
-                        label="Dashboard"
-                        active={activeView === 'dashboard'}
-                        onClick={() => onNavigate('dashboard')}
+                        label="Overview"
+                        active={activeView === 'overview'}
+                        onClick={() => onNavigate('overview')}
                     />
                     {/* Inbox / Unfiled Drop Zone */}
                     <div
@@ -320,7 +303,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
                 {/* Campaigns Folders */}
                 <div className="space-y-1 mt-6">
-                    <h4 className="px-4 text-[10px] uppercase tracking-widest text-white/30 font-semibold mb-2">Campaign Folders</h4>
+                    <div className="flex items-center justify-between px-4 mb-2">
+                        <h4 className="text-[10px] uppercase tracking-widest text-white/30 font-semibold">Campaign Folders</h4>
+                        <button
+                            onClick={() => alert("Folder creation coming soon!")} // Placeholder
+                            className="text-white/30 hover:text-visio-teal transition-colors"
+                        >
+                            <Plus size={14} />
+                        </button>
+                    </div>
 
                     {campaigns.map(c => {
                         const campaignSessions = sessions.filter(s => s.folderId === c.id);
@@ -432,13 +423,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     onClick={() => onNavigate('settings')}
                     className="flex items-center gap-3 w-full p-2 hover:bg-white/5 rounded-xl transition-colors text-left"
                 >
-                    <img src="https://picsum.photos/id/64/100/100" alt="User" className="w-8 h-8 rounded-full border border-white/20" />
+                    <div className="w-8 h-8 rounded-full border border-white/20 bg-gradient-to-br from-visio-teal to-visio-sage flex items-center justify-center text-black font-bold text-sm">
+                        {artistProfile?.name?.charAt(0)?.toUpperCase() || 'G'}
+                    </div>
                     <div className="flex-1 overflow-hidden">
-                        <p className="text-sm font-medium text-white truncate">Isabella R.</p>
-                        <p className="text-xs text-white/40 truncate">Pro Plan</p>
+                        <p className="text-sm font-medium text-white truncate">{artistProfile?.name || 'Guest User'}</p>
+                        <p className="text-xs text-white/40 truncate capitalize">{subscription.tier} Plan</p>
                     </div>
                     <Settings size={16} className="text-white/40" />
                 </button>
+                <div className="mt-4 px-2">
+                    <p className="text-[10px] text-white/20 text-center leading-tight">
+                        Powered by: VisioCorp<br />Copyright @ 2026 & Touchline Agency
+                    </p>
+                </div>
             </div>
         </aside>
     );

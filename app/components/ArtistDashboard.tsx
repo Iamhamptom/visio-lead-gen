@@ -55,22 +55,11 @@ const MOCK_ANALYTICS: ArtistAnalytics = {
     }
 };
 
-export const ArtistDashboard = () => {
-    const [analytics, setAnalytics] = useState<ArtistAnalytics>(MOCK_ANALYTICS);
-
+export const ArtistDashboard = ({ analytics }: { analytics: ArtistAnalytics }) => {
     // CSV Parser Mock
     const handleFileUpload = () => {
         // In a real app, parse CSV here
         alert("Simulating CSV Import... Data updated.");
-        // Simulate a data bump
-        setAnalytics(prev => ({
-            ...prev,
-            totalStreams: prev.totalStreams + 50000,
-            spotify: {
-                ...prev.spotify,
-                monthlyListeners: prev.spotify.monthlyListeners + 1200
-            }
-        }));
     };
 
     return (
@@ -99,19 +88,19 @@ export const ArtistDashboard = () => {
                 <MetricCard
                     label="Total Streams"
                     value={analytics.totalStreams.toLocaleString()}
-                    trend="+12.5%"
+                    trend="+0%"
                     icon={<Music size={20} className="text-visio-teal" />}
                 />
                 <MetricCard
                     label="Avg. Monthly Reach"
                     value={analytics.totalReach.toLocaleString()}
-                    trend="+8.2%"
+                    trend="+0%"
                     icon={<TrendingUp size={20} className="text-purple-400" />}
                 />
                 <MetricCard
                     label="Total Followers"
                     value={analytics.totalFollowers.toLocaleString()}
-                    trend="+5.1%"
+                    trend="+0%"
                     icon={<Users size={20} className="text-blue-400" />}
                 />
             </div>

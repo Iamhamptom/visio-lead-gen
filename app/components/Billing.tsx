@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
     CreditCard,
@@ -12,34 +12,77 @@ import {
     Rocket,
     Music,
     AlertCircle,
-    Building
+    Building,
+    Loader2
 } from 'lucide-react';
 import { Subscription, SubscriptionTier } from '../types';
+import { InvoiceReceipt } from './InvoiceReceipt';
 
 interface BillingProps {
     currentSubscription?: Subscription;
     onUpgrade: (tier: SubscriptionTier) => void;
+    userEmail?: string;
 }
 
-const TIER_DETAILS = {
+const TIER_DETAILS: Record<SubscriptionTier, {
+    name: string;
+    price: string;
+    priceValue: number;
+    color: string;
+    borderColor?: string;
+    icon: typeof Music;
+    features: string[];
+    recommended?: boolean;
+}> = {
     artist: {
         name: 'Artist Base',
         price: 'Free',
+        priceValue: 0,
         color: 'bg-white/5',
         icon: Music,
         features: ['1 Artist Profile', 'Basic Search', 'Instant AI']
     },
+    starter: {
+        name: 'Starter',
+        price: 'R199',
+        priceValue: 199,
+        color: 'bg-emerald-500/10',
+        borderColor: 'border-emerald-500/20',
+        icon: Music,
+        features: ['1 Artist Profile', 'Standard AI', 'Basic Support']
+    },
+    artiste: {
+        name: 'Artiste',
+        price: 'R570',
+        priceValue: 570,
+        color: 'bg-teal-500/10',
+        borderColor: 'border-teal-500/20',
+        icon: Music,
+        features: ['2 Artist Profiles', 'Standard AI', 'Email Support']
+    },
+    starter_label: {
+        name: 'Starter Label',
+        price: 'R950',
+        priceValue: 950,
+        color: 'bg-cyan-500/10',
+        borderColor: 'border-cyan-500/20',
+        icon: Briefcase,
+        features: ['3 Artist Profiles', 'Business AI', 'Priority Support'],
+        recommended: true
+    },
     label: {
         name: 'Label Pro',
-        price: '$99/mo',
+        price: 'R1,799',
+        priceValue: 1799,
         color: 'bg-blue-500/10',
         borderColor: 'border-blue-500/20',
         icon: Briefcase,
-        features: ['5 Artist Profiles', 'Business AI', 'Priority Support']
+        features: ['5 Artist Profiles', 'Advanced AI', 'Dedicated Support']
     },
     agency: {
         name: 'Agency Elite',
-        price: '$249/mo',
+        price: 'R4,499',
+        priceValue: 4499,
         color: 'bg-visio-accent/10',
         borderColor: 'border-visio-accent/30',
         icon: Zap,
@@ -48,6 +91,7 @@ const TIER_DETAILS = {
     enterprise: {
         name: 'Enterprise',
         price: 'Custom',
+        priceValue: 0,
         color: 'bg-purple-500/10',
         borderColor: 'border-purple-500/20',
         icon: Rocket,
@@ -57,12 +101,72 @@ const TIER_DETAILS = {
 
 export const Billing: React.FC<BillingProps> = ({
     currentSubscription = { tier: 'artist', status: 'active', currentPeriodEnd: Date.now(), interval: 'month' },
-    onUpgrade
+    onUpgrade,
+    userEmail
 }) => {
     const [selectedPlan, setSelectedPlan] = useState<SubscriptionTier>(currentSubscription.tier);
     const [isYearly, setIsYearly] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [processingTier, setProcessingTier] = useState<SubscriptionTier | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [invoices, setInvoices] = useState<any[]>([]);
+    const [loadingInvoices, setLoadingInvoices] = useState(true);
 
     const CurrentPlanIcon = TIER_DETAILS[currentSubscription.tier].icon;
+
+    // Fetch invoices on mount
+    useEffect(() => {
+        const fetchInvoices = async () => {
+            try {
+                const res = await fetch('/api/invoices');
+                if (res.ok) {
+                    const data = await res.json();
+                    setInvoices(data.invoices || []);
+                }
+            } catch (err) {
+                console.error('Failed to fetch invoices:', err);
+            } finally {
+                setLoadingInvoices(false);
+            }
+        };
+        fetchInvoices();
+    }, []);
+
+    // Handle Yoco checkout
+    const handleUpgrade = async (tier: SubscriptionTier) => {
+        if (tier === 'artist' || tier === 'enterprise') {
+            // Free tier or enterprise (contact sales)
+            if (tier === 'enterprise') {
+                window.open('mailto:sales@visio.ai?subject=Enterprise Plan Inquiry', '_blank');
+            }
+            return;
+        }
+
+        setIsProcessing(true);
+        setProcessingTier(tier);
+        setError(null);
+
+        try {
+            const response = await fetch('/api/payments/create-checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tier, email: userEmail })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to create checkout');
+            }
+
+            // Redirect to Yoco checkout page
+            window.location.href = data.redirectUrl;
+        } catch (err: any) {
+            setError(err.message || 'Something went wrong');
+            setIsProcessing(false);
+            setProcessingTier(null);
+        }
+    };
 
     return (
         <div className="h-full overflow-y-auto p-8 space-y-8">
@@ -76,6 +180,14 @@ export const Billing: React.FC<BillingProps> = ({
                     <span className="text-sm font-medium text-white capitalize">{currentSubscription.status}</span>
                 </div>
             </div>
+
+            {/* Error Alert */}
+            {error && (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+                    <AlertCircle className="text-red-400 shrink-0" size={20} />
+                    <p className="text-red-400 text-sm font-medium">{error}</p>
+                </div>
+            )}
 
             {/* Current Plan Overview */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -152,7 +264,7 @@ export const Billing: React.FC<BillingProps> = ({
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                     {(Object.keys(TIER_DETAILS) as SubscriptionTier[]).map((tier) => {
                         const details = TIER_DETAILS[tier];
                         const Icon = details.icon;
@@ -196,23 +308,74 @@ export const Billing: React.FC<BillingProps> = ({
                                 </div>
 
                                 <button
-                                    onClick={() => onUpgrade(tier)}
-                                    disabled={isCurrent}
+                                    onClick={() => handleUpgrade(tier)}
+                                    disabled={isCurrent || (isProcessing && processingTier === tier)}
                                     className={`
-                                        w-full py-2.5 rounded-xl font-bold text-sm transition-all
+                                        w-full py-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2
                                         ${isCurrent
                                             ? 'bg-white/10 text-white/40 cursor-default'
                                             : tier === 'enterprise'
                                                 ? 'bg-white/10 text-white hover:bg-white/20'
-                                                : 'bg-white text-black hover:scale-105'
+                                                : isProcessing && processingTier === tier
+                                                    ? 'bg-white/50 text-black cursor-wait'
+                                                    : 'bg-white text-black hover:scale-105'
                                         }
                                     `}
                                 >
-                                    {isCurrent ? 'Active' : tier === 'enterprise' ? 'Contact Sales' : 'Upgrade'}
+                                    {isProcessing && processingTier === tier ? (
+                                        <>
+                                            <Loader2 size={16} className="animate-spin" />
+                                            Processing...
+                                        </>
+                                    ) : isCurrent ? 'Active' : tier === 'enterprise' ? 'Contact Sales' : 'Upgrade'}
                                 </button>
                             </div>
                         );
                     })}
+                </div>
+            </div>
+
+            {/* Invoice History Section */}
+            <div className="mt-12 pt-8 border-t border-white/5">
+                <div className="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 className="text-xl font-bold text-white mb-1">Invoice History</h3>
+                        <p className="text-white/50 text-sm">View and download your payment receipts.</p>
+                    </div>
+                    {invoices.length > 0 && (
+                        <button className="text-sm font-medium text-visio-accent hover:text-white transition-colors flex items-center gap-2">
+                            <Download size={14} />
+                            Download All
+                        </button>
+                    )}
+                </div>
+
+                <div className="space-y-3">
+                    {loadingInvoices ? (
+                        // Loading skeleton
+                        <>
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className="h-16 bg-white/5 rounded-xl animate-pulse" />
+                            ))}
+                        </>
+                    ) : invoices.length > 0 ? (
+                        invoices.slice(0, 5).map((invoice) => (
+                            <InvoiceReceipt
+                                key={invoice.id}
+                                invoice={invoice}
+                                compact
+                                onDownload={() => window.open(`/api/invoices/${invoice.id}`, '_blank')}
+                            />
+                        ))
+                    ) : (
+                        <div className="bg-white/[0.02] border border-white/5 rounded-xl p-8 text-center">
+                            <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center mx-auto mb-4">
+                                <CreditCard size={24} className="text-white/20" />
+                            </div>
+                            <p className="text-white/40 text-sm">No invoices yet</p>
+                            <p className="text-white/20 text-xs mt-1">Your payment history will appear here</p>
+                        </div>
+                    )}
                 </div>
             </div>
 

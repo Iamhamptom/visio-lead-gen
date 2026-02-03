@@ -1,15 +1,8 @@
 import React, { useState } from 'react';
-import { ArrowLeft, User, Mail, Lock, LogOut, Home, ArrowUpRight } from 'lucide-react';
-import { Subscription } from '../types';
-
-interface SettingsPageProps {
-    subscription: Subscription;
-    onBack: () => void;
-    onNavigateHome: () => void;
-    onLogout: () => void;
-}
-
-import { ArtistProfile } from '../types';
+import { ArrowLeft, User, Mail, Lock, LogOut, Home, ArrowUpRight, Music, MapPin } from 'lucide-react';
+import { Subscription, ArtistProfile } from '../types';
+import { saveArtistProfile } from '@/lib/data-service';
+import { ShinyButton } from './ui/ShinyButton';
 
 interface SettingsPageProps {
     subscription: Subscription;
@@ -26,18 +19,74 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     onNavigateHome,
     onLogout
 }) => {
+    const [name, setName] = useState(artistProfile?.name || '');
+    const [email, setEmail] = useState(artistProfile?.socials?.email || '');
+    const [genre, setGenre] = useState(artistProfile?.genre || '');
+    const [city, setCity] = useState(artistProfile?.location?.city || '');
+    const [country, setCountry] = useState(artistProfile?.location?.country || '');
+    const [isSaving, setIsSaving] = useState(false);
+
+    // Sync state with profile prop
+    React.useEffect(() => {
+        if (artistProfile) {
+            setName(artistProfile.name || '');
+            setEmail(artistProfile.socials?.email || '');
+            setGenre(artistProfile.genre || '');
+            setCity(artistProfile.location?.city || '');
+            setCountry(artistProfile.location?.country || '');
+        }
+    }, [artistProfile]);
+
+    // Save Handler
+    const handleSave = async () => {
+        if (!artistProfile) return;
+        setIsSaving(true);
+
+        const updatedProfile = {
+            ...artistProfile,
+            name,
+            genre,
+            location: {
+                city,
+                country
+            },
+            socials: {
+                ...artistProfile.socials,
+                email
+            }
+        };
+
+        const success = await saveArtistProfile(updatedProfile);
+
+        // Trigger update event
+        if (success) {
+            window.dispatchEvent(new Event('artistProfileUpdated'));
+            alert('Settings saved successfully!');
+        } else {
+            alert('Failed to save settings. Please try again.');
+        }
+        setIsSaving(false);
+    };
+
     return (
         <div className="flex-1 h-full overflow-y-auto bg-visio-bg text-white p-6 md:p-10 font-outfit">
-            <div className="max-w-3xl mx-auto space-y-10">
+            <div className="max-w-3xl mx-auto space-y-10 pb-20">
                 {/* Header */}
-                <div className="flex items-center gap-4">
-                    <button
-                        onClick={onBack}
-                        className="p-2 rounded-full hover:bg-white/10 transition-colors"
-                    >
-                        <ArrowLeft size={20} />
-                    </button>
-                    <h1 className="text-3xl font-bold tracking-tight">Account Settings</h1>
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={onBack}
+                            className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                        >
+                            <ArrowLeft size={20} />
+                        </button>
+                        <h1 className="text-3xl font-bold tracking-tight">Account Settings</h1>
+                    </div>
+                    <ShinyButton
+                        text={isSaving ? "Saving..." : "Save Changes"}
+                        onClick={handleSave}
+                        className="bg-visio-teal text-black font-bold"
+                    />
                 </div>
 
                 {/* Navigation Actions */}
@@ -85,9 +134,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                                 <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
                                 <input
                                     type="text"
-                                    defaultValue={artistProfile?.name || ''}
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
                                     placeholder="Your Name"
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-visio-teal/50"
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-visio-teal/50 transition-colors"
                                 />
                             </div>
                         </div>
@@ -97,10 +147,46 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                                 <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
                                 <input
                                     type="email"
-                                    defaultValue={artistProfile?.socials?.website || ''}
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
                                     placeholder="email@example.com"
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-visio-teal/50"
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-visio-teal/50 transition-colors"
                                 />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-xs uppercase font-bold text-white/40 tracking-widest">Genre</label>
+                            <div className="relative">
+                                <Music size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
+                                <input
+                                    type="text"
+                                    value={genre}
+                                    onChange={(e) => setGenre(e.target.value)}
+                                    placeholder="e.g. Amapiano, Hip-Hop"
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-visio-teal/50 transition-colors"
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-xs uppercase font-bold text-white/40 tracking-widest">Location</label>
+                            <div className="relative">
+                                <MapPin size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={city}
+                                        onChange={(e) => setCity(e.target.value)}
+                                        placeholder="City"
+                                        className="flex-1 bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-visio-teal/50 transition-colors"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={country}
+                                        onChange={(e) => setCountry(e.target.value)}
+                                        placeholder="Country"
+                                        className="flex-1 bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:border-visio-teal/50 transition-colors"
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>

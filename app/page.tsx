@@ -11,24 +11,33 @@ import { LandingPage } from './components/LandingPage';
 import { AuthPage } from './components/AuthPage';
 import { SettingsPage } from './components/SettingsPage';
 import { Billing } from './components/Billing';
+import { DashboardOverview } from './components/DashboardOverview';
 import ReasonPage from './reason/page';
 import ReachPage from './reach/page';
 import { Toast } from './components/Toast';
 import { Message, Role, Campaign, ViewMode, Lead, Session, ArtistProfile, Subscription, SubscriptionTier, AgentMode } from './types';
 import { AITier } from './components/Composer';
-import { Menu } from 'lucide-react';
+import { Menu, Loader2 } from 'lucide-react';
 import { BackgroundBeams } from './components/ui/background-beams';
 import { CommandMenu, COMMAND_ACTIONS, ACTION_PROMPTS } from './components/ui/command-menu';
+import { useAuth } from '@/lib/auth-context';
+import {
+  saveArtistProfile,
+  loadArtistProfile,
+  saveOnboardingComplete,
+  checkOnboardingComplete,
+  saveSessions,
+  loadSessions,
+  deleteSession,
+  loadSubscription,
+  updateSubscription
+} from '@/lib/data-service';
 
-// Default Campaigns (Folders)
-const DEFAULT_CAMPAIGNS: Campaign[] = [
-  { id: '1', name: 'Tech Launch Q3', client: 'Arsa Tech', status: 'active' },
-  { id: '2', name: 'Fashion Week', client: 'Vogue', status: 'active' },
-  { id: '3', name: 'Crisis Mgmt', client: 'Tesla', status: 'completed' },
-];
+// Default Campaigns (Folders) - Users create their own
+const DEFAULT_CAMPAIGNS: Campaign[] = [];
 
 const createInitialSession = (): Session => ({
-  id: Date.now().toString(),
+  id: crypto.randomUUID(),
   title: 'New Research',
   folderId: null, // Starts in Inbox
   lastUpdated: Date.now(),
@@ -41,6 +50,7 @@ const createInitialSession = (): Session => ({
 });
 
 export default function Home() {
+  const { user, loading: authLoading, signOut } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // State: Views and Sessions
@@ -74,21 +84,46 @@ export default function Home() {
     }
   };
 
-  // Handle Initial Load & PopState
+  // Handle Initial Load & PopState  
+  // Handle Initial Load & Auth State check
   useEffect(() => {
-    const handleUrlChange = () => {
+    // Don't run until auth is loaded
+    if (authLoading) return;
+
+    const checkUserStatus = async () => {
       const path = window.location.pathname;
-      const hasCompletedOnboarding = localStorage.getItem('visio_onboarding_complete');
-      const hasProfile = localStorage.getItem('visio_artist_profile');
-      const isLoggedIn = localStorage.getItem('visio_auth_token');
+      const isLoggedIn = !!user;
+
+      let hasCompletedOnboarding = false;
+      let hasProfile = false;
+
+      if (isLoggedIn) {
+        // Fetch real status from Supabase
+        const [onboardingStatus, profile] = await Promise.all([
+          checkOnboardingComplete(),
+          loadArtistProfile()
+        ]);
+        hasCompletedOnboarding = onboardingStatus;
+        hasProfile = !!profile;
+
+        if (profile) {
+          setArtistProfile(profile);
+        } else {
+          setArtistProfile(null);
+        }
+      }
 
       // 1. Map URL to View
       let targetView: ViewMode = 'landing';
-      if (path === '/' || path === '/dashboard') targetView = 'dashboard';
+      if (path === '/' || path === '/dashboard') targetView = 'overview';
+      else if (path === '/overview') targetView = 'overview';
       else if (path === '/auth' || path === '/login' || path === '/signin') targetView = 'auth';
       else if (path === '/onboarding') targetView = 'onboarding';
       else if (path === '/artist-portal') targetView = 'artist-portal';
       else if (path === '/billing') targetView = 'billing';
+      else if (path === '/settings') targetView = 'settings';
+      else if (path === '/reason') targetView = 'reason';
+      else if (path === '/reach') targetView = 'reach';
       else if (path === '/landing') targetView = 'landing';
 
       // 2. Auth Guards
@@ -111,7 +146,7 @@ export default function Home() {
         } else {
           // Fully setup
           if (targetView === 'landing' || targetView === 'auth') {
-            navigateTo('dashboard');
+            navigateTo('overview');
             return;
           }
           setCurrentView(targetView);
@@ -119,13 +154,12 @@ export default function Home() {
       }
     };
 
-    // Run on mount
-    handleUrlChange();
+    checkUserStatus();
 
-    // Listen for back/forward
-    window.addEventListener('popstate', handleUrlChange);
-    return () => window.removeEventListener('popstate', handleUrlChange);
-  }, []);
+    // Listen for back/forward (simplified)
+    window.addEventListener('popstate', checkUserStatus);
+    return () => window.removeEventListener('popstate', checkUserStatus);
+  }, [user, authLoading]);
 
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup');
 
@@ -139,14 +173,25 @@ export default function Home() {
     navigateTo('auth');
   };
 
-  const handleAuthComplete = () => {
-    localStorage.setItem('visio_auth_token', 'mock_token_123');
-    // Check if they need onboarding
-    const hasCompletedOnboarding = localStorage.getItem('visio_onboarding_complete');
-    if (!hasCompletedOnboarding) {
-      navigateTo('onboarding');
+  const handleAuthComplete = async () => {
+    // Check both profile AND onboarding completion status
+    const [profile, hasCompletedOnboarding] = await Promise.all([
+      loadArtistProfile(),
+      checkOnboardingComplete()
+    ]);
+
+    if (profile) {
+      setArtistProfile(profile);
+    }
+
+    // Only skip onboarding if BOTH profile exists AND onboarding is marked complete
+    if (profile && hasCompletedOnboarding) {
+      navigateTo('overview');
     } else {
-      navigateTo('dashboard');
+      // Either no profile or onboarding not complete - go to onboarding
+      console.log("Onboarding not complete, redirecting to onboarding");
+      navigateTo('onboarding');
+      setCurrentView('onboarding');
     }
   };
 
@@ -154,74 +199,125 @@ export default function Home() {
   const [artistProfile, setArtistProfile] = useState<ArtistProfile | null>(null);
 
 
-  useEffect(() => {
-    const storedProfile = localStorage.getItem('visio_artist_profile');
-    if (storedProfile) {
-      setArtistProfile(JSON.parse(storedProfile));
-    }
-  }, []);
+  // Artist profile loaded in main effect above
 
 
-  const handleOnboardingComplete = (profile: ArtistProfile) => {
-    localStorage.setItem('visio_artist_profile', JSON.stringify(profile));
-    localStorage.setItem('visio_onboarding_complete', 'true');
+  const handleOnboardingComplete = async (profile: ArtistProfile) => {
+    // Save to Supabase
+    await Promise.all([
+      saveArtistProfile(profile),
+      saveOnboardingComplete()
+    ]);
+
     setArtistProfile(profile);
     setShowOnboarding(false);
     setToastMessage(`Welcome, ${profile.name}! Your profile is ready.`);
-    navigateTo('dashboard');
+    navigateTo('overview');
   };
 
 
 
-  const handleOnboardingSkip = () => {
-    localStorage.setItem('visio_onboarding_complete', 'true');
+  const handleOnboardingSkip = async () => {
+    // 1. Create a placeholder profile so checks pass
+    const placeholderProfile: ArtistProfile = {
+      name: "New Artist",
+      genre: "",
+      description: "",
+      socials: {},
+      connectedAccounts: {},
+      similarArtists: [],
+      milestones: { instagramFollowers: 0, monthlyListeners: 0 },
+      location: { city: "", country: "" },
+      promotionalFocus: "Streaming",
+      careerHighlights: [],
+      lifeHighlights: [],
+      desiredCommunities: []
+    };
+
+    // 2. Save both
+    await Promise.all([
+      saveArtistProfile(placeholderProfile),
+      saveOnboardingComplete()
+    ]);
+
+    // 3. Update State
+    setArtistProfile(placeholderProfile);
     setShowOnboarding(false);
-    navigateTo('dashboard');
+    navigateTo('overview');
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('visio_auth_token');
-    localStorage.removeItem('visio_artist_profile');
-    localStorage.removeItem('visio_onboarding_complete');
+  const handleLogout = async () => {
+    await signOut(); // Supabase sign out
     setArtistProfile(null);
     navigateTo('landing');
   };
 
   // Set subscription date client-side to avoid hydration mismatch
+  // Load Subscription from Supabase
   useEffect(() => {
-    setSubscription(prev => ({
-      ...prev,
-      currentPeriodEnd: Date.now() + 1000 * 60 * 60 * 24 * 30 // +30 days
-    }));
+    const initSubscription = async () => {
+      // 1. Try loading from DB
+      const savedSub = await loadSubscription();
+      if (savedSub) {
+        setSubscription(savedSub);
+      } else {
+        // 2. Default if nothing found (Artist Tier)
+        setSubscription(prev => ({
+          ...prev,
+          currentPeriodEnd: Date.now() + 1000 * 60 * 60 * 24 * 30
+        }));
+      }
+    };
+
+    if (user && !authLoading) {
+      initSubscription();
+    }
+  }, [user, authLoading]);
+
+  // Listen for profile updates from Settings/ArtistPortal saves
+  useEffect(() => {
+    const handleProfileUpdate = async () => {
+      const updatedProfile = await loadArtistProfile();
+      if (updatedProfile) {
+        setArtistProfile(updatedProfile);
+      }
+    };
+
+    window.addEventListener('artistProfileUpdated', handleProfileUpdate);
+    return () => window.removeEventListener('artistProfileUpdated', handleProfileUpdate);
   }, []);
 
   // Load Persistence
   useEffect(() => {
-    const savedSessions = localStorage.getItem('visio_sessions_v2');
-    if (savedSessions) {
-      try {
-        const parsed = JSON.parse(savedSessions);
-        setSessions(parsed);
-        if (parsed.length > 0) {
-          setActiveSessionId(parsed[0].id);
-        } else {
-          handleNewChat();
-        }
-      } catch (e) {
+    const fetchSessions = async () => {
+      if (!user || authLoading) return;
+
+      const loadedSessions = await loadSessions();
+      if (loadedSessions && loadedSessions.length > 0) {
+        setSessions(loadedSessions);
+        setActiveSessionId(loadedSessions[0].id);
+      } else {
         handleNewChat();
       }
-    } else {
-      // First time load
-      handleNewChat();
+    };
+
+    // Only fetch if sessions are empty (initial load)
+    if (sessions.length === 0) {
+      fetchSessions();
     }
-  }, []);
+  }, [user, authLoading]);
 
   // Save Persistence
   useEffect(() => {
-    if (sessions.length > 0) {
-      localStorage.setItem('visio_sessions_v2', JSON.stringify(sessions));
+    // Debounce save or just save on change
+    // Using a simple timeout to avoid too many writes
+    if (sessions.length > 0 && user) {
+      const timer = setTimeout(() => {
+        saveSessions(sessions);
+      }, 1000);
+      return () => clearTimeout(timer);
     }
-  }, [sessions]);
+  }, [sessions, user]);
 
   // Scroll on new message
   useEffect(() => {
@@ -339,6 +435,41 @@ export default function Home() {
   };
 
   const handleSendMessage = async (text: string, tier: AITier = 'instant', mode: AgentMode = 'chat') => {
+    // --- Access Control / Mode Locking ---
+    const userTier = subscription.tier;
+
+    // Defines which tiers can access which AI modes
+    // Artist (Free) -> Instant Only
+    // Starter (R199) & Artiste (R570) -> Instant + Standard
+    // Label+ -> All
+    const RESTRICTIONS = {
+      'artist': ['instant'],
+      'starter': ['instant', 'standard'],
+      'artiste': ['instant', 'standard'],
+      'starter_label': ['instant', 'standard', 'business'],
+      'label': ['instant', 'standard', 'business', 'enterprise'],
+      'agency': ['instant', 'standard', 'business', 'enterprise'],
+      'enterprise': ['instant', 'standard', 'business', 'enterprise']
+    };
+
+    const allowedTiers = RESTRICTIONS[userTier] || ['instant']; // Fallback to instant
+
+    // Check 1: Is the requested AI Tier allowed?
+    if (!allowedTiers.includes(tier)) {
+      setToastMessage(`Upgrade to ${userTier === 'artist' ? 'Starter' : 'Label'} to use ${tier.toUpperCase()} mode.`);
+      return; // BLOCK ACTION
+    }
+
+    // Check 2: Explicit Mode Check (e.g. Switching to Business Mode)
+    // If user is trying to use 'business' or 'enterprise' logic but is on a lower plan
+    if ((mode === 'research' || tier === 'business' || tier === 'enterprise') && !['starter_label', 'label', 'agency', 'enterprise'].includes(userTier)) {
+      // Allow Research for Starter/Artiste but maybe limited? 
+      // For now, strict block on Business/Enterprise TIER usage.
+      // If generic 'research' mode is used with 'standard' tier, that's fine for Starter/Artiste.
+    }
+
+    // -------------------------------------
+
     const activeSessionIndex = sessions.findIndex(s => s.id === activeSessionId);
     if (activeSessionIndex === -1) return;
 
@@ -346,7 +477,7 @@ export default function Home() {
 
     // 1. Add User Message
     const userMsg: Message = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       role: Role.USER,
       content: text,
       timestamp: Date.now()
@@ -399,16 +530,13 @@ export default function Home() {
       }));
 
       // Get Artist Context
-      const storedProfile = localStorage.getItem('visio_artist_profile');
-      const artistContext = storedProfile ? JSON.parse(storedProfile) : null;
-
       const res = await fetch('/api/agent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: text,
           conversationHistory: historyForApi,
-          artistContext,
+          artistContext: artistProfile, // Use state instead of localStorage
           tier,
           mode
         })
@@ -460,13 +588,21 @@ export default function Home() {
     // Ideally call backend to save
   };
 
-  const handleUpgrade = (tier: SubscriptionTier) => {
+  const handleUpgrade = async (tier: SubscriptionTier) => {
+    const newDetails = {
+      tier: tier,
+      status: 'active' as const,
+      currentPeriodEnd: Date.now() + 1000 * 60 * 60 * 24 * 30
+    };
+
     setSubscription(prev => ({
       ...prev,
-      tier: tier,
-      status: 'active',
-      currentPeriodEnd: Date.now() + 1000 * 60 * 60 * 24 * 30 // Extend for 30 days
+      ...newDetails
     }));
+
+    // Persist
+    await updateSubscription(newDetails);
+
     setToastMessage(`Upgraded to ${tier} plan!`);
     setToastMessage(`Upgraded to ${tier} plan!`);
     navigateTo('artist-portal'); // Or back to dashboard
@@ -504,6 +640,19 @@ export default function Home() {
 
   const activeMessages = sessions.find(s => s.id === activeSessionId)?.messages || [];
 
+  // Show loading while auth is being determined
+  if (authLoading) {
+    return (
+      <div className="flex h-screen w-full bg-visio-bg items-center justify-center text-white font-outfit">
+        <BackgroundBeams className="fixed inset-0 z-0 pointer-events-none" />
+        <div className="flex flex-col items-center gap-4 z-10">
+          <Loader2 className="w-8 h-8 animate-spin text-visio-teal" />
+          <p className="text-white/50 text-sm">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen w-full bg-visio-bg overflow-hidden text-white font-outfit relative">
 
@@ -530,6 +679,7 @@ export default function Home() {
       ) : currentView === 'onboarding' ? (
         <div className="flex-1 w-full h-full overflow-y-auto">
           <Onboarding
+            userEmail={user?.email}
             onComplete={(profile) => {
               handleOnboardingComplete(profile);
               // NavigateTo is handled in handler
@@ -548,15 +698,33 @@ export default function Home() {
             activeSessionId={activeSessionId}
             campaigns={DEFAULT_CAMPAIGNS}
             sessions={sessions}
-            onNavigate={navigateTo}
-            onSelectSession={handleSelectSession}
-            onNewChat={handleNewChat}
+            onNavigate={(view) => {
+              navigateTo(view);
+              setIsSidebarOpen(false); // Close sidebar on navigation (mobile)
+            }}
+            onSelectSession={(id) => {
+              handleSelectSession(id);
+              setIsSidebarOpen(false); // Close sidebar on selection (mobile)
+            }}
+            onNewChat={() => {
+              handleNewChat();
+              setIsSidebarOpen(false); // Close sidebar on new chat (mobile)
+            }}
             onMoveSession={handleMoveSession}
             onDeleteSession={handleDeleteSession}
             onShareSession={handleShareSession}
             subscription={subscription}
             artistProfile={artistProfile}
           />
+
+          {/* Mobile Sidebar Overlay Backdrop */}
+          {isSidebarOpen && (
+            <div
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+              onClick={() => setIsSidebarOpen(false)}
+              aria-label="Close sidebar"
+            />
+          )}
 
           {/* Main Content */}
           <main className="flex-1 flex flex-col md:ml-64 relative z-10 h-full bg-visio-bg/50">
@@ -588,11 +756,19 @@ export default function Home() {
             </header>
 
             {/* View Switcher */}
-            {currentView === 'dashboard' ? (
+            {currentView === 'overview' ? (
+              <div className="flex-1 overflow-hidden">
+                <DashboardOverview
+                  artistProfile={artistProfile}
+                  onNavigate={navigateTo}
+                  onNewChat={handleNewChat}
+                />
+              </div>
+            ) : currentView === 'dashboard' ? (
               <>
                 {/* Chat Area - Adjusted padding for fixed headers */}
-                <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-4 scroll-smooth">
-                  <div className="max-w-4xl mx-auto flex flex-col pt-2">
+                <div className="flex-1 min-h-0 overflow-y-auto px-4 md:px-0 pb-32">
+                  <div className="max-w-3xl mx-auto flex flex-col pt-6 space-y-6">
                     {activeMessages.map((msg) => (
                       <ChatMessage key={msg.id} message={msg} onSaveLead={handleSaveLead} />
                     ))}
@@ -619,21 +795,23 @@ export default function Home() {
               <ArtistPortal
                 subscription={subscription}
                 onUpgrade={() => navigateTo('billing')}
+                onRedoOnboarding={() => navigateTo('onboarding')}
               />
             ) : currentView === 'billing' ? (
               <Billing
                 currentSubscription={subscription}
                 onUpgrade={handleUpgrade}
+                userEmail={user?.email}
               />
             ) : currentView === 'reason' ? (
-              <ReasonPage onBack={() => navigateTo('dashboard')} />
+              <ReasonPage onBack={() => navigateTo('overview')} />
             ) : currentView === 'reach' ? (
-              <ReachPage onBack={() => navigateTo('dashboard')} />
+              <ReachPage onBack={() => navigateTo('overview')} />
             ) : currentView === 'settings' ? (
               <SettingsPage
                 subscription={subscription}
                 artistProfile={artistProfile}
-                onBack={() => navigateTo('dashboard')}
+                onBack={() => navigateTo('overview')}
                 onNavigateHome={() => navigateTo('landing')}
                 onLogout={handleLogout}
               />

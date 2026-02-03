@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Check, Zap, Globe, Music, Shield, Play } from 'lucide-react';
+import { ArrowRight, Check, Zap, Globe, Music, Shield, Play, Search } from 'lucide-react';
 import { ShinyButton } from './ui/ShinyButton';
 import { BackgroundBeams } from './ui/background-beams';
 
@@ -122,18 +122,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
             <div className="py-20 border-y border-white/5 bg-black/40 backdrop-blur-sm relative overflow-hidden">
                 <div className="max-w-7xl mx-auto px-6 text-center">
                     <p className="text-sm font-bold text-white/20 uppercase tracking-[0.3em] mb-10">Trusted By Industry Leaders</p>
-                    <div className="flex flex-wrap items-center justify-center gap-12 md:gap-24 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
-                        {/* Text Placeholders for Logos to keep it clean but representative */}
-                        <div className="text-2xl font-bold font-serif text-white/60">SONY MUSIC</div>
-                        <div className="text-2xl font-bold tracking-tighter text-white/60">UNIVERSAL</div>
-                        <div className="text-xl font-bold tracking-widest text-white/60">WARNER</div>
-                        <div className="text-2xl font-bold italic text-white/60">ATLANTIC</div>
+                    <div className="flex flex-wrap items-center justify-center gap-12 md:gap-24 opacity-70 hover:opacity-100 transition-all duration-500">
+                        <div className="text-2xl font-bold text-white/80">Tony Duardo</div>
+                        <div className="text-2xl font-bold tracking-tighter text-visio-teal">HGA</div>
+                        <div className="text-xl font-medium tracking-wide text-white/60">+ 50 Global Agencies</div>
                     </div>
                 </div>
             </div>
 
             {/* Features Strip */}
-            <div className="py-32 relative">
+            <div className="py-24 relative">
                 <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8">
                     <FeatureItem
                         icon={<Globe className="text-visio-teal" />}
@@ -150,6 +148,86 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                         title="Verified Profiles"
                         desc="Claim your artist profile and manage your EPK in one secure place."
                     />
+                </div>
+            </div>
+
+            {/* How It Works */}
+            <div className="py-24 relative z-10 bg-black/40 backdrop-blur-md border-y border-white/5">
+                <div className="max-w-7xl mx-auto px-6 text-center">
+                    <p className="text-visio-teal font-bold uppercase tracking-widest text-sm mb-4">The Workflow</p>
+                    <h2 className="text-4xl md:text-5xl font-bold text-white mb-16 tracking-tight">Stop sending emails into the void.</h2>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                        <div className="flex flex-col items-center group">
+                            <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 shadow-xl shadow-visio-teal/5">
+                                <Search size={32} className="text-visio-teal" />
+                            </div>
+                            <h3 className="text-2xl font-bold text-white mb-4">1. Find Contacts</h3>
+                            <p className="text-white/50 leading-relaxed max-w-xs">Instantly access a database of 10M+ playlists, curators, and industry professionals filtering by your specific genre.</p>
+                        </div>
+                        <div className="flex flex-col items-center group">
+                            <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 delay-100 shadow-xl shadow-visio-sage/5">
+                                <Zap size={32} className="text-visio-sage" />
+                            </div>
+                            <h3 className="text-2xl font-bold text-white mb-4">2. AI Outreach</h3>
+                            <p className="text-white/50 leading-relaxed max-w-xs">Our AI reads their recent posts and drafts a hyper-personalized pitch that actually gets opened.</p>
+                        </div>
+                        <div className="flex flex-col items-center group">
+                            <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 delay-200 shadow-xl shadow-purple-500/5">
+                                <Shield size={32} className="text-purple-400" />
+                            </div>
+                            <h3 className="text-2xl font-bold text-white mb-4">3. Get Placed</h3>
+                            <p className="text-white/50 leading-relaxed max-w-xs">Track opens, replies, and placements directly from your dashboard. Close more deals in less time.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Pricing Section */}
+            <div className="py-32 relative">
+                <div className="max-w-7xl mx-auto px-6 text-center">
+                    <p className="text-white/40 font-bold uppercase tracking-widest text-sm mb-4">Plans & Pricing</p>
+                    <h2 className="text-4xl md:text-5xl font-bold text-white mb-16 tracking-tight">Invest in your career.</h2>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
+                        {/* Artist Plan */}
+                        <div className="p-8 rounded-3xl bg-white/5 border border-white/10 hover:border-visio-teal/50 transition-colors relative group">
+                            <h3 className="text-2xl font-bold text-white mb-2">Artist</h3>
+                            <div className="text-4xl font-bold text-white mb-6">R150<span className="text-lg text-white/40 font-normal">/mo</span></div>
+                            <ul className="space-y-4 mb-8">
+                                <li className="flex gap-3 text-white/70"><Check size={18} className="text-visio-teal" /> 5 AI Searches / mo</li>
+                                <li className="flex gap-3 text-white/70"><Check size={18} className="text-visio-teal" /> Basic Pitch Drafting</li>
+                                <li className="flex gap-3 text-white/70"><Check size={18} className="text-visio-teal" /> 1 Artist Profile</li>
+                            </ul>
+                            <button onClick={onGetStarted} className="w-full py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold transition-colors">Start Free Trial</button>
+                        </div>
+
+                        {/* Label Plan (Featured) */}
+                        <div className="p-8 rounded-3xl bg-gradient-to-b from-visio-teal/10 to-visio-bg border border-visio-teal/50 relative group shadow-2xl shadow-visio-teal/10 scale-105 z-10">
+                            <div className="absolute top-0 right-0 bg-visio-teal text-black text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl">MOST POPULAR</div>
+                            <h3 className="text-2xl font-bold text-white mb-2">Label</h3>
+                            <div className="text-4xl font-bold text-white mb-6">R850<span className="text-lg text-white/40 font-normal">/mo</span></div>
+                            <ul className="space-y-4 mb-8">
+                                <li className="flex gap-3 text-white"><Check size={18} className="text-visio-teal" /> 50 AI Searches / mo</li>
+                                <li className="flex gap-3 text-white"><Check size={18} className="text-visio-teal" /> Advanced Enrichment</li>
+                                <li className="flex gap-3 text-white"><Check size={18} className="text-visio-teal" /> 5 Artist Profiles</li>
+                                <li className="flex gap-3 text-white"><Check size={18} className="text-visio-teal" /> Priority Support</li>
+                            </ul>
+                            <button onClick={onGetStarted} className="w-full py-3 rounded-xl bg-visio-teal text-black font-bold hover:shadow-lg hover:shadow-visio-teal/20 transition-all">Get Started</button>
+                        </div>
+
+                        {/* Enterprise */}
+                        <div className="p-8 rounded-3xl bg-white/5 border border-white/10 hover:border-purple-500/50 transition-colors relative group">
+                            <h3 className="text-2xl font-bold text-white mb-2">Agency</h3>
+                            <div className="text-4xl font-bold text-white mb-6">Contact Us</div>
+                            <ul className="space-y-4 mb-8">
+                                <li className="flex gap-3 text-white/70"><Check size={18} className="text-purple-400" /> Unlimited Searches</li>
+                                <li className="flex gap-3 text-white/70"><Check size={18} className="text-purple-400" /> API Access</li>
+                                <li className="flex gap-3 text-white/70"><Check size={18} className="text-purple-400" /> Unlimited Profiles</li>
+                            </ul>
+                            <button onClick={onGetStarted} className="w-full py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold transition-colors">Contact Sales</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 

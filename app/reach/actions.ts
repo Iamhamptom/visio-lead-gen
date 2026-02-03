@@ -63,7 +63,7 @@ export async function calculateReach(input: ReachInput): Promise<ReachResult> {
     let viralFactor = placement.type === 'reel' ? 1.5 : 1.0;
 
     return {
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         targetId: 'custom',
         inputStats: { followers, avgViews, engagementRate },
         placement,
@@ -114,7 +114,7 @@ export async function calculateBatchReach(input: BatchReachInput): Promise<Batch
     let viralFactor = placement.type === 'reel' ? 1.5 : 1.0;
 
     return {
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         totalFollowers,
         avgEngagementRate,
         pageCount,
