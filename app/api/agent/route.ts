@@ -20,6 +20,14 @@ interface LeadResponse {
     followers?: string;
 }
 
+interface WebResult {
+    title: string;
+    url: string;
+    snippet?: string;
+    source?: string;
+    date?: string;
+}
+
 // Normalize country input
 function normalizeCountry(input: string | null | undefined): string {
     if (!input) return 'ZA';
@@ -87,7 +95,7 @@ function parseBasicIntent(message: string, lastState?: any): ParsedIntent {
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { message, conversationHistory = [], lastSearchState, tier = 'instant', mode = 'chat' } = body;
+        const { message, conversationHistory = [], lastSearchState, tier = 'instant', mode = 'chat', webSearchEnabled = true } = body;
         const userMessage = message || body.query;
 
         if (!userMessage) {
@@ -100,6 +108,7 @@ export async function POST(request: NextRequest) {
 
         const logs: string[] = [];
         let leads: LeadResponse[] = [];
+        let webResults: WebResult[] = [];
         let intent: ParsedIntent;
 
         // 1. FETCH ARTIST CONTEXT (Source of Truth)
@@ -160,13 +169,28 @@ export async function POST(request: NextRequest) {
                 // Check if the AI wants to use a tool (Search)
                 if (intent.message && intent.message.startsWith('SEARCH_REQUEST:')) {
                     const query = intent.message.replace('SEARCH_REQUEST:', '').trim();
-                    logs.push(`🛠️ Tool Triggered: Searching for "${query}"...`);
+                    if (!webSearchEnabled) {
+                        logs.push('🛑 Web search disabled by user.');
+                        intent = {
+                            ...intent,
+                            action: 'clarify',
+                            message: `Web search is currently off. I can answer from my internal knowledge, or you can toggle Web Search on for fresh sources.`
+                        };
+                    } else {
+                        logs.push(`🛠️ Tool Triggered: Searching for "${query}"...`);
 
-                    // Execute Search
-                    const searchResults = await performSmartSearch(query, normalizeCountry(intent.filters?.country));
+                        // Execute Search
+                        const searchResults = await performSmartSearch(query, normalizeCountry(intent.filters?.country));
+                        webResults = searchResults.map(r => ({
+                            title: r.name,
+                            url: r.url,
+                            snippet: r.snippet,
+                            source: r.source,
+                            date: r.date
+                        }));
 
-                    // Format results for the AI
-                    const contextBlock = searchResults.map(r => `Title: ${r.name}\nSnippet: ${r.snippet}\nSource: ${r.source}`).join('\n\n');
+                        // Format results for the AI
+                        const contextBlock = searchResults.map(r => `Title: ${r.name}\nSnippet: ${r.snippet}\nSource: ${r.source}`).join('\n\n');
 
                     // Re-prompt Gemini with the results
                     logs.push(`✅ Found ${searchResults.length} results. Re-prompting AI...`);
@@ -180,8 +204,9 @@ Cite the sources naturally if relevant. Write in your standard Visio persona (wa
 `;
                     // We call parseIntent again (effectively a "Tool Output" turn) but treat it as a new standard chat generation
                     // We clear history for this specific turn or append? Appending is safer.
-                    const finalIntent = await parseIntent(toolPrompt, conversationHistory, artistContext || undefined, tier as any, 'chat', '');
-                    intent = finalIntent; // Replace the "SEARCH_REQUEST" intent with the final answer
+                        const finalIntent = await parseIntent(toolPrompt, conversationHistory, artistContext || undefined, tier as any, 'chat', '');
+                        intent = finalIntent; // Replace the "SEARCH_REQUEST" intent with the final answer
+                    }
                 }
                 // ---------------------------
 
@@ -257,6 +282,7 @@ Cite the sources naturally if relevant. Write in your standard Visio persona (wa
         return NextResponse.json({
             message: assistantMessage,
             leads: leads,
+            webResults,
             logs: logs,
             intent: intent,
             meta: {

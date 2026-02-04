@@ -78,11 +78,17 @@ export default function Home() {
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const isChatAtBottomRef = useRef(true);
   const scrollRafRef = useRef<number | null>(null);
+  const scrollRailRef = useRef<HTMLDivElement | null>(null);
+  const isDraggingThumbRef = useRef(false);
+  const dragOffsetRef = useRef(0);
 
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const [isChatScrollable, setIsChatScrollable] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [scrollThumbSize, setScrollThumbSize] = useState(32);
+  const [scrollRailHeight, setScrollRailHeight] = useState(0);
+  const [webSearchEnabled, setWebSearchEnabled] = useState(true);
 
   // Helper to update view and URL
   const navigateTo = (view: ViewMode) => {
@@ -444,10 +450,15 @@ export default function Home() {
     const atBottom = maxScroll - el.scrollTop <= threshold;
     const scrollable = maxScroll > 4;
     const progress = scrollable ? Math.min(1, Math.max(0, el.scrollTop / maxScroll)) : 1;
+    const railHeight = scrollRailRef.current?.clientHeight || 0;
+    const sizeRatio = el.clientHeight / Math.max(el.scrollHeight, 1);
+    const thumbSize = railHeight > 0 ? Math.max(28, Math.round(railHeight * sizeRatio)) : 32;
 
     isChatAtBottomRef.current = atBottom;
     setIsChatScrollable(scrollable);
     setScrollProgress(progress);
+    setScrollThumbSize(thumbSize);
+    setScrollRailHeight(railHeight);
     setShowScrollToTop(scrollable && !atTop);
     setShowScrollToBottom(scrollable && !atBottom);
   }, []);
@@ -457,6 +468,16 @@ export default function Home() {
     scrollRafRef.current = requestAnimationFrame(() => {
       updateChatScrollState();
     });
+  }, [updateChatScrollState]);
+
+  const handleChatWheel = useCallback((event: React.WheelEvent<HTMLDivElement>) => {
+    const el = chatScrollRef.current;
+    if (!el) return;
+    const maxScroll = el.scrollHeight - el.clientHeight;
+    if (maxScroll <= 0) return;
+    el.scrollTop += event.deltaY;
+    event.preventDefault();
+    updateChatScrollState();
   }, [updateChatScrollState]);
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
@@ -469,6 +490,65 @@ export default function Home() {
   const scrollToTop = useCallback(() => {
     chatScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
+
+  const handleRailPointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    const rail = scrollRailRef.current;
+    const el = chatScrollRef.current;
+    if (!rail || !el) return;
+
+    const railRect = rail.getBoundingClientRect();
+    const railHeight = railRect.height;
+    if (railHeight <= scrollThumbSize) return;
+
+    const offset = event.clientY - railRect.top - scrollThumbSize / 2;
+    const clamped = Math.max(0, Math.min(railHeight - scrollThumbSize, offset));
+    const ratio = clamped / (railHeight - scrollThumbSize);
+    el.scrollTop = ratio * (el.scrollHeight - el.clientHeight);
+    updateChatScrollState();
+  }, [scrollThumbSize, updateChatScrollState]);
+
+  const handleThumbPointerDown = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const rail = scrollRailRef.current;
+    if (!rail) return;
+    isDraggingThumbRef.current = true;
+    const railRect = rail.getBoundingClientRect();
+    const thumbTop = (railRect.height - scrollThumbSize) * scrollProgress;
+    dragOffsetRef.current = event.clientY - railRect.top - thumbTop;
+  }, [scrollProgress, scrollThumbSize]);
+
+  useEffect(() => {
+    const handlePointerMove = (event: PointerEvent) => {
+      if (!isDraggingThumbRef.current) return;
+      const rail = scrollRailRef.current;
+      const el = chatScrollRef.current;
+      if (!rail || !el) return;
+
+      const railRect = rail.getBoundingClientRect();
+      const railHeight = railRect.height;
+      const track = railHeight - scrollThumbSize;
+      if (track <= 0) return;
+
+      const raw = event.clientY - railRect.top - dragOffsetRef.current;
+      const clamped = Math.max(0, Math.min(track, raw));
+      const ratio = clamped / track;
+      el.scrollTop = ratio * (el.scrollHeight - el.clientHeight);
+      updateChatScrollState();
+    };
+
+    const handlePointerUp = () => {
+      isDraggingThumbRef.current = false;
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+    };
+  }, [scrollThumbSize, updateChatScrollState]);
 
 
   // When switching sessions / entering the chat view, jump to the bottom.
@@ -587,9 +667,9 @@ export default function Home() {
     // Starter (R199) & Artiste (R570) -> Instant + Standard
     // Label+ -> All
     const RESTRICTIONS = {
-      'artist': ['instant'],
-      'starter': ['instant', 'standard'],
-      'artiste': ['instant', 'standard'],
+      'artist': ['instant', 'business'],
+      'starter': ['instant', 'standard', 'business'],
+      'artiste': ['instant', 'standard', 'business'],
       'starter_label': ['instant', 'standard', 'business'],
       'label': ['instant', 'standard', 'business', 'enterprise'],
       'agency': ['instant', 'standard', 'business', 'enterprise'],
@@ -689,7 +769,8 @@ export default function Home() {
           conversationHistory: historyForApi,
           artistContext: artistProfile, // Ignored by backend (source of truth is server fetch)
           tier,
-          mode
+          mode,
+          webSearchEnabled
         })
       });
 
@@ -719,6 +800,7 @@ export default function Home() {
             ...msg,
             content: data.message || "Done.",
             leads: data.leads || [],
+            webResults: data.webResults || [],
             isThinking: false
           };
         }
@@ -943,7 +1025,8 @@ export default function Home() {
                   <div
                     ref={chatScrollRef}
                     onScroll={handleChatScroll}
-                    className="flex-1 min-h-0 overflow-y-auto px-4 md:px-0 pb-32 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent"
+                    onWheel={handleChatWheel}
+                    className="visio-chat-scroll flex-1 min-h-0 overflow-y-auto px-4 md:px-0 pb-32 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent"
                   >
                     <div className="max-w-3xl mx-auto flex flex-col pt-6 space-y-6">
                       {portalLocked && (
@@ -967,96 +1050,115 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* Scroll Controls (Floating, non-blocking) */}
-                  <div className="pointer-events-none absolute right-6 bottom-32 flex flex-col items-center gap-2 z-30">
-                    {showScrollToBottom && (
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); scrollToBottom('smooth'); }}
-                        className="pointer-events-auto w-8 h-8 rounded-full bg-visio-teal text-black shadow-lg shadow-visio-teal/20 flex items-center justify-center hover:scale-105 transition-all"
-                        aria-label="New messages below"
-                      >
-                        <ChevronDown size={16} />
-                      </button>
+                  <ChevronDown size={16} />
+                </button>
                     )}
-                  </div>
-                </div>
+              </div>
 
-
-                {/* Footer / Composer */}
-                <div className="flex-shrink-0 bg-gradient-to-t from-visio-bg via-visio-bg to-transparent pt-10 pb-2">
-                  <Composer
-                    onSend={handleSendMessage}
-                    isLoading={isLoading}
-                    pendingPrompt={pendingPrompt}
-                    onPromptUsed={() => setPendingPrompt(null)}
-                    portalLocked={portalLocked}
-                    onRequirePortal={() => {
-                      setToastMessage('Complete your profile in Settings to unlock Research + Leads.');
-                      navigateTo('settings');
+            {/* Scroll Rail (Far Right) */}
+            {isChatScrollable && (
+              <div className="absolute right-1 top-24 bottom-32 flex items-center justify-center z-20 pointer-events-none">
+                <div
+                  ref={scrollRailRef}
+                  onPointerDown={handleRailPointerDown}
+                  className="pointer-events-auto w-3 h-44 rounded-full bg-white/5 border border-white/10 backdrop-blur-md flex items-start justify-center"
+                  aria-hidden="true"
+                >
+                  <button
+                    type="button"
+                    onPointerDown={handleThumbPointerDown}
+                    className="w-2 rounded-full bg-visio-teal/80 shadow-[0_0_12px_rgba(96,138,148,0.4)]"
+                    style={{
+                      height: `${scrollThumbSize}px`,
+                      transform: `translateY(${Math.max(0, scrollRailHeight - scrollThumbSize) * scrollProgress}px)`
                     }}
+                    aria-label="Scroll chat"
                   />
-                </div>
-              </>
-            ) : currentView === 'leads' ? (
-              portalLocked ? (
-                <PortalGate
-                  onRefresh={async () => {
-                    setIsLoading(true);
-                    const profile = await loadArtistProfile();
-                    if (profile) {
-                      setArtistProfile(profile);
-                      setToastMessage("Profile Found! Unlocking...");
-                    } else {
-                      setToastMessage("Still no profile found. Please complete setup in Settings.");
-                    }
-                    setIsLoading(false);
-                  }}
-                  isLoading={isLoading}
-                />
-              ) : (
-                <LeadsGallery
-                  leads={allLeads}
-                  onSaveLead={handleSaveLead}
-                />
-              )
-            ) : currentView === 'billing' ? (
-              <Billing
-                currentSubscription={subscription}
-                onUpgrade={handleUpgrade}
-                userEmail={user?.email}
-              />
-            ) : currentView === 'reason' ? (
-              <ReasonPage onBack={() => navigateTo('overview')} />
-            ) : currentView === 'reach' ? (
-              <ReachPage onBack={() => navigateTo('overview')} />
-            ) : currentView === 'settings' ? (
-              <SettingsPage
-                subscription={subscription}
-                artistProfile={artistProfile}
-                onBack={() => navigateTo('overview')}
-                onNavigateHome={() => navigateTo('overview')}
-                onLogout={handleLogout}
-              />
-            ) : (
-              <div className="flex-1 flex items-center justify-center text-white/30">
-                <div className="text-center">
-                  <p className="text-lg">Automations Module</p>
-                  <p className="text-sm">Coming Soon</p>
                 </div>
               </div>
             )}
-          </main>
+          </div>
 
-          {/* Overlay for mobile sidebar */}
-          {isSidebarOpen && (
-            <div
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
-              onClick={() => setIsSidebarOpen(false)}
+
+          {/* Footer / Composer */}
+          <div className="flex-shrink-0 bg-gradient-to-t from-visio-bg via-visio-bg to-transparent pt-10 pb-2">
+            <Composer
+              onSend={handleSendMessage}
+              isLoading={isLoading}
+              pendingPrompt={pendingPrompt}
+              onPromptUsed={() => setPendingPrompt(null)}
+              portalLocked={portalLocked}
+              onRequirePortal={() => {
+                setToastMessage('Complete your profile in Settings to unlock Research + Leads.');
+                navigateTo('settings');
+              }}
+              webSearchEnabled={webSearchEnabled}
+              onToggleWebSearch={() => setWebSearchEnabled((prev) => !prev)}
             />
-          )}
+          </div>
         </>
-      )}
+      ) : currentView === 'leads' ? (
+      portalLocked ? (
+      <PortalGate
+        onRefresh={async () => {
+          setIsLoading(true);
+          const profile = await loadArtistProfile();
+          if (profile) {
+            setArtistProfile(profile);
+            setToastMessage("Profile Found! Unlocking...");
+          } else {
+            setToastMessage("Still no profile found. Please complete setup in Settings.");
+          }
+          setIsLoading(false);
+        }}
+        isLoading={isLoading}
+      />
+      ) : (
+      <LeadsGallery
+        leads={allLeads}
+        onSaveLead={handleSaveLead}
+      />
+      )
+      ) : currentView === 'billing' ? (
+      <Billing
+        currentSubscription={subscription}
+        onUpgrade={handleUpgrade}
+        userEmail={user?.email}
+      />
+      ) : currentView === 'reason' ? (
+      <ReasonPage onBack={() => navigateTo('overview')} />
+      ) : currentView === 'reach' ? (
+      <ReachPage onBack={() => navigateTo('overview')} />
+      ) : currentView === 'settings' ? (
+      <SettingsPage
+        subscription={subscription}
+        artistProfile={artistProfile}
+        onBack={() => navigateTo('overview')}
+        onNavigateHome={() => navigateTo('overview')}
+        onLogout={handleLogout}
+      />
+      ) : (
+      <div className="flex-1 flex items-center justify-center text-white/30">
+        <div className="text-center">
+          <p className="text-lg">Automations Module</p>
+          <p className="text-sm">Coming Soon</p>
+        </div>
+      </div>
+            )}
+    </main>
+
+          {/* Overlay for mobile sidebar */ }
+  {
+    isSidebarOpen && (
+      <div
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+        onClick={() => setIsSidebarOpen(false)}
+      />
+    )
+  }
+        </>
+      )
+}
     </div >
   );
 }

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Paperclip, Sparkles, Mic, Zap, Briefcase, Rocket, ChevronDown, Lock } from 'lucide-react';
+import { Send, Paperclip, Sparkles, Mic, Zap, Briefcase, Rocket, ChevronDown, Lock, Search } from 'lucide-react';
 
 import { AgentMode } from '@/app/types';
 
@@ -12,6 +12,8 @@ interface ComposerProps {
     onPromptUsed?: () => void;
     portalLocked?: boolean;
     onRequirePortal?: () => void;
+    webSearchEnabled: boolean;
+    onToggleWebSearch: () => void;
 }
 
 const TIER_CONFIG = {
@@ -41,9 +43,18 @@ const TIER_CONFIG = {
     }
 };
 
-export const Composer: React.FC<ComposerProps> = ({ onSend, isLoading, pendingPrompt, onPromptUsed, portalLocked = false, onRequirePortal }) => {
+export const Composer: React.FC<ComposerProps> = ({
+    onSend,
+    isLoading,
+    pendingPrompt,
+    onPromptUsed,
+    portalLocked = false,
+    onRequirePortal,
+    webSearchEnabled,
+    onToggleWebSearch
+}) => {
     const [input, setInput] = useState('');
-    const [tier, setTier] = useState<AITier>('instant');
+    const [tier, setTier] = useState<AITier>('business');
     const [mode, setMode] = useState<AgentMode>('chat');
     const [showTierMenu, setShowTierMenu] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -156,8 +167,21 @@ export const Composer: React.FC<ComposerProps> = ({ onSend, isLoading, pendingPr
                             )}
                         </div>
 
-                        {/* Mode Toggle */}
-                        <div className="flex bg-white/5 rounded-lg p-1 border border-white/5">
+                        {/* Mode + Web Search */}
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={onToggleWebSearch}
+                                className={`flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium rounded-md border transition-all ${webSearchEnabled
+                                    ? 'border-visio-teal/40 bg-visio-teal/15 text-visio-teal'
+                                    : 'border-white/10 bg-white/5 text-white/50 hover:text-white/70'
+                                    }`}
+                                aria-pressed={webSearchEnabled}
+                            >
+                                <Search size={12} />
+                                Web Search
+                            </button>
+                            <div className="flex bg-white/5 rounded-lg p-1 border border-white/5">
                             <button
                                 onClick={() => setMode('chat')}
                                 className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${mode === 'chat' ? 'bg-visio-teal/20 text-visio-teal shadow-sm' : 'text-white/40 hover:text-white/60'
@@ -179,6 +203,7 @@ export const Composer: React.FC<ComposerProps> = ({ onSend, isLoading, pendingPr
                                 {isResearchLocked && <Lock size={12} className="text-white/50" />}
                                 Research
                             </button>
+                            </div>
                         </div>
                     </div>
 

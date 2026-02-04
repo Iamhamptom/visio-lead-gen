@@ -79,8 +79,17 @@ export interface Message {
     content: string;
     timestamp: number;
     leads?: Lead[];
+    webResults?: WebResult[];
     isThinking?: boolean;
     mode?: AgentMode;
+}
+
+export interface WebResult {
+    title: string;
+    url: string;
+    snippet?: string;
+    source?: string;
+    date?: string;
 }
 
 export type AgentMode = 'chat' | 'research';

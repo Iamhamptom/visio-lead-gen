@@ -109,12 +109,19 @@ export function createGeminiClient(tier: 'instant' | 'business' | 'enterprise' =
 
     const genAI = new GoogleGenerativeAI(apiKey);
 
-    // Model selection based on tier - using stable Gemini models
-    const modelName = tier === 'enterprise'
-        ? 'gemini-2.5-pro'  // Most intelligent, supports 1M context with thinking
+    // Model selection based on tier - using stable and latest Gemini models
+    const modelOverrides = {
+        instant: process.env.VISIO_GEMINI_INSTANT_MODEL,
+        business: process.env.VISIO_GEMINI_BUSINESS_MODEL,
+        enterprise: process.env.VISIO_GEMINI_ENTERPRISE_MODEL
+    };
+    // UPDATED: Using verified model names as of Feb 2026
+    const fallbackModel = tier === 'enterprise'
+        ? 'gemini-1.5-pro-latest'  // Best reasoning/logic (replacing invalid 2.5-pro)
         : tier === 'business'
-            ? 'gemini-2.5-flash'  // Fast mid-size model with thinking
-            : 'gemini-2.0-flash';  // Instant - fastest responses
+            ? 'gemini-2.0-flash-exp' // Fast & Smart (replacing 2.5-flash)
+            : 'gemini-2.0-flash-exp'; // Instant default
+    const modelName = modelOverrides[tier] || process.env.VISIO_GEMINI_MODEL || fallbackModel;
 
     return genAI.getGenerativeModel({ model: modelName });
 }

@@ -149,3 +149,9 @@ body {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
+
+.visio-chat-scroll {
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable both-edges;
+  scroll-behavior: smooth;
+}
