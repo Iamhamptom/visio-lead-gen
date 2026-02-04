@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Paperclip, Sparkles, Mic, Zap, Briefcase, Rocket, ChevronDown } from 'lucide-react';
+import { Send, Paperclip, Sparkles, Mic, Zap, Briefcase, Rocket, ChevronDown, Lock } from 'lucide-react';
 
 import { AgentMode } from '@/app/types';
 
@@ -10,6 +10,8 @@ interface ComposerProps {
     isLoading: boolean;
     pendingPrompt?: string | null;
     onPromptUsed?: () => void;
+    portalLocked?: boolean;
+    onRequirePortal?: () => void;
 }
 
 const TIER_CONFIG = {
@@ -39,7 +41,7 @@ const TIER_CONFIG = {
     }
 };
 
-export const Composer: React.FC<ComposerProps> = ({ onSend, isLoading, pendingPrompt, onPromptUsed }) => {
+export const Composer: React.FC<ComposerProps> = ({ onSend, isLoading, pendingPrompt, onPromptUsed, portalLocked = false, onRequirePortal }) => {
     const [input, setInput] = useState('');
     const [tier, setTier] = useState<AITier>('instant');
     const [mode, setMode] = useState<AgentMode>('chat');
@@ -57,8 +59,18 @@ export const Composer: React.FC<ComposerProps> = ({ onSend, isLoading, pendingPr
         }
     }, [pendingPrompt, onPromptUsed]);
 
+    useEffect(() => {
+        if (portalLocked && mode === 'research') {
+            setMode('chat');
+        }
+    }, [portalLocked, mode]);
+
     const handleSubmit = () => {
         if (!input.trim() || isLoading) return;
+        if (portalLocked && mode === 'research') {
+            onRequirePortal?.();
+            return;
+        }
         onSend(input, tier, mode);
         setInput('');
     };
@@ -91,6 +103,7 @@ export const Composer: React.FC<ComposerProps> = ({ onSend, isLoading, pendingPr
 
     const currentTier = TIER_CONFIG[tier];
     const TierIcon = currentTier.icon;
+    const isResearchLocked = portalLocked;
 
     return (
         <div className="w-full max-w-4xl mx-auto px-4 pb-6">
@@ -153,10 +166,17 @@ export const Composer: React.FC<ComposerProps> = ({ onSend, isLoading, pendingPr
                                 Chat
                             </button>
                             <button
-                                onClick={() => setMode('research')}
-                                className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${mode === 'research' ? 'bg-visio-accent/20 text-visio-accent shadow-sm' : 'text-white/40 hover:text-white/60'
-                                    }`}
+                                onClick={() => {
+                                    if (isResearchLocked) {
+                                        onRequirePortal?.();
+                                        return;
+                                    }
+                                    setMode('research');
+                                }}
+                                aria-disabled={isResearchLocked}
+                                className={`px-3 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1 ${mode === 'research' ? 'bg-visio-accent/20 text-visio-accent shadow-sm' : 'text-white/40 hover:text-white/60'} ${isResearchLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
                             >
+                                {isResearchLocked && <Lock size={12} className="text-white/50" />}
                                 Research
                             </button>
                         </div>

@@ -269,6 +269,7 @@ export default function Home() {
 
 
   const [artistProfile, setArtistProfile] = useState<ArtistProfile | null>(null);
+  const portalLocked = !artistProfile;
 
 
   // Artist profile loaded in main effect above
@@ -611,6 +612,13 @@ export default function Home() {
       // If generic 'research' mode is used with 'standard' tier, that's fine for Starter/Artiste.
     }
 
+    // Check 3: Portal requirement for research + lead generation
+    if (portalLocked && mode === 'research') {
+      setToastMessage('Complete your profile in Settings to unlock Research + Leads.');
+      navigateTo('settings');
+      return;
+    }
+
     // -------------------------------------
 
     const activeSessionIndex = sessions.findIndex(s => s.id === activeSessionId);
@@ -938,29 +946,26 @@ export default function Home() {
                     className="flex-1 min-h-0 overflow-y-auto touch-pan-y px-4 md:px-0 pb-32"
                     style={{ WebkitOverflowScrolling: 'touch' }}
                   >
-                    {!artistProfile ? (
-                      <PortalGate
-                        onRefresh={async () => {
-                          setIsLoading(true);
-                          const profile = await loadArtistProfile();
-                          if (profile) {
-                            setArtistProfile(profile);
-                            setToastMessage("Profile Found! Unlocking...");
-                          } else {
-                            setToastMessage("Still no profile found. Please complete setup in Settings.");
-                          }
-                          setIsLoading(false);
-                        }}
-                        isLoading={isLoading}
-                      />
-                    ) : (
-                      <div className="max-w-3xl mx-auto flex flex-col pt-6 space-y-6">
-                        {activeMessages.map((msg) => (
-                          <ChatMessage key={msg.id} message={msg} onSaveLead={handleSaveLead} />
-                        ))}
-                        <div ref={messagesEndRef} className="h-4" />
-                      </div>
-                    )}
+                    <div className="max-w-3xl mx-auto flex flex-col pt-6 space-y-6">
+                      {portalLocked && (
+                        <div className="mx-auto w-full max-w-2xl rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-white/70 backdrop-blur-md">
+                          <div className="font-semibold text-white/90 mb-1">Chat is open. Research is locked.</div>
+                          <div className="flex items-center justify-between gap-3">
+                            <span>Complete your profile to unlock research and lead generation.</span>
+                            <button
+                              onClick={() => navigateTo('settings')}
+                              className="shrink-0 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold text-white hover:bg-white/20"
+                            >
+                              Open Settings
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      {activeMessages.map((msg) => (
+                        <ChatMessage key={msg.id} message={msg} onSaveLead={handleSaveLead} />
+                      ))}
+                      <div ref={messagesEndRef} className="h-4" />
+                    </div>
                   </div>
 
                   {/* Scroll rail + controls (right side) */}
@@ -1005,14 +1010,36 @@ export default function Home() {
                     isLoading={isLoading}
                     pendingPrompt={pendingPrompt}
                     onPromptUsed={() => setPendingPrompt(null)}
+                    portalLocked={portalLocked}
+                    onRequirePortal={() => {
+                      setToastMessage('Complete your profile in Settings to unlock Research + Leads.');
+                      navigateTo('settings');
+                    }}
                   />
                 </div>
               </>
             ) : currentView === 'leads' ? (
-              <LeadsGallery
-                leads={allLeads}
-                onSaveLead={handleSaveLead}
-              />
+              portalLocked ? (
+                <PortalGate
+                  onRefresh={async () => {
+                    setIsLoading(true);
+                    const profile = await loadArtistProfile();
+                    if (profile) {
+                      setArtistProfile(profile);
+                      setToastMessage("Profile Found! Unlocking...");
+                    } else {
+                      setToastMessage("Still no profile found. Please complete setup in Settings.");
+                    }
+                    setIsLoading(false);
+                  }}
+                  isLoading={isLoading}
+                />
+              ) : (
+                <LeadsGallery
+                  leads={allLeads}
+                  onSaveLead={handleSaveLead}
+                />
+              )
             ) : currentView === 'billing' ? (
               <Billing
                 currentSubscription={subscription}

@@ -161,6 +161,21 @@ export async function POST(request: NextRequest) {
             }
         }
 
+        const portalRequired = !artistContext && (mode === 'research' || intent.action === 'search');
+        if (portalRequired) {
+            logs.push('🔒 Portal required for research/leads.');
+            return NextResponse.json({
+                message: 'Complete your profile in Settings to unlock research and lead generation.',
+                leads: [],
+                logs,
+                intent: { ...intent, action: 'data_gap' },
+                meta: {
+                    total: 0,
+                    source: 'Portal Required'
+                }
+            }, { status: 403 });
+        }
+
         // Handle different actions
         switch (intent.action) {
             case 'search': {
