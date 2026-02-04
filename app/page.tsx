@@ -948,9 +948,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Dynamic Background with Premium Beams */}
-      <BackgroundBeams className="fixed inset-0 z-0 pointer-events-none" />
-
       {/* Conditional Layout based on View */}
       {currentView === 'landing' ? (
         <div className="flex-1 w-full h-full overflow-y-auto">
@@ -965,24 +962,23 @@ export default function Home() {
         </div>
       ) : (
         <>
+          {/* Sidebar - Desktop: Toggleable, Mobile: Overlay */}
           <Sidebar
-            isOpen={isSidebarOpen}
+            isOpen={isSidebarOpen} // Mobile State
+            isDesktopOpen={isDesktopSidebarOpen} // Desktop State
             activeView={currentView}
             activeSessionId={activeSessionId}
             campaigns={DEFAULT_CAMPAIGNS}
             sessions={sessions}
             onNavigate={(view) => {
               navigateTo(view);
-              setIsSidebarOpen(false); // Close sidebar on navigation (mobile)
+              setIsSidebarOpen(false);
             }}
             onSelectSession={(id) => {
               handleSelectSession(id);
-              setIsSidebarOpen(false); // Close sidebar on selection (mobile)
+              setIsSidebarOpen(false);
             }}
-            onNewChat={() => {
-              handleNewChat();
-              setIsSidebarOpen(false); // Close sidebar on new chat (mobile)
-            }}
+            onNewChat={handleNewChat}
             onMoveSession={handleMoveSession}
             onDeleteSession={handleDeleteSession}
             onShareSession={handleShareSession}
@@ -999,214 +995,190 @@ export default function Home() {
             />
           )}
 
-          {/* Main Content */}
-          <main className="flex-1 flex flex-col md:ml-64 relative z-10 h-full min-h-0 bg-visio-bg/50">
+        </div>
+    </header>
 
-            {/* Mobile Header */}
-            <header className="md:hidden flex items-center justify-between p-4 border-b border-white/5 bg-black/40 backdrop-blur-md sticky top-0 z-20">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded bg-gradient-to-br from-visio-teal to-visio-sage flex items-center justify-center text-black font-bold text-xs">V</div>
-                <span className="font-bold">Visio AI</span>
-              </div>
-              <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-white">
-                <Menu />
+  {/* View Switcher */ }
+  {
+    currentView === 'overview' ? (
+      <div className="flex-1 overflow-hidden">
+        <DashboardOverview
+          artistProfile={artistProfile}
+          onNavigate={navigateTo}
+          onNewChat={handleNewChat}
+        />
+      </div>
+    ) : currentView === 'dashboard' ? (
+      <>
+        {/* Chat Area - Native Scroll */}
+        <div className="flex-1 min-h-0 relative flex flex-col">
+          <div
+            ref={chatScrollRef}
+            onScroll={handleChatScroll}
+            onWheel={handleChatWheel}
+            className="visio-chat-scroll flex-1 min-h-0 overflow-y-auto px-4 md:px-0 pb-32 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent"
+          >
+            <div className="max-w-3xl mx-auto flex flex-col pt-6 space-y-6">
+              {portalLocked && (
+                <div className="mx-auto w-full max-w-2xl rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-white/70 backdrop-blur-md">
+                  <div className="font-semibold text-white/90 mb-1">Chat is open. Research is locked.</div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span>Complete your profile to unlock research and lead generation.</span>
+                    <button
+                      onClick={() => navigateTo('settings')}
+                      className="shrink-0 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold text-white hover:bg-white/20"
+                    >
+                      Open Settings
+                    </button>
+                  </div>
+                </div>
+              )}
+              {activeMessages.map((msg) => (
+                <ChatMessage key={msg.id} message={msg} onSaveLead={handleSaveLead} />
+              ))}
+              <div ref={messagesEndRef} className="h-4" />
+            </div>
+          </div>
+
+          {/* Tools Panel */}
+          <div className="hidden lg:block absolute right-6 top-28 z-30">
+            <ToolsPanel
+              activeTool={activeTool}
+              onSelect={(tool) => setActiveTool(tool)}
+              webSearchEnabled={webSearchEnabled}
+            />
+          </div>
+
+          {/* Scroll Controls (Floating, non-blocking) */}
+          <div className="pointer-events-none absolute right-3 bottom-32 flex flex-col items-center gap-2 z-30">
+            {showScrollToTop && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); scrollToTop(); }}
+                className="pointer-events-auto w-8 h-8 rounded-full bg-white/10 text-white shadow-lg flex items-center justify-center hover:scale-105 transition-all"
+                aria-label="Scroll to top"
+              >
+                <ChevronUp size={16} />
               </button>
-            </header>
-
-            {/* Desktop Header / Status Bar - Fixes "floating" feel */}
-            <header className="hidden md:flex items-center justify-between px-8 py-4 border-b border-white/5 bg-black/20 backdrop-blur-sm sticky top-0 z-20">
-              <div className="flex items-center gap-3">
-                <h2 className="text-lg font-medium text-white/80">
-                  {currentView === 'dashboard' ? (sessions.find(s => s.id === activeSessionId)?.title || 'New Research') :
-                    currentView === 'leads' ? 'Lead Database' : 'Artist Portal'}
-                </h2>
-                {isLoading && <span className="text-xs text-visio-accent animate-pulse">Processing...</span>}
-              </div>
-              <div className="flex items-center gap-4 text-xs text-white/30">
-                <span>v1.2.0</span>
-                <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]"></div>
-              </div>
-            </header>
-
-            {/* View Switcher */}
-            {currentView === 'overview' ? (
-              <div className="flex-1 overflow-hidden">
-                <DashboardOverview
-                  artistProfile={artistProfile}
-                  onNavigate={navigateTo}
-                  onNewChat={handleNewChat}
-                />
-              </div>
-            ) : currentView === 'dashboard' ? (
-              <>
-                {/* Chat Area - Native Scroll */}
-                <div className="flex-1 min-h-0 relative flex flex-col">
-                  <div
-                    ref={chatScrollRef}
-                    onScroll={handleChatScroll}
-                    onWheel={handleChatWheel}
-                    className="visio-chat-scroll flex-1 min-h-0 overflow-y-auto px-4 md:px-0 pb-32 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent"
-                  >
-                    <div className="max-w-3xl mx-auto flex flex-col pt-6 space-y-6">
-                      {portalLocked && (
-                        <div className="mx-auto w-full max-w-2xl rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-white/70 backdrop-blur-md">
-                          <div className="font-semibold text-white/90 mb-1">Chat is open. Research is locked.</div>
-                          <div className="flex items-center justify-between gap-3">
-                            <span>Complete your profile to unlock research and lead generation.</span>
-                            <button
-                              onClick={() => navigateTo('settings')}
-                              className="shrink-0 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold text-white hover:bg-white/20"
-                            >
-                              Open Settings
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                      {activeMessages.map((msg) => (
-                        <ChatMessage key={msg.id} message={msg} onSaveLead={handleSaveLead} />
-                      ))}
-                      <div ref={messagesEndRef} className="h-4" />
-                    </div>
-                  </div>
-
-                  {/* Tools Panel */}
-                  <div className="hidden lg:block absolute right-6 top-28 z-30">
-                    <ToolsPanel
-                      activeTool={activeTool}
-                      onSelect={(tool) => setActiveTool(tool)}
-                      webSearchEnabled={webSearchEnabled}
-                    />
-                  </div>
-
-                  {/* Scroll Controls (Floating, non-blocking) */}
-                  <div className="pointer-events-none absolute right-3 bottom-32 flex flex-col items-center gap-2 z-30">
-                    {showScrollToTop && (
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); scrollToTop(); }}
-                        className="pointer-events-auto w-8 h-8 rounded-full bg-white/10 text-white shadow-lg flex items-center justify-center hover:scale-105 transition-all"
-                        aria-label="Scroll to top"
-                      >
-                        <ChevronUp size={16} />
-                      </button>
-                    )}
-                    {showScrollToBottom && (
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); scrollToBottom('smooth'); }}
-                        className="pointer-events-auto w-8 h-8 rounded-full bg-visio-teal text-black shadow-lg shadow-visio-teal/20 flex items-center justify-center hover:scale-105 transition-all"
-                        aria-label="New messages below"
-                      >
-                        <ChevronDown size={16} />
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Scroll Rail (Far Right) */}
-                  {isChatScrollable && (
-                    <div className="absolute right-1 top-24 bottom-32 flex items-center justify-center z-20 pointer-events-none">
-                      <div
-                        ref={scrollRailRef}
-                        onPointerDown={handleRailPointerDown}
-                        className="pointer-events-auto w-3 h-44 rounded-full bg-white/5 border border-white/10 backdrop-blur-md flex items-start justify-center"
-                        aria-hidden="true"
-                      >
-                        <button
-                          type="button"
-                          onPointerDown={handleThumbPointerDown}
-                          className="w-2 rounded-full bg-visio-teal/80 shadow-[0_0_12px_rgba(96,138,148,0.4)]"
-                          style={{
-                            height: `${scrollThumbSize}px`,
-                            transform: `translateY(${Math.max(0, scrollRailHeight - scrollThumbSize) * scrollProgress}px)`
-                          }}
-                          aria-label="Scroll chat"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                </div>
-
-
-                {/* Footer / Composer */}
-                <div className="flex-shrink-0 bg-gradient-to-t from-visio-bg via-visio-bg to-transparent pt-10 pb-2">
-                  <Composer
-                    onSend={handleSendMessage}
-                    isLoading={isLoading}
-                    pendingPrompt={pendingPrompt}
-                    onPromptUsed={() => setPendingPrompt(null)}
-                    portalLocked={portalLocked}
-                    onRequirePortal={() => {
-                      setToastMessage('Complete your profile in Settings to unlock Research + Leads.');
-                      navigateTo('settings');
-                    }}
-                    webSearchEnabled={webSearchEnabled}
-                    onToggleWebSearch={() => setWebSearchEnabled((prev) => !prev)}
-                  />
-                </div>
-              </>
-            ) : currentView === 'leads' ? (
-              portalLocked ? (
-                <PortalGate
-                  onRefresh={async () => {
-                    setIsLoading(true);
-                    const profile = await loadArtistProfile();
-                    if (profile) {
-                      setArtistProfile(profile);
-                      setToastMessage("Profile Found! Unlocking...");
-                    } else {
-                      setToastMessage("Still no profile found. Please complete setup in Settings.");
-                    }
-                    setIsLoading(false);
-                  }}
-                  isLoading={isLoading}
-                />
-              ) : (
-                <LeadsGallery
-                  leads={allLeads}
-                  onSaveLead={handleSaveLead}
-                />
-              )
-            ) : currentView === 'billing' ? (
-              <Billing
-                currentSubscription={subscription}
-                onUpgrade={handleUpgrade}
-                userEmail={user?.email}
-              />
-            ) : currentView === 'reason' ? (
-              <ReasonPage onBack={() => navigateTo('overview')} />
-            ) : currentView === 'reach' ? (
-              <ReachPage onBack={() => navigateTo('overview')} />
-            ) : currentView === 'settings' ? (
-              <SettingsPage
-                subscription={subscription}
-                artistProfile={artistProfile}
-                onBack={() => navigateTo('overview')}
-                onNavigateHome={() => navigateTo('overview')}
-                onLogout={handleLogout}
-              />
-            ) : (
-              <div className="flex-1 flex items-center justify-center text-white/30">
-                <div className="text-center">
-                  <p className="text-lg">Automations Module</p>
-                  <p className="text-sm">Coming Soon</p>
-                </div>
-              </div>
             )}
-          </main>
+            {showScrollToBottom && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); scrollToBottom('smooth'); }}
+                className="pointer-events-auto w-8 h-8 rounded-full bg-visio-teal text-black shadow-lg shadow-visio-teal/20 flex items-center justify-center hover:scale-105 transition-all"
+                aria-label="New messages below"
+              >
+                <ChevronDown size={16} />
+              </button>
+            )}
+          </div>
 
-          {/* Overlay for mobile sidebar */}
-          {
-            isSidebarOpen && (
+          {/* Scroll Rail (Far Right) */}
+          {isChatScrollable && (
+            <div className="absolute right-1 top-24 bottom-32 flex items-center justify-center z-20 pointer-events-none">
               <div
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
-                onClick={() => setIsSidebarOpen(false)}
-              />
-            )
-          }
+                ref={scrollRailRef}
+                onPointerDown={handleRailPointerDown}
+                className="pointer-events-auto w-3 h-44 rounded-full bg-white/5 border border-white/10 backdrop-blur-md flex items-start justify-center"
+                aria-hidden="true"
+              >
+                <button
+                  type="button"
+                  onPointerDown={handleThumbPointerDown}
+                  className="w-2 rounded-full bg-visio-teal/80 shadow-[0_0_12px_rgba(96,138,148,0.4)]"
+                  style={{
+                    height: `${scrollThumbSize}px`,
+                    transform: `translateY(${Math.max(0, scrollRailHeight - scrollThumbSize) * scrollProgress}px)`
+                  }}
+                  aria-label="Scroll chat"
+                />
+              </div>
+            </div>
+          )}
+
+        </div>
+
+
+        {/* Footer / Composer */}
+        <div className="flex-shrink-0 bg-gradient-to-t from-visio-bg via-visio-bg to-transparent pt-10 pb-2">
+          <Composer
+            onSend={handleSendMessage}
+            isLoading={isLoading}
+            pendingPrompt={pendingPrompt}
+            onPromptUsed={() => setPendingPrompt(null)}
+            portalLocked={portalLocked}
+            onRequirePortal={() => {
+              setToastMessage('Complete your profile in Settings to unlock Research + Leads.');
+              navigateTo('settings');
+            }}
+            webSearchEnabled={webSearchEnabled}
+            onToggleWebSearch={() => setWebSearchEnabled((prev) => !prev)}
+          />
+        </div>
+      </>
+    ) : currentView === 'leads' ? (
+      portalLocked ? (
+        <PortalGate
+          onRefresh={async () => {
+            setIsLoading(true);
+            const profile = await loadArtistProfile();
+            if (profile) {
+              setArtistProfile(profile);
+              setToastMessage("Profile Found! Unlocking...");
+            } else {
+              setToastMessage("Still no profile found. Please complete setup in Settings.");
+            }
+            setIsLoading(false);
+          }}
+          isLoading={isLoading}
+        />
+      ) : (
+        <LeadsGallery
+          leads={allLeads}
+          onSaveLead={handleSaveLead}
+        />
+      )
+    ) : currentView === 'billing' ? (
+      <Billing
+        currentSubscription={subscription}
+        onUpgrade={handleUpgrade}
+        userEmail={user?.email}
+      />
+    ) : currentView === 'reason' ? (
+      <ReasonPage onBack={() => navigateTo('overview')} />
+    ) : currentView === 'reach' ? (
+      <ReachPage onBack={() => navigateTo('overview')} />
+    ) : currentView === 'settings' ? (
+      <SettingsPage
+        subscription={subscription}
+        artistProfile={artistProfile}
+        onBack={() => navigateTo('overview')}
+        onNavigateHome={() => navigateTo('overview')}
+        onLogout={handleLogout}
+      />
+    ) : (
+      <div className="flex-1 flex items-center justify-center text-white/30">
+        <div className="text-center">
+          <p className="text-lg">Automations Module</p>
+          <p className="text-sm">Coming Soon</p>
+        </div>
+      </div>
+    )
+  }
+          </main >
+
+    {/* Overlay for mobile sidebar */ }
+  {
+    isSidebarOpen && (
+      <div
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+        onClick={() => setIsSidebarOpen(false)}
+      />
+    )
+  }
         </>
       )
-      }
+}
     </div >
   );
 }
