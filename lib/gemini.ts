@@ -156,7 +156,7 @@ export async function parseIntent(
 
         let prompt;
         if (isChatMode) {
-            prompt = `${systemPrompt}${historyText}\n\nUser: ${userMessage}\n\nRespond directly to the user as Visio. Do NOT use JSON. Write in natural, flowing paragraphs (no headings, no bullet lists unless explicitly requested). Avoid markdown styling. Be genuinely helpful and specific: aim for 4-8 sentences, and only ask one clarifying question if it truly helps move forward.`;
+            prompt = `${systemPrompt}${historyText}\n\nUser: ${userMessage}\n\nRespond directly to the user as Visio. Do NOT use JSON.\n\nIMPORTANT TOOL USE:\nIf the user asks about a specific person, artist, trend, or topic that you DO NOT know or need real-time info for, respond with ONLY:\nSEARCH_REQUEST: <exact query>\n\nExample:\nUser: "Who is Tony Duardo?"\nVisio: SEARCH_REQUEST: Tony Duardo bio music\n\nOtherwise, write in natural, flowing paragraphs (no headings, no bullet lists unless explicitly requested). Avoid markdown styling. Be genuinely helpful and specific: aim for 4-8 sentences.`;
         } else {
             prompt = `${systemPrompt}${historyText}\n\nUser: ${userMessage}\n\nRespond with ONLY valid JSON:`;
         }

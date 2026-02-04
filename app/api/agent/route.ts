@@ -153,8 +153,38 @@ export async function POST(request: NextRequest) {
             if (hasGemini) {
                 const intentMode = 'chat'; // Explicitly typed
                 // PASS KNOWLEDGE CONTEXT
-                logs.push('🧠 Visio: Thinking...');
+                logs.push('🧠 Visio: Thinking (Chat Mode)...');
                 intent = await parseIntent(userMessage, conversationHistory, artistContext || undefined, tier as 'instant' | 'business' | 'enterprise', intentMode, knowledgeContext);
+
+                // --- TOOL USE INTERCEPTOR ---
+                // Check if the AI wants to use a tool (Search)
+                if (intent.message && intent.message.startsWith('SEARCH_REQUEST:')) {
+                    const query = intent.message.replace('SEARCH_REQUEST:', '').trim();
+                    logs.push(`🛠️ Tool Triggered: Searching for "${query}"...`);
+
+                    // Execute Search
+                    const searchResults = await performSmartSearch(query, normalizeCountry(intent.filters?.country));
+
+                    // Format results for the AI
+                    const contextBlock = searchResults.map(r => `Title: ${r.name}\nSnippet: ${r.snippet}\nSource: ${r.source}`).join('\n\n');
+
+                    // Re-prompt Gemini with the results
+                    logs.push(`✅ Found ${searchResults.length} results. Re-prompting AI...`);
+                    const toolPrompt = `
+SYSTEM: You requested a search for "${query}". 
+Here are the results:
+${contextBlock}
+
+INSTRUCTION: Now, using these search results, answer the user's original question: "${userMessage}".
+Cite the sources naturally if relevant. Write in your standard Visio persona (warm, professional, strategic).
+`;
+                    // We call parseIntent again (effectively a "Tool Output" turn) but treat it as a new standard chat generation
+                    // We clear history for this specific turn or append? Appending is safer.
+                    const finalIntent = await parseIntent(toolPrompt, conversationHistory, artistContext || undefined, tier as any, 'chat', '');
+                    intent = finalIntent; // Replace the "SEARCH_REQUEST" intent with the final answer
+                }
+                // ---------------------------
+
             } else {
                 logs.push('⚠️ AI offline - using basic mode');
                 intent = parseBasicIntent(userMessage, lastSearchState);
