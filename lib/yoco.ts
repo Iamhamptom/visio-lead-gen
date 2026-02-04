@@ -115,3 +115,31 @@ export async function createYocoCheckout(params: CreateCheckoutParams): Promise<
 
     return response.json();
 }
+
+/**
+ * Charge a Yoco Token (Recurring/Saved Card)
+ */
+export async function chargeYocoToken(token: string, amountInCents: number, currency: string = 'ZAR'): Promise<any> {
+    const secretKey = getYocoSecretKey();
+    if (!secretKey) throw new Error('Yoco secret key not configured');
+
+    const response = await fetch(`${YOCO_API_BASE}/charges`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${secretKey}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            token,
+            amountInCents,
+            currency
+        })
+    });
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Unknown error' }));
+        throw new Error(error.message || 'Payment failed');
+    }
+
+    return response.json();
+}

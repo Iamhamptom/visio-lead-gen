@@ -120,20 +120,32 @@ body {
   /* App-like feel */
 }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar - Always Visible & Styled */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 10px; /* Slightly wider for easier grabbing */
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.02); /* Faint track to indicate scrollable area */
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.2); /* Higher visibility default */
+  border-radius: 5px;
+  border: 2px solid transparent; /* Creates padding effect */
+  background-clip: content-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.4); /* Bright on hover */
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }

@@ -13,10 +13,12 @@ import {
     Music,
     AlertCircle,
     Building,
-    Loader2
+    Loader2,
+    X,
 } from 'lucide-react';
 import { Subscription, SubscriptionTier } from '../types';
 import { InvoiceReceipt } from './InvoiceReceipt';
+import { YocoCardForm } from './YocoCardForm';
 
 interface BillingProps {
     currentSubscription?: Subscription;
@@ -168,8 +170,51 @@ export const Billing: React.FC<BillingProps> = ({
         }
     };
 
+    const [showUpdateModal, setShowUpdateModal] = useState(false);
+
+    const handlePaymentUpdate = async (token: string) => {
+        setIsProcessing(true);
+        try {
+            const res = await fetch('/api/payments/save-method', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token })
+            });
+
+            if (!res.ok) throw new Error('Failed to save card');
+
+            // Success
+            setShowUpdateModal(false);
+            // Ideally reload subscription or optimistically update
+            window.location.reload(); // Simple reload to fetch fresh data
+        } catch (err) {
+            setError('Failed to update payment method.');
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
     return (
-        <div className="h-full overflow-y-auto p-8 space-y-8">
+        <div className="h-full overflow-y-auto p-8 space-y-8 relative">
+            {/* Update Payment Modal */}
+            {showUpdateModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                    <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-md p-6 relative">
+                        <button
+                            onClick={() => setShowUpdateModal(false)}
+                            className="absolute top-4 right-4 text-white/40 hover:text-white"
+                        >
+                            <X size={20} />
+                        </button>
+                        <h3 className="text-xl font-bold text-white mb-6">Update Payment Method</h3>
+                        <YocoCardForm
+                            onSuccess={handlePaymentUpdate}
+                            onError={(msg) => setError(msg)}
+                        />
+                    </div>
+                </div>
+            )}
+
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold text-white mb-2">Billing & Subscription</h1>
@@ -222,7 +267,7 @@ export const Billing: React.FC<BillingProps> = ({
                     </div>
                 </div>
 
-                {/* Payment Method Stub (Stitch Ready) */}
+                {/* Payment Method Card */}
                 <div className="bg-white/5 border border-white/10 rounded-3xl p-8 flex flex-col justify-between">
                     <div>
                         <div className="flex items-center justify-between mb-6">
@@ -231,13 +276,25 @@ export const Billing: React.FC<BillingProps> = ({
                         </div>
                         <div className="flex items-center gap-4 mb-2">
                             <div className="w-12 h-8 bg-white/10 rounded flex items-center justify-center">
-                                <span className="text-xs font-bold text-white/60">VISA</span>
+                                <span className="text-xs font-bold text-white/60 uppercase">
+                                    {currentSubscription.paymentMethod?.brand || 'VISA'}
+                                </span>
                             </div>
-                            <span className="text-white font-mono">•••• 4242</span>
+                            <span className="text-white font-mono">
+                                •••• {currentSubscription.paymentMethod?.last4 || '4242'}
+                            </span>
                         </div>
-                        <p className="text-xs text-white/40">Expires 12/28</p>
+                        <p className="text-xs text-white/40">
+                            {currentSubscription.paymentMethod ? `Expires ${currentSubscription.paymentMethod.expiry}` : 'No saved card'}
+                        </p>
                     </div>
-                    <button className="text-visio-accent text-sm font-medium hover:text-white transition-colors flex items-center gap-2 mt-6">
+                    <button
+                        onClick={() => {
+                            console.log('Update Details clicked');
+                            setShowUpdateModal(true);
+                        }}
+                        className="text-visio-accent text-sm font-medium hover:text-white transition-colors flex items-center gap-2 mt-6"
+                    >
                         Update Details
                         <ArrowUpRight size={14} />
                     </button>

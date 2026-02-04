@@ -70,6 +70,7 @@ export default function Home() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<{ setInput: (text: string) => void }>(null);
@@ -822,11 +823,23 @@ export default function Home() {
               <>
                 {/* Chat Area - Adjusted padding for fixed headers */}
                 {/* Chat Area - Adjusted padding for fixed headers */}
+<<<<<<< HEAD
                 <div
                   ref={chatScrollRef}
                   onScroll={handleChatScroll}
                   className="flex-1 min-h-0 overflow-y-auto scroll-smooth touch-pan-y px-4 md:px-0 pb-32 relative"
                   style={{ WebkitOverflowScrolling: 'touch' }}
+=======
+                {/* Chat Scroll Container */}
+                <div
+                  className="flex-1 min-h-0 overflow-y-auto px-4 md:px-0 pb-32 relative custom-scrollbar-y"
+                  onScroll={(e) => {
+                    const target = e.currentTarget;
+                    const isAtBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 100;
+                    if (isAtBottom && showScrollButton) setShowScrollButton(false);
+                    if (!isAtBottom && !showScrollButton) setShowScrollButton(true);
+                  }}
+>>>>>>> da9fef7117c5e960be1fe6c8f4ed952657c2f60d
                 >
                   {!artistProfile ? (
                     <PortalGate
@@ -852,6 +865,7 @@ export default function Home() {
                     </div>
                   )}
 
+<<<<<<< HEAD
                   {/* Scroll controls (right side) */}
                   {(showScrollToTop || showScrollToBottom) && (
                     <div className="pointer-events-none absolute right-3 bottom-6 flex flex-col gap-2 items-center">
@@ -877,7 +891,11 @@ export default function Home() {
                       )}
                     </div>
                   )}
+=======
+                  {/* NOTE: Floating Scroll Button Removed in favor of enhanced native scrollbar per user request */}
+>>>>>>> da9fef7117c5e960be1fe6c8f4ed952657c2f60d
                 </div>
+
 
                 {/* Footer / Composer */}
                 <div className="flex-shrink-0 bg-gradient-to-t from-visio-bg via-visio-bg to-transparent pt-10 pb-2">

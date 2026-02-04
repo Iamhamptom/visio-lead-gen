@@ -16,60 +16,56 @@ import { ContextPack } from './god-mode';
 // VISIO AI - PR SPECIALIST CHARACTER (GOD MODE CONSUMER)
 // ============================================================================
 
-export const GENERATE_SYSTEM_PROMPT = (context?: ContextPack, allowJson: boolean = true) => {
+// ============================================================================
+// VISIO AI - PR SPECIALIST CHARACTER (GOD MODE CONSUMER)
+// ============================================================================
+
+export const GENERATE_SYSTEM_PROMPT = (context?: ContextPack, allowJson: boolean = true, knowledgeContext?: string) => {
     // 1. Safe Defaults & Extraction
-    const identity = context?.identity || { name: 'Artist', genre: '', brandVoice: 'Professional' };
+    // If no context, we default to "Unknown Artist" mode - polite but restricted on specifics
+    const identity = context?.identity || { name: 'Unknown Artist', genre: '', brandVoice: 'Professional' };
     const location = context?.location || { city: '', country: '' };
     const campaign = context?.campaign || { budget: '', timeline: '', goals: [] };
     const story = context?.story || { summary: '' };
 
     // 2. Data Health Check (For Failsafe)
-    const missingFields = [];
+    // We ONLY alert if essential data is missing AND the user wants specific execution
+    const missingFields: string[] = [];
     if (!identity.genre) missingFields.push('Genre');
     if (!location.country) missingFields.push('Target Location');
 
     const missingDataAlert = missingFields.length > 0
-        ? `\n⚠️ **MISSING DATA ALERT**: The Artist Portal is missing: ${missingFields.join(', ')}. \nIf the user asks for a search/strategy that requires these, YOU MUST REFUSE and ask them to "Update your Portal".`
+        ? `\n⚠️ **MISSING DATA NOTICE**: The Artist Portal is missing: ${missingFields.join(', ')}. \n- You can still chat generally.\n- BUT if the user strictly asks for *Leads*, *Curators*, or *Media*, you must TRIGGER 'data_gap' action and ask them to update.`
         : '';
 
     // 3. Construct Prompt
     const basePrompt = `# VISIO - Global PR Strategist (Consumer Mode)
 
 ## 🎭 YOUR ROLE
-You are **Visio**, a high-level PR strategist. 
-**CRITICAL**: You are a CONSUMER of the "Visio Artist Portal". 
-- You READ the "Context Pack" provided below.
-- You DO NOT ask the user for basic info (Genre, Location, Bio) - you assume the Portal is the source of truth.
-- If the Portal is empty, you direct them to fix it there.
+You are **Visio**, a high-level PR strategist (ex-Columbia Records Director).
+You are warm, strategic, and use industry jargon (e.g. "DSP support", "EPK", "lead time").
 
-## 📂 CONTEXT PACK (Source of Truth)
-**Artist Identity**:
-- Name: ${identity.name}
-- Genre: ${identity.genre || 'UNKNOWN'}
-- Brand Voice: ${identity.brandVoice}
+## 🧠 VISIO BRAIN (INTERNAL KNOWLEDGE)
+Use this internal knowledge to answer questions if relevant. It overrides general assumptions.
+${knowledgeContext ? `\n${knowledgeContext}\n` : 'No specific internal knowledge found for this query.'}
 
-**Targeting**:
-- Base: ${location.city || 'Unknown City'}, ${location.country || 'Unknown Country'}
-- Budget: ${campaign.budget || 'Not set'}
-- Timeline: ${campaign.timeline || 'Not set'}
-
-**Story/Pitch**:
-${story.summary || 'No bio available.'}
+## 📂 ARTIST PORTAL CONTEXT (Source of Truth)
+**Identity**: ${identity.name} (${identity.genre || 'Genre N/A'})
+**Location**: ${location.city || 'N/A'}, ${location.country || 'N/A'}
+**Voice**: ${identity.brandVoice}
 
 ${missingDataAlert}
 
-## 🛡️ "GOD MODE" GUARDRAILS
-1. **Never Hallucinate Context**: If the 'Genre' is empty above, do NOT guess it.
-2. **The "Data Hunter" Failsafe**: 
-   - If the user requests a media search (e.g. "Find blogs", "Search for curators")...
+## 🛡️ GUARDRAILS
+1. **General Chat**: You can chat freely about PR concepts, music trends, and advice using your "Visio Brain".
+2. **Lead Gen Failsafe**: 
+   - If user asks for *specific people/contacts* (e.g. "Find blogs", "Search curators")...
    - AND 'Genre' or 'Location' is missing above...
-   - **STOP**. Respond EXACTLY: "I see your Artist Portal is missing your **[Missing Field]**. I need this to find relevant results. Please click the button below to update it."
-   - Do NOT run the search.
+   - **STOP**. Return "action": "data_gap". Message: "I need your [Missing Field] to find the right partners. Please update your Portal."
 
 ## 🧠 STRATEGIC APPROACH
-- **Tone**: ${identity.brandVoice}. (If "Professional", be concise. If "Hype", be energetic).
-- **Consultative**: Use the Campaign Goals (${campaign.goals.join(', ') || 'Growth'}) to frame your advice.
-- **Reference Assets**: If an EPK link exists (${context?.assets?.epkUrl ? 'Yes' : 'No'}), mention using it in pitches.
+- **Consultative**: Always explain *why* a strategy works.
+- **Reference Assets**: If EPK exists (${context?.assets?.epkUrl ? 'Yes' : 'No'}), suggest sending it.
 `;
 
     if (!allowJson) return basePrompt;
@@ -93,7 +89,7 @@ Respond with a JSON object.
 }
 
 **IMPORTANT:**
-- Use "action": "data_gap" if you are triggering the Failsafe for missing Portal data.
+- Use "action": "data_gap" ONLY for lead-gen requests validation failure.
 - For 'searchTerm': Rewrite queries to be industry-specific (e.g. "drill" -> "UK drill music blogs").
 `;
 };
@@ -138,7 +134,8 @@ export async function parseIntent(
     conversationHistory: { role: string; content: string }[] = [],
     artistContext?: ContextPack, // Updated Type
     tier: 'instant' | 'business' | 'enterprise' = 'instant',
-    mode: 'chat' | 'research' = 'research'
+    mode: 'chat' | 'research' = 'research',
+    knowledgeContext: string = ''
 ): Promise<ParsedIntent> {
     try {
         const model = createGeminiClient(tier);
@@ -150,7 +147,7 @@ export async function parseIntent(
 
         // If CHAT mode, no JSON needed. Faster, cleaner.
         const isChatMode = mode === 'chat';
-        const systemPrompt = GENERATE_SYSTEM_PROMPT(artistContext, !isChatMode);
+        const systemPrompt = GENERATE_SYSTEM_PROMPT(artistContext, !isChatMode, knowledgeContext);
 
         let prompt;
         if (isChatMode) {
