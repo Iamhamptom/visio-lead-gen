@@ -275,16 +275,26 @@ export default function Home() {
   }, [sessions, user]);
 
   // Scroll on new message
+  const lastMessageIdRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (currentView === 'dashboard') {
-      scrollToBottom();
+      const activeMsgs = sessions.find(s => s.id === activeSessionId)?.messages || [];
+      const lastedMsg = activeMsgs[activeMsgs.length - 1];
+
+      if (lastedMsg && lastedMsg.id !== lastMessageIdRef.current) {
+        lastMessageIdRef.current = lastedMsg.id;
+        scrollToBottom();
+      }
     }
   }, [sessions, activeSessionId, currentView]);
 
   const scrollToBottom = () => {
+    // Use instant scroll to prevent "fighting" user interaction
+    // Small timeout ensures DOM is painted
     setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
+      messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' });
+    }, 50);
   };
 
   // Listen for command menu events
