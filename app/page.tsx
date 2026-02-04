@@ -69,6 +69,7 @@ export default function Home() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<{ setInput: (text: string) => void }>(null);
@@ -723,7 +724,15 @@ export default function Home() {
               <>
                 {/* Chat Area - Adjusted padding for fixed headers */}
                 {/* Chat Area - Adjusted padding for fixed headers */}
-                <div className="flex-1 min-h-0 overflow-y-auto px-4 md:px-0 pb-32 relative">
+                {/* Chat Scroll Container */}
+                <div
+                  className="flex-1 min-h-0 overflow-y-auto px-4 md:px-0 pb-32 relative scroll-smooth"
+                  onScroll={(e) => {
+                    const target = e.currentTarget;
+                    const isAtBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 100;
+                    setShowScrollButton(!isAtBottom);
+                  }}
+                >
                   {!artistProfile ? (
                     <PortalGate
                       onRefresh={async () => {
@@ -747,7 +756,19 @@ export default function Home() {
                       <div ref={messagesEndRef} className="h-4" />
                     </div>
                   )}
+
+                  {/* Floating Scroll Button */}
+                  {showScrollButton && (
+                    <button
+                      onClick={scrollToBottom}
+                      className="fixed bottom-32 right-8 md:right-[30%] z-50 bg-visio-teal text-black p-3 rounded-full shadow-lg hover:bg-visio-teal/80 transition-all animate-in fade-in slide-in-from-bottom-4"
+                      aria-label="Scroll to bottom"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14" /><path d="m19 12-7 7-7-7" /></svg>
+                    </button>
+                  )}
                 </div>
+
 
                 {/* Footer / Composer */}
                 <div className="flex-shrink-0 bg-gradient-to-t from-visio-bg via-visio-bg to-transparent pt-10 pb-2">
