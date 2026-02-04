@@ -726,11 +726,12 @@ export default function Home() {
                 {/* Chat Area - Adjusted padding for fixed headers */}
                 {/* Chat Scroll Container */}
                 <div
-                  className="flex-1 min-h-0 overflow-y-auto px-4 md:px-0 pb-32 relative scroll-smooth"
+                  className="flex-1 min-h-0 overflow-y-auto px-4 md:px-0 pb-32 relative custom-scrollbar-y"
                   onScroll={(e) => {
                     const target = e.currentTarget;
                     const isAtBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 100;
-                    setShowScrollButton(!isAtBottom);
+                    if (isAtBottom && showScrollButton) setShowScrollButton(false);
+                    if (!isAtBottom && !showScrollButton) setShowScrollButton(true);
                   }}
                 >
                   {!artistProfile ? (
@@ -757,16 +758,7 @@ export default function Home() {
                     </div>
                   )}
 
-                  {/* Floating Scroll Button */}
-                  {showScrollButton && (
-                    <button
-                      onClick={scrollToBottom}
-                      className="fixed bottom-32 right-8 md:right-[30%] z-50 bg-visio-teal text-black p-3 rounded-full shadow-lg hover:bg-visio-teal/80 transition-all animate-in fade-in slide-in-from-bottom-4"
-                      aria-label="Scroll to bottom"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14" /><path d="m19 12-7 7-7-7" /></svg>
-                    </button>
-                  )}
+                  {/* NOTE: Floating Scroll Button Removed in favor of enhanced native scrollbar per user request */}
                 </div>
 
 
