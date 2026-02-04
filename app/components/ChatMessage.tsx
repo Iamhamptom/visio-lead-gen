@@ -110,11 +110,16 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSaveLead })
                 <div className="flex flex-col gap-2 min-w-0 w-full">
                     {/* Header for Bot */}
                     {!isUser && (
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <span className="text-xs font-medium text-visio-teal/80">Visio AI</span>
                             {message.webResults && message.webResults.length > 0 && (
                                 <span className="text-[10px] uppercase tracking-widest text-visio-teal/70 border border-visio-teal/30 bg-visio-teal/10 px-2 py-0.5 rounded-full">
                                     Web Search Used
+                                </span>
+                            )}
+                            {message.toolUsed && message.toolUsed !== 'web_search' && (
+                                <span className="text-[10px] uppercase tracking-widest text-white/60 border border-white/10 bg-white/5 px-2 py-0.5 rounded-full">
+                                    Tool: {message.toolUsed.replace(/_/g, ' ')}
                                 </span>
                             )}
                         </div>

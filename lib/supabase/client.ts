@@ -5,11 +5,13 @@ import { createClient } from '@supabase/supabase-js';
  * Uses the anon key for RLS-protected operations.
  */
 export function createSupabaseClient() {
+    const isBrowser = typeof window !== 'undefined';
     // Safety check for build environments where secrets might be missing
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
         console.warn('⚠️ Supabase keys missing. Initializing stub client for build process.');
         // Return a proxy or stub to prevent crash during import/build
         return {
+            __isStub: true,
             auth: {
                 getUser: async () => ({ data: { user: null }, error: null }),
                 getSession: async () => ({ data: { session: null }, error: null }),
@@ -24,7 +26,6 @@ export function createSupabaseClient() {
         } as any;
     }
 
-    const isBrowser = typeof window !== 'undefined';
     return createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,

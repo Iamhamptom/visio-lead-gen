@@ -95,7 +95,7 @@ function parseBasicIntent(message: string, lastState?: any): ParsedIntent {
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { message, conversationHistory = [], lastSearchState, tier = 'instant', mode = 'chat', webSearchEnabled = true } = body;
+        const { message, conversationHistory = [], lastSearchState, tier = 'instant', mode = 'chat', webSearchEnabled = true, activeTool = 'none' } = body;
         const userMessage = message || body.query;
 
         if (!userMessage) {
@@ -109,6 +109,7 @@ export async function POST(request: NextRequest) {
         const logs: string[] = [];
         let leads: LeadResponse[] = [];
         let webResults: WebResult[] = [];
+        let toolUsed: string | null = null;
         let intent: ParsedIntent;
 
         // 1. FETCH ARTIST CONTEXT (Source of Truth)
@@ -163,7 +164,22 @@ export async function POST(request: NextRequest) {
                 const intentMode = 'chat'; // Explicitly typed
                 // PASS KNOWLEDGE CONTEXT
                 logs.push('🧠 Visio: Thinking (Chat Mode)...');
-                intent = await parseIntent(userMessage, conversationHistory, artistContext || undefined, tier as 'instant' | 'business' | 'enterprise', intentMode, knowledgeContext);
+                const toolInstructions: Record<string, string> = {
+                    web_search: 'Use SEARCH_REQUEST if the user needs fresh facts. Keep the query short and specific.',
+                    summarize_chat: 'Summarize the conversation so far in 4-6 sentences. Focus on decisions and next steps. No headings.',
+                    draft_pitch: 'Write a concise PR pitch email. Include a subject line, then 2 short paragraphs. Keep it warm and strategic.',
+                    press_release: 'Draft a short press release. Provide a headline, then 2 brief paragraphs. Keep it factual and clean.',
+                    social_pack: 'Create 5 social post ideas with short captions. Keep each to 1-2 sentences.',
+                    market_research: 'Give a quick market snapshot with key trends and what they mean for the artist. 4-6 sentences.'
+                };
+                const toolInstruction = toolInstructions[activeTool] || '';
+                const toolWrappedMessage = toolInstruction
+                    ? `${toolInstruction}\n\nUser request: ${userMessage}`
+                    : userMessage;
+                if (toolInstruction && activeTool !== 'web_search') {
+                    toolUsed = activeTool;
+                }
+                intent = await parseIntent(toolWrappedMessage, conversationHistory, artistContext || undefined, tier as 'instant' | 'business' | 'enterprise', intentMode, knowledgeContext);
 
                 // --- TOOL USE INTERCEPTOR ---
                 // Check if the AI wants to use a tool (Search)
@@ -188,6 +204,7 @@ export async function POST(request: NextRequest) {
                             source: r.source,
                             date: r.date
                         }));
+                        toolUsed = toolUsed || 'web_search';
 
                         // Format results for the AI
                         const contextBlock = searchResults.map(r => `Title: ${r.name}\nSnippet: ${r.snippet}\nSource: ${r.source}`).join('\n\n');
@@ -283,6 +300,7 @@ Cite the sources naturally if relevant. Write in your standard Visio persona (wa
             message: assistantMessage,
             leads: leads,
             webResults,
+            toolUsed,
             logs: logs,
             intent: intent,
             meta: {

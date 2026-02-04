@@ -80,6 +80,7 @@ export interface Message {
     timestamp: number;
     leads?: Lead[];
     webResults?: WebResult[];
+    toolUsed?: ToolId;
     isThinking?: boolean;
     mode?: AgentMode;
 }
@@ -91,6 +92,15 @@ export interface WebResult {
     source?: string;
     date?: string;
 }
+
+export type ToolId =
+    | 'none'
+    | 'web_search'
+    | 'summarize_chat'
+    | 'draft_pitch'
+    | 'press_release'
+    | 'social_pack'
+    | 'market_research';
 
 export type AgentMode = 'chat' | 'research';
 

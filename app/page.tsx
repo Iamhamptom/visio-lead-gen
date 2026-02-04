@@ -14,12 +14,14 @@ import { DashboardOverview } from './components/DashboardOverview';
 import ReasonPage from './reason/page';
 import ReachPage from './reach/page';
 import { Toast } from './components/Toast';
-import { Message, Role, Campaign, ViewMode, Lead, Session, ArtistProfile, Subscription, SubscriptionTier, AgentMode } from './types';
+import { ToolsPanel } from './components/ToolsPanel';
+import { Message, Role, Campaign, ViewMode, Lead, Session, ArtistProfile, Subscription, SubscriptionTier, AgentMode, ToolId } from './types';
 import { AITier } from './components/Composer';
 import { Menu, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import { BackgroundBeams } from './components/ui/background-beams';
 import { CommandMenu, COMMAND_ACTIONS, ACTION_PROMPTS } from './components/ui/command-menu';
 import { useAuth } from '@/lib/auth-context';
+import { supabase } from '@/lib/supabase/client';
 import {
   saveArtistProfile,
   loadArtistProfile,
@@ -50,7 +52,7 @@ const createInitialSession = (): Session => ({
 });
 
 export default function Home() {
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, loading: authLoading, authStale, signOut } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const userId = user?.id;
 
@@ -89,6 +91,7 @@ export default function Home() {
   const [scrollThumbSize, setScrollThumbSize] = useState(32);
   const [scrollRailHeight, setScrollRailHeight] = useState(0);
   const [webSearchEnabled, setWebSearchEnabled] = useState(true);
+  const [activeTool, setActiveTool] = useState<ToolId>('none');
 
   // Helper to update view and URL
   const navigateTo = (view: ViewMode) => {
@@ -170,7 +173,7 @@ export default function Home() {
 
     const checkUserStatus = async () => {
       const path = window.location.pathname;
-      const isLoggedIn = !!user;
+      const isLoggedIn = !!user || authStale;
 
       let hasCompletedOnboarding = false;
       let hasProfile = false;
@@ -237,7 +240,7 @@ export default function Home() {
     // Listen for back/forward (simplified)
     window.addEventListener('popstate', checkUserStatus);
     return () => window.removeEventListener('popstate', checkUserStatus);
-  }, [user, authLoading]);
+  }, [user, authStale, authLoading]);
 
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup');
 
@@ -283,7 +286,7 @@ export default function Home() {
   // If auth is lost (sign out or expired session), clear user-scoped state so we don't leak data across accounts.
   useEffect(() => {
     if (authLoading) return;
-    if (user) return;
+    if (user || authStale) return;
 
     setSessions([]);
     setActiveSessionId('');
@@ -295,7 +298,7 @@ export default function Home() {
     });
     setArtistProfile(null);
     setIsSidebarOpen(false);
-  }, [user, authLoading]);
+  }, [user, authStale, authLoading]);
 
 
 
@@ -770,7 +773,8 @@ export default function Home() {
           artistContext: artistProfile, // Ignored by backend (source of truth is server fetch)
           tier,
           mode,
-          webSearchEnabled
+          webSearchEnabled,
+          activeTool
         })
       });
 
@@ -801,6 +805,7 @@ export default function Home() {
             content: data.message || "Done.",
             leads: data.leads || [],
             webResults: data.webResults || [],
+            toolUsed: data.toolUsed || undefined,
             isThinking: false
           };
         }
@@ -929,6 +934,20 @@ export default function Home() {
         </div>
       )}
 
+      {authStale && (
+        <div className="fixed top-4 left-4 z-50 max-w-sm bg-amber-500/10 border border-amber-400/30 text-amber-100 text-xs px-4 py-3 rounded-xl backdrop-blur-md shadow-lg">
+          <div className="font-semibold mb-1">Reconnecting Session</div>
+          <div className="text-amber-100/80">We’re keeping you signed in while we re-check your session.</div>
+        </div>
+      )}
+
+      {typeof window !== 'undefined' && (supabase as any)?.__isStub && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-md bg-red-600/10 border border-red-500/40 text-red-100 text-xs px-4 py-3 rounded-xl backdrop-blur-md shadow-lg">
+          <div className="font-semibold mb-1">Supabase Keys Missing</div>
+          <div className="text-red-100/80">Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` on the live host to prevent logouts.</div>
+        </div>
+      )}
+
       {/* Dynamic Background with Premium Beams */}
       <BackgroundBeams className="fixed inset-0 z-0 pointer-events-none" />
 
@@ -1049,6 +1068,62 @@ export default function Home() {
                       <div ref={messagesEndRef} className="h-4" />
                     </div>
                   </div>
+
+                  {/* Tools Panel */}
+                  <div className="hidden lg:block absolute right-6 top-28 z-30">
+                    <ToolsPanel
+                      activeTool={activeTool}
+                      onSelect={(tool) => setActiveTool(tool)}
+                      webSearchEnabled={webSearchEnabled}
+                    />
+                  </div>
+
+                  {/* Scroll Controls (Floating, non-blocking) */}
+                  <div className="pointer-events-none absolute right-3 bottom-32 flex flex-col items-center gap-2 z-30">
+                    {showScrollToTop && (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); scrollToTop(); }}
+                        className="pointer-events-auto w-8 h-8 rounded-full bg-white/10 text-white shadow-lg flex items-center justify-center hover:scale-105 transition-all"
+                        aria-label="Scroll to top"
+                      >
+                        <ChevronUp size={16} />
+                      </button>
+                    )}
+                    {showScrollToBottom && (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); scrollToBottom('smooth'); }}
+                        className="pointer-events-auto w-8 h-8 rounded-full bg-visio-teal text-black shadow-lg shadow-visio-teal/20 flex items-center justify-center hover:scale-105 transition-all"
+                        aria-label="New messages below"
+                      >
+                        <ChevronDown size={16} />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Scroll Rail (Far Right) */}
+                  {isChatScrollable && (
+                    <div className="absolute right-1 top-24 bottom-32 flex items-center justify-center z-20 pointer-events-none">
+                      <div
+                        ref={scrollRailRef}
+                        onPointerDown={handleRailPointerDown}
+                        className="pointer-events-auto w-3 h-44 rounded-full bg-white/5 border border-white/10 backdrop-blur-md flex items-start justify-center"
+                        aria-hidden="true"
+                      >
+                        <button
+                          type="button"
+                          onPointerDown={handleThumbPointerDown}
+                          className="w-2 rounded-full bg-visio-teal/80 shadow-[0_0_12px_rgba(96,138,148,0.4)]"
+                          style={{
+                            height: `${scrollThumbSize}px`,
+                            transform: `translateY(${Math.max(0, scrollRailHeight - scrollThumbSize) * scrollProgress}px)`
+                          }}
+                          aria-label="Scroll chat"
+                        />
+                      </div>
+                    </div>
+                  )}
 
                 </div>
 
