@@ -124,14 +124,13 @@ body {
   background-color: var(--color-visio-bg);
   color: #ffffff;
   font-family: var(--font-outfit), system-ui, sans-serif;
-  overflow: hidden;
-  /* App-like feel */
+  /* FIX: Use 'clip' instead of 'hidden' - allows scroll events to pass through */
+  overflow: clip;
 }
 
 /* Custom Scrollbar - Always Visible & Styled */
 ::-webkit-scrollbar {
   width: 10px;
-  /* Slightly wider for easier grabbing */
   height: 10px;
 }
 
@@ -141,56 +140,57 @@ body {
   }
 
   /* HIGH VISIBILITY SCROLLBAR - FORCED */
-  /* This ensures the scrollbar is always visible, wide, and bright */
-
-  /* For Firefox */
   html,
   body,
   .overflow-y-auto {
     scrollbar-width: auto;
-    /* Revert to standard width (not thin) */
     scrollbar-color: rgba(255, 255, 255, 0.4) transparent;
   }
 
   /* For Chrome, Safari, Edge */
   ::-webkit-scrollbar {
     width: 14px;
-    /* Wide enough to grab */
     height: 14px;
     background: transparent;
-    /* Track */
   }
 
   ::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.05);
-    /* Faint visible track */
   }
 
   ::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.4);
-    /* Bright thumb */
     border: 3px solid transparent;
-    /* Pushes thumb inside for "floating" look */
     background-clip: content-box;
     border-radius: 99px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.7);
-    /* Brighter on hover */
     border: 3px solid transparent;
     background-clip: content-box;
   }
 }
 
-scrollbar-gutter: stable both-edges;
-scroll-behavior: smooth;
+/* Smooth Chat Scroll */
+.visio-chat-scroll {
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable both-edges;
+  scroll-behavior: smooth;
 }
 
-/* Force Text Selection Utility */
+/* Force Text Selection - High Specificity */
+.select-text,
 .allow-select,
-.select-text {
+.markdown-content,
+.markdown-content * {
   -webkit-user-select: text !important;
   user-select: text !important;
   cursor: text;
+}
+
+/* Selection Highlight Color */
+::selection {
+  background-color: rgba(96, 138, 148, 0.4);
+  color: white;
 }

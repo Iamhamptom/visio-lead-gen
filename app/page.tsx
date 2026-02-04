@@ -14,14 +14,12 @@ import { DashboardOverview } from './components/DashboardOverview';
 import ReasonPage from './reason/page';
 import ReachPage from './reach/page';
 import { Toast } from './components/Toast';
-import { ToolsPanel } from './components/ToolsPanel';
-import { Message, Role, Campaign, ViewMode, Lead, Session, ArtistProfile, Subscription, SubscriptionTier, AgentMode, ToolId } from './types';
+import { Message, Role, Campaign, ViewMode, Lead, Session, ArtistProfile, Subscription, SubscriptionTier, AgentMode } from './types';
 import { AITier } from './components/Composer';
 import { Menu, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import { BackgroundBeams } from './components/ui/background-beams';
 import { CommandMenu, COMMAND_ACTIONS, ACTION_PROMPTS } from './components/ui/command-menu';
 import { useAuth } from '@/lib/auth-context';
-import { supabase } from '@/lib/supabase/client';
 import {
   saveArtistProfile,
   loadArtistProfile,
@@ -52,9 +50,8 @@ const createInitialSession = (): Session => ({
 });
 
 export default function Home() {
-  const { user, loading: authLoading, authStale, signOut } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const userId = user?.id;
 
   // State: Views and Sessions
   const [currentView, setCurrentView] = useState<ViewMode>('landing'); // Default safe state
@@ -73,25 +70,16 @@ export default function Home() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [persistenceWarning, setPersistenceWarning] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<{ setInput: (text: string) => void }>(null);
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const isChatAtBottomRef = useRef(true);
   const scrollRafRef = useRef<number | null>(null);
-  const scrollRailRef = useRef<HTMLDivElement | null>(null);
-  const isDraggingThumbRef = useRef(false);
-  const dragOffsetRef = useRef(0);
 
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
-  const [isChatScrollable, setIsChatScrollable] = useState(false);
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const [scrollThumbSize, setScrollThumbSize] = useState(32);
-  const [scrollRailHeight, setScrollRailHeight] = useState(0);
   const [webSearchEnabled, setWebSearchEnabled] = useState(true);
-  const [activeTool, setActiveTool] = useState<ToolId>('none');
 
   // Helper to update view and URL
   const navigateTo = (view: ViewMode) => {
@@ -104,67 +92,6 @@ export default function Home() {
     }
   };
 
-  const localSessionsKey = useCallback(() => `visio:sessions:${userId || 'guest'}`, [userId]);
-  const localLastSessionKey = useCallback(() => `visio:lastSessionId:${userId || 'guest'}`, [userId]);
-
-  const loadLocalSessions = useCallback((): Session[] => {
-    if (typeof window === 'undefined') return [];
-    try {
-      const raw = window.localStorage.getItem(localSessionsKey());
-      if (!raw) return [];
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? (parsed as Session[]) : [];
-    } catch {
-      return [];
-    }
-  }, [localSessionsKey]);
-
-  const saveLocalSessions = useCallback((nextSessions: Session[]) => {
-    if (typeof window === 'undefined') return;
-    try {
-      window.localStorage.setItem(localSessionsKey(), JSON.stringify(nextSessions));
-    } catch {
-      // Ignore storage errors (private mode, etc.)
-    }
-  }, [localSessionsKey]);
-
-  const attemptRemoteSave = useCallback(async (nextSessions: Session[]) => {
-    if (!user) return true;
-    try {
-      const ok = await saveSessions(nextSessions);
-      if (!ok) {
-        setPersistenceWarning('Supabase sync failed. Using local storage only.');
-        return false;
-      }
-      setPersistenceWarning(null);
-      return true;
-    } catch (error) {
-      console.error('Supabase sync failed:', error);
-      setPersistenceWarning('Supabase sync failed. Using local storage only.');
-      return false;
-    }
-  }, [user]);
-
-  const mergeSessions = useCallback((localSessions: Session[], remoteSessions: Session[]) => {
-    const byId = new Map<string, Session>();
-    const all = [...localSessions, ...remoteSessions];
-    for (const session of all) {
-      const existing = byId.get(session.id);
-      if (!existing) {
-        byId.set(session.id, session);
-        continue;
-      }
-      const existingCount = existing.messages?.length || 0;
-      const nextCount = session.messages?.length || 0;
-      if (nextCount > existingCount) {
-        byId.set(session.id, session);
-      } else if (session.lastUpdated > existing.lastUpdated) {
-        byId.set(session.id, session);
-      }
-    }
-    return Array.from(byId.values()).sort((a, b) => b.lastUpdated - a.lastUpdated);
-  }, []);
-
   // Handle Initial Load & PopState  
   // Handle Initial Load & Auth State check
   useEffect(() => {
@@ -173,7 +100,7 @@ export default function Home() {
 
     const checkUserStatus = async () => {
       const path = window.location.pathname;
-      const isLoggedIn = !!user || authStale;
+      const isLoggedIn = !!user;
 
       let hasCompletedOnboarding = false;
       let hasProfile = false;
@@ -240,7 +167,7 @@ export default function Home() {
     // Listen for back/forward (simplified)
     window.addEventListener('popstate', checkUserStatus);
     return () => window.removeEventListener('popstate', checkUserStatus);
-  }, [user, authStale, authLoading]);
+  }, [user, authLoading]);
 
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup');
 
@@ -278,7 +205,6 @@ export default function Home() {
 
 
   const [artistProfile, setArtistProfile] = useState<ArtistProfile | null>(null);
-  const portalLocked = !artistProfile;
 
 
   // Artist profile loaded in main effect above
@@ -286,7 +212,7 @@ export default function Home() {
   // If auth is lost (sign out or expired session), clear user-scoped state so we don't leak data across accounts.
   useEffect(() => {
     if (authLoading) return;
-    if (user || authStale) return;
+    if (user) return;
 
     setSessions([]);
     setActiveSessionId('');
@@ -298,7 +224,7 @@ export default function Home() {
     });
     setArtistProfile(null);
     setIsSidebarOpen(false);
-  }, [user, authStale, authLoading]);
+  }, [user, authLoading]);
 
 
 
@@ -348,37 +274,17 @@ export default function Home() {
   // Load Persistence
   useEffect(() => {
     const fetchSessions = async () => {
-      if (authLoading) return;
-
-      const cached = loadLocalSessions();
-
-      if (!user) {
-        if (cached.length > 0) {
-          setSessions(cached);
-          const lastSessionId = typeof window !== 'undefined'
-            ? window.localStorage.getItem(localLastSessionKey())
-            : null;
-          const preferred = lastSessionId && cached.some(s => s.id === lastSessionId)
-            ? lastSessionId
-            : cached[0].id;
-          setActiveSessionId(preferred);
-          return;
-        }
-        handleNewChat();
-        return;
-      }
+      if (!user || authLoading) return;
 
       const loadedSessions = await loadSessions();
-      const merged = mergeSessions(cached, loadedSessions || []);
-      if (merged.length > 0) {
-        setSessions(merged);
-        saveLocalSessions(merged);
+      if (loadedSessions && loadedSessions.length > 0) {
+        setSessions(loadedSessions);
         const lastSessionId = typeof window !== 'undefined'
-          ? window.localStorage.getItem(localLastSessionKey())
+          ? window.localStorage.getItem(`visio:lastSessionId:${user.id}`)
           : null;
-        const preferred = lastSessionId && merged.some(s => s.id === lastSessionId)
+        const preferred = lastSessionId && loadedSessions.some(s => s.id === lastSessionId)
           ? lastSessionId
-          : merged[0].id;
+          : loadedSessions[0].id;
         setActiveSessionId(preferred);
       } else {
         handleNewChat();
@@ -389,28 +295,26 @@ export default function Home() {
     if (sessions.length === 0) {
       fetchSessions();
     }
-  }, [user, authLoading, loadLocalSessions, localLastSessionKey, mergeSessions, saveLocalSessions]);
+  }, [user, authLoading]);
 
-  // Persist last active session per-user (or guest) so returning users land back where they left off.
+  // Persist last active session per-user so returning users land back where they left off.
   useEffect(() => {
-    if (!activeSessionId) return;
+    if (!user || !activeSessionId) return;
     try {
-      window.localStorage.setItem(localLastSessionKey(), activeSessionId);
+      window.localStorage.setItem(`visio:lastSessionId:${user.id}`, activeSessionId);
     } catch {
       // Ignore storage errors (private mode, etc.)
     }
-  }, [activeSessionId, localLastSessionKey]);
+  }, [user, activeSessionId]);
 
   // Flush saves when the user backgrounds/leaves the app (common on mobile "home button").
   useEffect(() => {
+    if (!user) return;
     if (sessions.length === 0) return;
 
     const flush = () => {
       if (sessions.length === 0) return;
-      saveLocalSessions(sessions);
-      if (user) {
-        void attemptRemoteSave(sessions);
-      }
+      void saveSessions(sessions);
     };
 
     const handleVisibilityChange = () => {
@@ -426,22 +330,19 @@ export default function Home() {
       window.removeEventListener('beforeunload', flush);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [user, sessions, saveLocalSessions, attemptRemoteSave]);
+  }, [user, sessions]);
 
   // Save Persistence
   useEffect(() => {
     // Debounce save or just save on change
     // Using a simple timeout to avoid too many writes
-    if (sessions.length > 0) {
+    if (sessions.length > 0 && user) {
       const timer = setTimeout(() => {
-        saveLocalSessions(sessions);
-        if (user) {
-          void attemptRemoteSave(sessions);
-        }
+        saveSessions(sessions);
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [sessions, user, saveLocalSessions, attemptRemoteSave]);
+  }, [sessions, user]);
 
   const updateChatScrollState = useCallback(() => {
     const el = chatScrollRef.current;
@@ -449,21 +350,11 @@ export default function Home() {
 
     const threshold = 80;
     const atTop = el.scrollTop <= threshold;
-    const maxScroll = el.scrollHeight - el.clientHeight;
-    const atBottom = maxScroll - el.scrollTop <= threshold;
-    const scrollable = maxScroll > 4;
-    const progress = scrollable ? Math.min(1, Math.max(0, el.scrollTop / maxScroll)) : 1;
-    const railHeight = scrollRailRef.current?.clientHeight || 0;
-    const sizeRatio = el.clientHeight / Math.max(el.scrollHeight, 1);
-    const thumbSize = railHeight > 0 ? Math.max(28, Math.round(railHeight * sizeRatio)) : 32;
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= threshold;
 
     isChatAtBottomRef.current = atBottom;
-    setIsChatScrollable(scrollable);
-    setScrollProgress(progress);
-    setScrollThumbSize(thumbSize);
-    setScrollRailHeight(railHeight);
-    setShowScrollToTop(scrollable && !atTop);
-    setShowScrollToBottom(scrollable && !atBottom);
+    setShowScrollToTop(!atTop);
+    setShowScrollToBottom(!atBottom);
   }, []);
 
   const handleChatScroll = useCallback(() => {
@@ -471,16 +362,6 @@ export default function Home() {
     scrollRafRef.current = requestAnimationFrame(() => {
       updateChatScrollState();
     });
-  }, [updateChatScrollState]);
-
-  const handleChatWheel = useCallback((event: React.WheelEvent<HTMLDivElement>) => {
-    const el = chatScrollRef.current;
-    if (!el) return;
-    const maxScroll = el.scrollHeight - el.clientHeight;
-    if (maxScroll <= 0) return;
-    el.scrollTop += event.deltaY;
-    event.preventDefault();
-    updateChatScrollState();
   }, [updateChatScrollState]);
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
@@ -493,66 +374,6 @@ export default function Home() {
   const scrollToTop = useCallback(() => {
     chatScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
-
-  const handleRailPointerDown = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    const rail = scrollRailRef.current;
-    const el = chatScrollRef.current;
-    if (!rail || !el) return;
-
-    const railRect = rail.getBoundingClientRect();
-    const railHeight = railRect.height;
-    if (railHeight <= scrollThumbSize) return;
-
-    const offset = event.clientY - railRect.top - scrollThumbSize / 2;
-    const clamped = Math.max(0, Math.min(railHeight - scrollThumbSize, offset));
-    const ratio = clamped / (railHeight - scrollThumbSize);
-    el.scrollTop = ratio * (el.scrollHeight - el.clientHeight);
-    updateChatScrollState();
-  }, [scrollThumbSize, updateChatScrollState]);
-
-  const handleThumbPointerDown = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    const rail = scrollRailRef.current;
-    if (!rail) return;
-    isDraggingThumbRef.current = true;
-    const railRect = rail.getBoundingClientRect();
-    const thumbTop = (railRect.height - scrollThumbSize) * scrollProgress;
-    dragOffsetRef.current = event.clientY - railRect.top - thumbTop;
-  }, [scrollProgress, scrollThumbSize]);
-
-  useEffect(() => {
-    const handlePointerMove = (event: PointerEvent) => {
-      if (!isDraggingThumbRef.current) return;
-      const rail = scrollRailRef.current;
-      const el = chatScrollRef.current;
-      if (!rail || !el) return;
-
-      const railRect = rail.getBoundingClientRect();
-      const railHeight = railRect.height;
-      const track = railHeight - scrollThumbSize;
-      if (track <= 0) return;
-
-      const raw = event.clientY - railRect.top - dragOffsetRef.current;
-      const clamped = Math.max(0, Math.min(track, raw));
-      const ratio = clamped / track;
-      el.scrollTop = ratio * (el.scrollHeight - el.clientHeight);
-      updateChatScrollState();
-    };
-
-    const handlePointerUp = () => {
-      isDraggingThumbRef.current = false;
-    };
-
-    window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('pointerup', handlePointerUp);
-
-    return () => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', handlePointerUp);
-    };
-  }, [scrollThumbSize, updateChatScrollState]);
-
 
   // When switching sessions / entering the chat view, jump to the bottom.
   useEffect(() => {
@@ -670,9 +491,9 @@ export default function Home() {
     // Starter (R199) & Artiste (R570) -> Instant + Standard
     // Label+ -> All
     const RESTRICTIONS = {
-      'artist': ['instant', 'business'],
-      'starter': ['instant', 'standard', 'business'],
-      'artiste': ['instant', 'standard', 'business'],
+      'artist': ['instant'],
+      'starter': ['instant', 'standard'],
+      'artiste': ['instant', 'standard'],
       'starter_label': ['instant', 'standard', 'business'],
       'label': ['instant', 'standard', 'business', 'enterprise'],
       'agency': ['instant', 'standard', 'business', 'enterprise'],
@@ -693,13 +514,6 @@ export default function Home() {
       // Allow Research for Starter/Artiste but maybe limited? 
       // For now, strict block on Business/Enterprise TIER usage.
       // If generic 'research' mode is used with 'standard' tier, that's fine for Starter/Artiste.
-    }
-
-    // Check 3: Portal requirement for research + lead generation
-    if (portalLocked && mode === 'research') {
-      setToastMessage('Complete your profile in Settings to unlock Research + Leads.');
-      navigateTo('settings');
-      return;
     }
 
     // -------------------------------------
@@ -772,9 +586,7 @@ export default function Home() {
           conversationHistory: historyForApi,
           artistContext: artistProfile, // Ignored by backend (source of truth is server fetch)
           tier,
-          mode,
-          webSearchEnabled,
-          activeTool
+          mode
         })
       });
 
@@ -804,8 +616,6 @@ export default function Home() {
             ...msg,
             content: data.message || "Done.",
             leads: data.leads || [],
-            webResults: data.webResults || [],
-            toolUsed: data.toolUsed || undefined,
             isThinking: false
           };
         }
@@ -920,65 +730,41 @@ export default function Home() {
         <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
       )}
 
-      {/* Persistence Debug Banner */}
-      {persistenceWarning && (
-        <div className="fixed top-4 right-4 z-50 max-w-sm bg-red-500/10 border border-red-500/30 text-red-200 text-xs px-4 py-3 rounded-xl backdrop-blur-md shadow-lg">
-          <div className="font-semibold mb-1">Sync Warning</div>
-          <div className="text-red-100/80">{persistenceWarning}</div>
-          <button
-            onClick={() => setPersistenceWarning(null)}
-            className="mt-2 text-[10px] text-red-200/70 hover:text-red-100 underline underline-offset-2"
-          >
-            Dismiss
-          </button>
-        </div>
-      )}
-
-      {authStale && (
-        <div className="fixed top-4 left-4 z-50 max-w-sm bg-amber-500/10 border border-amber-400/30 text-amber-100 text-xs px-4 py-3 rounded-xl backdrop-blur-md shadow-lg">
-          <div className="font-semibold mb-1">Reconnecting Session</div>
-          <div className="text-amber-100/80">We’re keeping you signed in while we re-check your session.</div>
-        </div>
-      )}
-
-      {typeof window !== 'undefined' && (supabase as any)?.__isStub && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 max-w-md bg-red-600/10 border border-red-500/40 text-red-100 text-xs px-4 py-3 rounded-xl backdrop-blur-md shadow-lg">
-          <div className="font-semibold mb-1">Supabase Keys Missing</div>
-          <div className="text-red-100/80">Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` on the live host to prevent logouts.</div>
-        </div>
-      )}
+      {/* Dynamic Background with Premium Beams */}
+      <BackgroundBeams className="fixed inset-0 z-0 pointer-events-none" />
 
       {/* Conditional Layout based on View */}
       {currentView === 'landing' ? (
-        <div className="flex-1 w-full h-full overflow-y-auto overscroll-contain relative z-10">
+        <div className="flex-1 w-full h-full overflow-y-auto">
           <LandingPage
             onGetStarted={handleGetStarted}
             onLogin={handleLogin}
           />
         </div>
       ) : currentView === 'auth' ? (
-        <div className="flex-1 w-full h-full overflow-y-auto overscroll-contain relative z-10">
+        <div className="flex-1 w-full h-full overflow-y-auto">
           <AuthPage key={authMode} onComplete={handleAuthComplete} initialMode={authMode} />
         </div>
       ) : (
         <>
-          {/* Sidebar - Desktop: Toggleable, Mobile: Overlay */}
           <Sidebar
-            isOpen={isSidebarOpen} // Mobile State
-            isDesktopOpen={isDesktopSidebarOpen} // Desktop State
+            isOpen={isSidebarOpen}
             activeView={currentView}
             activeSessionId={activeSessionId}
             campaigns={DEFAULT_CAMPAIGNS}
             sessions={sessions}
             onNavigate={(view) => {
               navigateTo(view);
-              setIsSidebarOpen(false);
+              setIsSidebarOpen(false); // Close sidebar on navigation (mobile)
             }}
             onSelectSession={(id) => {
               handleSelectSession(id);
-              setIsSidebarOpen(false);
+              setIsSidebarOpen(false); // Close sidebar on selection (mobile)
             }}
-            onNewChat={handleNewChat}
+            onNewChat={() => {
+              handleNewChat();
+              setIsSidebarOpen(false); // Close sidebar on new chat (mobile)
+            }}
             onMoveSession={handleMoveSession}
             onDeleteSession={handleDeleteSession}
             onShareSession={handleShareSession}
@@ -995,298 +781,159 @@ export default function Home() {
             />
           )}
 
-          {/* Main Content Area */}
-          <main
-            className={`flex-1 flex flex-col h-full min-w-0 transition-all duration-300 ${isDesktopSidebarOpen ? 'md:ml-64' : 'md:ml-0'
-              } relative z-0`}
-          >
+          {/* Main Content */}
+          <main className="flex-1 flex flex-col md:ml-64 relative z-10 h-full min-h-0 bg-visio-bg/50">
+
             {/* Mobile Header */}
-            <header className={`md:hidden h-14 border-b border-white/5 flex items-center justify-between px-4 bg-black/40 backdrop-blur-md sticky top-0 z-40`}>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setIsSidebarOpen(true)}
-                  className="p-2 -ml-2 text-white/70 hover:text-white hover:bg-white/5 rounded-lg active:scale-95 transition-all"
-                >
-                  <Menu size={20} />
-                </button>
-                <span className="font-outfit font-medium text-lg tracking-tight">Visio<span className="opacity-50">AI</span></span>
+            <header className="md:hidden flex items-center justify-between p-4 border-b border-white/5 bg-black/40 backdrop-blur-md sticky top-0 z-20">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded bg-gradient-to-br from-visio-teal to-visio-sage flex items-center justify-center text-black font-bold text-xs">V</div>
+                <span className="font-bold">Visio AI</span>
               </div>
-              <div className="w-8" />
+              <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-white">
+                <Menu />
+              </button>
             </header>
 
-            {/* Desktop Sidebar Toggle (Only visible on Desktop) */}
-            <div className="hidden md:flex absolute top-4 left-4 z-40">
-              {!isDesktopSidebarOpen && (
-                <button
-                  onClick={() => setIsDesktopSidebarOpen(true)}
-                  className="p-2 bg-black/50 border border-white/10 text-white/50 hover:text-white rounded-lg backdrop-blur-md transition-all hover:scale-105"
-                  title="Open Sidebar"
-                >
-                  <Menu size={20} />
-                </button>
-              )}
-            </div>
-
-            {/* Dashboard Header */}
-            {currentView === 'dashboard' && (
-              <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-black/20 backdrop-blur-md sticky top-0 z-30">
-                <div className="flex items-center gap-3">
-                  {/* Desktop Toggle (Close) */}
-                  {isDesktopSidebarOpen && (
-                    <button
-                      onClick={() => setIsDesktopSidebarOpen(false)}
-                      className="hidden md:flex p-2 text-white/50 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
-                      title="Close Sidebar"
-                    >
-                      <Menu size={18} />
-                    </button>
-                  )}
-                  <h2 className="text-sm font-medium text-white/80 truncate max-w-[200px] md:max-w-md">
-                    {currentSession?.title || 'New Chat'}
-                  </h2>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] md:text-xs text-white/30 font-mono">v1.2.0</span>
-                  <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-visio-teal shadow-[0_0_8px_rgba(96,138,148,0.4)]"></div>
-                </div>
+            {/* Desktop Header / Status Bar - Fixes "floating" feel */}
+            <header className="hidden md:flex items-center justify-between px-8 py-4 border-b border-white/5 bg-black/20 backdrop-blur-sm sticky top-0 z-20">
+              <div className="flex items-center gap-3">
+                <h2 className="text-lg font-medium text-white/80">
+                  {currentView === 'dashboard' ? (sessions.find(s => s.id === activeSessionId)?.title || 'New Research') :
+                    currentView === 'leads' ? 'Lead Database' : 'Artist Portal'}
+                </h2>
+                {isLoading && <span className="text-xs text-visio-accent animate-pulse">Processing...</span>}
               </div>
-            )}
+              <div className="flex items-center gap-4 text-xs text-white/30">
+                <span>v1.2.0</span>
+                <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]"></div>
+              </div>
+            </header>
 
-
-            {/* Content Views */}
-            <div className="flex-1 w-full min-h-0 relative flex flex-col">
-              {currentView === 'dashboard' ? (
-                <div className="flex-1 min-h-0 relative flex flex-col">
-                  <div
-                    ref={chatScrollRef}
-                    onScroll={handleChatScroll}
-                    className="flex-1 min-h-0 overflow-y-auto touch-pan-y px-4 md:px-0 pb-32 overscroll-contain relative z-10 scroll-smooth"
-                    style={{ WebkitOverflowScrolling: 'touch' }}
-                  >
+            {/* View Switcher */}
+            {currentView === 'overview' ? (
+              <div className="flex-1 overflow-hidden">
+                <DashboardOverview
+                  artistProfile={artistProfile}
+                  onNavigate={navigateTo}
+                  onNewChat={handleNewChat}
+                />
+              </div>
+            ) : currentView === 'dashboard' ? (
+              <>
+                {/* Chat Area - Adjusted padding for fixed headers */}
+                {/* Chat Area - Adjusted padding for fixed headers */}
+                <div
+                  ref={chatScrollRef}
+                  onScroll={handleChatScroll}
+                  className="flex-1 min-h-0 overflow-y-auto scroll-smooth touch-pan-y px-4 md:px-0 pb-32 relative"
+                  style={{ WebkitOverflowScrolling: 'touch' }}
+                >
+                  {!artistProfile ? (
+                    <PortalGate
+                      onRefresh={async () => {
+                        setIsLoading(true);
+                        const profile = await loadArtistProfile();
+                        if (profile) {
+                          setArtistProfile(profile);
+                          setToastMessage("Profile Found! Unlocking...");
+                        } else {
+                          setToastMessage("Still no profile found. Please complete setup in Settings.");
+                        }
+                        setIsLoading(false);
+                      }}
+                      isLoading={isLoading}
+                    />
+                  ) : (
                     <div className="max-w-3xl mx-auto flex flex-col pt-6 space-y-6">
-                      {/* Messages */}
                       {activeMessages.map((msg) => (
                         <ChatMessage key={msg.id} message={msg} onSaveLead={handleSaveLead} />
                       ))}
-                      {activeMessages.length === 0 && (
-                        <div className="flex flex-col items-center justify-center h-[50vh] text-center px-6 animate-in fade-in zoom-in duration-500">
-                          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-visio-teal/20 to-visio-purple/20 flex items-center justify-center mb-6 ring-1 ring-white/10 shadow-xl shadow-visio-teal/5">
-                            <Bot size={32} className="text-visio-teal" />
-                          </div>
-                          <h3 className="text-xl font-medium text-white mb-2">Visio Research Assistant</h3>
-                          <p className="text-white/40 max-w-md text-sm leading-relaxed">
-                            I can help you find leads, research companies, and analyze market trends. Try asking me to find something.
-                          </p>
-                        </div>
-                      )}
                       <div ref={messagesEndRef} className="h-4" />
                     </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex-1 overflow-y-auto p-4 md:p-8 overscroll-contain relative z-10">
-                  {/* Render other views... placeholder logic or actual components */}
-                  {currentView === 'overview' && <Overview sessions={sessions} onNavigate={navigateTo} />}
-                  {currentView === 'leads' && <LeadsView leads={savedLeads} />}
-                  {currentView === 'settings' && <SettingsView subscription={subscription} />}
-                </div>
-              )}
+                  )}
 
-              {/* Chat Composer - Fixed at Bottom */}
-              {currentView === 'dashboard' && (
-                <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 bg-gradient-to-t from-visio-bg via-visio-bg/95 to-transparent z-20 pointer-events-none">
-                  <div className="max-w-3xl mx-auto pointer-events-auto">
-                    <ChatComposer onSend={handleSendMessage} isLoading={isLoading} />
-                  </div>
-                </div>
-              )}
-            </div>
-
-          </main>
-        </>
-      )}
-
-      {/* View Switcher */}
-      {
-        currentView === 'overview' ? (
-          <div className="flex-1 overflow-hidden">
-            <DashboardOverview
-              artistProfile={artistProfile}
-              onNavigate={navigateTo}
-              onNewChat={handleNewChat}
-            />
-          </div>
-        ) : currentView === 'dashboard' ? (
-          <>
-            {/* Chat Area - Native Scroll */}
-            <div className="flex-1 min-h-0 relative flex flex-col">
-              <div
-                ref={chatScrollRef}
-                onScroll={handleChatScroll}
-                onWheel={handleChatWheel}
-                className="visio-chat-scroll flex-1 min-h-0 overflow-y-auto px-4 md:px-0 pb-32 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent"
-              >
-                <div className="max-w-3xl mx-auto flex flex-col pt-6 space-y-6">
-                  {portalLocked && (
-                    <div className="mx-auto w-full max-w-2xl rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm text-white/70 backdrop-blur-md">
-                      <div className="font-semibold text-white/90 mb-1">Chat is open. Research is locked.</div>
-                      <div className="flex items-center justify-between gap-3">
-                        <span>Complete your profile to unlock research and lead generation.</span>
+                  {/* Scroll controls (right side) */}
+                  {(showScrollToTop || showScrollToBottom) && (
+                    <div className="pointer-events-none absolute right-3 bottom-6 flex flex-col gap-2 items-center">
+                      {showScrollToTop && (
                         <button
-                          onClick={() => navigateTo('settings')}
-                          className="shrink-0 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold text-white hover:bg-white/20"
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); scrollToTop(); }}
+                          className="pointer-events-auto w-10 h-10 rounded-full glass-panel flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                          aria-label="Scroll to top"
                         >
-                          Open Settings
+                          <ChevronUp size={18} />
                         </button>
-                      </div>
+                      )}
+                      {showScrollToBottom && (
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); scrollToBottom('smooth'); }}
+                          className="pointer-events-auto w-10 h-10 rounded-full glass-panel flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                          aria-label="Scroll to bottom"
+                        >
+                          <ChevronDown size={18} />
+                        </button>
+                      )}
                     </div>
                   )}
-                  {activeMessages.map((msg) => (
-                    <ChatMessage key={msg.id} message={msg} onSaveLead={handleSaveLead} />
-                  ))}
-                  <div ref={messagesEndRef} className="h-4" />
                 </div>
-              </div>
 
-              {/* Tools Panel */}
-              <div className="hidden lg:block absolute right-6 top-28 z-30">
-                <ToolsPanel
-                  activeTool={activeTool}
-                  onSelect={(tool) => setActiveTool(tool)}
-                  webSearchEnabled={webSearchEnabled}
-                />
-              </div>
-
-              {/* Scroll Controls (Floating, non-blocking) */}
-              <div className="pointer-events-none absolute right-3 bottom-32 flex flex-col items-center gap-2 z-30">
-                {showScrollToTop && (
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); scrollToTop(); }}
-                    className="pointer-events-auto w-8 h-8 rounded-full bg-white/10 text-white shadow-lg flex items-center justify-center hover:scale-105 transition-all"
-                    aria-label="Scroll to top"
-                  >
-                    <ChevronUp size={16} />
-                  </button>
-                )}
-                {showScrollToBottom && (
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); scrollToBottom('smooth'); }}
-                    className="pointer-events-auto w-8 h-8 rounded-full bg-visio-teal text-black shadow-lg shadow-visio-teal/20 flex items-center justify-center hover:scale-105 transition-all"
-                    aria-label="New messages below"
-                  >
-                    <ChevronDown size={16} />
-                  </button>
-                )}
-              </div>
-
-              {/* Scroll Rail (Far Right) */}
-              {isChatScrollable && (
-                <div className="absolute right-1 top-24 bottom-32 flex items-center justify-center z-20 pointer-events-none">
-                  <div
-                    ref={scrollRailRef}
-                    onPointerDown={handleRailPointerDown}
-                    className="pointer-events-auto w-3 h-44 rounded-full bg-white/5 border border-white/10 backdrop-blur-md flex items-start justify-center"
-                    aria-hidden="true"
-                  >
-                    <button
-                      type="button"
-                      onPointerDown={handleThumbPointerDown}
-                      className="w-2 rounded-full bg-visio-teal/80 shadow-[0_0_12px_rgba(96,138,148,0.4)]"
-                      style={{
-                        height: `${scrollThumbSize}px`,
-                        transform: `translateY(${Math.max(0, scrollRailHeight - scrollThumbSize) * scrollProgress}px)`
-                      }}
-                      aria-label="Scroll chat"
-                    />
-                  </div>
+                {/* Footer / Composer */}
+                <div className="flex-shrink-0 bg-gradient-to-t from-visio-bg via-visio-bg to-transparent pt-10 pb-2">
+                  <Composer
+                    onSend={handleSendMessage}
+                    isLoading={isLoading}
+                    pendingPrompt={pendingPrompt}
+                    onPromptUsed={() => setPendingPrompt(null)}
+                    webSearchEnabled={webSearchEnabled}
+                    onToggleWebSearch={() => setWebSearchEnabled(prev => !prev)}
+                  />
                 </div>
-              )}
-
-            </div>
-
-
-            {/* Footer / Composer */}
-            <div className="flex-shrink-0 bg-gradient-to-t from-visio-bg via-visio-bg to-transparent pt-10 pb-2">
-              <Composer
-                onSend={handleSendMessage}
-                isLoading={isLoading}
-                pendingPrompt={pendingPrompt}
-                onPromptUsed={() => setPendingPrompt(null)}
-                portalLocked={portalLocked}
-                onRequirePortal={() => {
-                  setToastMessage('Complete your profile in Settings to unlock Research + Leads.');
-                  navigateTo('settings');
-                }}
-                webSearchEnabled={webSearchEnabled}
-                onToggleWebSearch={() => setWebSearchEnabled((prev) => !prev)}
+              </>
+            ) : currentView === 'leads' ? (
+              <LeadsGallery
+                leads={allLeads}
+                onSaveLead={handleSaveLead}
               />
-            </div>
-          </>
-        ) : currentView === 'leads' ? (
-          portalLocked ? (
-            <PortalGate
-              onRefresh={async () => {
-                setIsLoading(true);
-                const profile = await loadArtistProfile();
-                if (profile) {
-                  setArtistProfile(profile);
-                  setToastMessage("Profile Found! Unlocking...");
-                } else {
-                  setToastMessage("Still no profile found. Please complete setup in Settings.");
-                }
-                setIsLoading(false);
-              }}
-              isLoading={isLoading}
-            />
-          ) : (
-            <LeadsGallery
-              leads={allLeads}
-              onSaveLead={handleSaveLead}
-            />
-          )
-        ) : currentView === 'billing' ? (
-          <Billing
-            currentSubscription={subscription}
-            onUpgrade={handleUpgrade}
-            userEmail={user?.email}
-          />
-        ) : currentView === 'reason' ? (
-          <ReasonPage onBack={() => navigateTo('overview')} />
-        ) : currentView === 'reach' ? (
-          <ReachPage onBack={() => navigateTo('overview')} />
-        ) : currentView === 'settings' ? (
-          <SettingsPage
-            subscription={subscription}
-            artistProfile={artistProfile}
-            onBack={() => navigateTo('overview')}
-            onNavigateHome={() => navigateTo('overview')}
-            onLogout={handleLogout}
-          />
-        ) : (
-          <div className="flex-1 flex items-center justify-center text-white/30">
-            <div className="text-center">
-              <p className="text-lg">Automations Module</p>
-              <p className="text-sm">Coming Soon</p>
-            </div>
-          </div>
-        )
-      }
-    </main >
+            ) : currentView === 'billing' ? (
+              <Billing
+                currentSubscription={subscription}
+                onUpgrade={handleUpgrade}
+                userEmail={user?.email}
+              />
+            ) : currentView === 'reason' ? (
+              <ReasonPage onBack={() => navigateTo('overview')} />
+            ) : currentView === 'reach' ? (
+              <ReachPage onBack={() => navigateTo('overview')} />
+            ) : currentView === 'settings' ? (
+              <SettingsPage
+                subscription={subscription}
+                artistProfile={artistProfile}
+                onBack={() => navigateTo('overview')}
+                onNavigateHome={() => navigateTo('overview')}
+                onLogout={handleLogout}
+              />
+            ) : (
+              <div className="flex-1 flex items-center justify-center text-white/30">
+                <div className="text-center">
+                  <p className="text-lg">Automations Module</p>
+                  <p className="text-sm">Coming Soon</p>
+                </div>
+              </div>
+            )}
+          </main>
 
-    {/* Overlay for mobile sidebar */ }
-  {
-    isSidebarOpen && (
-      <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
-        onClick={() => setIsSidebarOpen(false)}
-      />
-    )
-  }
+          {/* Overlay for mobile sidebar */}
+          {isSidebarOpen && (
+            <div
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+              onClick={() => setIsSidebarOpen(false)}
+            />
+          )}
         </>
-      )
-}
+      )}
     </div >
   );
 }

@@ -162,27 +162,75 @@ const NavItem: React.FC<NavItemProps> = ({
 );
 
 interface SidebarProps {
-    isOpen: boolean; // Mobile open state
-    isDesktopOpen?: boolean; // Desktop open state
+    isOpen: boolean;
     activeView: ViewMode;
     activeSessionId: string;
-// ... (keep existing lines)
+    campaigns: Campaign[];
+    sessions: Session[];
+    onNavigate: (view: ViewMode) => void;
+    onSelectSession: (id: string) => void;
+    onNewChat: () => void;
+    onMoveSession: (sessionId: string, folderId: string | null) => void;
+    onDeleteSession: (sessionId: string) => void;
+    onShareSession: (sessionId: string) => void;
+    subscription?: Subscription;
+    artistProfile: ArtistProfile | null;
+}
 
 export const Sidebar: React.FC<SidebarProps> = ({
     isOpen,
-    isDesktopOpen = true, // Default to true if not provided
     activeView,
-// ... (keep existing lines)
+    activeSessionId,
+    campaigns,
+    sessions,
+    onNavigate,
+    onSelectSession,
+    onNewChat,
+    onMoveSession,
+    onDeleteSession,
+
+    onShareSession,
+    subscription = { tier: 'artist', status: 'active', currentPeriodEnd: 0, interval: 'month' },
+    artistProfile
+}) => {
+
+    // State for collapsible folders
+    const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>(
+        campaigns.reduce((acc, c) => ({ ...acc, [c.id]: true }), {})
+    );
+
+    const toggleFolder = (id: string) => {
+        setExpandedFolders(prev => ({ ...prev, [id]: !prev[id] }));
+    };
+
+    // --- Drag and Drop Handlers ---
+    const handleDragStart = (e: React.DragEvent, sessionId: string) => {
+        e.dataTransfer.setData('sessionId', sessionId);
+        e.dataTransfer.effectAllowed = 'move';
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault(); // Necessary to allow dropping
+        e.dataTransfer.dropEffect = 'move';
+    };
+
+    const handleDrop = (e: React.DragEvent, folderId: string | null) => {
+        e.preventDefault();
+        const sessionId = e.dataTransfer.getData('sessionId');
+        if (sessionId) {
+            onMoveSession(sessionId, folderId);
+        }
+    };
+
+    // Group sessions
+    const unfiledSessions = sessions.filter(s => !s.folderId);
 
     return (
         <aside
             className={`
         fixed top-0 left-0 h-full w-64 bg-black/40 backdrop-blur-xl border-r border-white/5 
         transition-transform duration-300 z-50 flex flex-col
-        /* Mobile: Translate X based on isOpen */
-        /* Desktop: Translate X based on isDesktopOpen */
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'} 
-        md:${isDesktopOpen ? 'translate-x-0' : '-translate-x-full'}
+        ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}
         >
             {/* Brand Header */}
