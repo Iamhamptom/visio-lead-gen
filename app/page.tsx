@@ -1050,115 +1050,88 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <ChevronDown size={16} />
-                </button>
-                    )}
-              </div>
+                </div>
 
-            {/* Scroll Rail (Far Right) */}
-            {isChatScrollable && (
-              <div className="absolute right-1 top-24 bottom-32 flex items-center justify-center z-20 pointer-events-none">
-                <div
-                  ref={scrollRailRef}
-                  onPointerDown={handleRailPointerDown}
-                  className="pointer-events-auto w-3 h-44 rounded-full bg-white/5 border border-white/10 backdrop-blur-md flex items-start justify-center"
-                  aria-hidden="true"
-                >
-                  <button
-                    type="button"
-                    onPointerDown={handleThumbPointerDown}
-                    className="w-2 rounded-full bg-visio-teal/80 shadow-[0_0_12px_rgba(96,138,148,0.4)]"
-                    style={{
-                      height: `${scrollThumbSize}px`,
-                      transform: `translateY(${Math.max(0, scrollRailHeight - scrollThumbSize) * scrollProgress}px)`
+
+                {/* Footer / Composer */}
+                <div className="flex-shrink-0 bg-gradient-to-t from-visio-bg via-visio-bg to-transparent pt-10 pb-2">
+                  <Composer
+                    onSend={handleSendMessage}
+                    isLoading={isLoading}
+                    pendingPrompt={pendingPrompt}
+                    onPromptUsed={() => setPendingPrompt(null)}
+                    portalLocked={portalLocked}
+                    onRequirePortal={() => {
+                      setToastMessage('Complete your profile in Settings to unlock Research + Leads.');
+                      navigateTo('settings');
                     }}
-                    aria-label="Scroll chat"
+                    webSearchEnabled={webSearchEnabled}
+                    onToggleWebSearch={() => setWebSearchEnabled((prev) => !prev)}
                   />
+                </div>
+              </>
+            ) : currentView === 'leads' ? (
+              portalLocked ? (
+                <PortalGate
+                  onRefresh={async () => {
+                    setIsLoading(true);
+                    const profile = await loadArtistProfile();
+                    if (profile) {
+                      setArtistProfile(profile);
+                      setToastMessage("Profile Found! Unlocking...");
+                    } else {
+                      setToastMessage("Still no profile found. Please complete setup in Settings.");
+                    }
+                    setIsLoading(false);
+                  }}
+                  isLoading={isLoading}
+                />
+              ) : (
+                <LeadsGallery
+                  leads={allLeads}
+                  onSaveLead={handleSaveLead}
+                />
+              )
+            ) : currentView === 'billing' ? (
+              <Billing
+                currentSubscription={subscription}
+                onUpgrade={handleUpgrade}
+                userEmail={user?.email}
+              />
+            ) : currentView === 'reason' ? (
+              <ReasonPage onBack={() => navigateTo('overview')} />
+            ) : currentView === 'reach' ? (
+              <ReachPage onBack={() => navigateTo('overview')} />
+            ) : currentView === 'settings' ? (
+              <SettingsPage
+                subscription={subscription}
+                artistProfile={artistProfile}
+                onBack={() => navigateTo('overview')}
+                onNavigateHome={() => navigateTo('overview')}
+                onLogout={handleLogout}
+              />
+            ) : (
+              <div className="flex-1 flex items-center justify-center text-white/30">
+                <div className="text-center">
+                  <p className="text-lg">Automations Module</p>
+                  <p className="text-sm">Coming Soon</p>
                 </div>
               </div>
             )}
-          </div>
+          </main>
 
-
-          {/* Footer / Composer */}
-          <div className="flex-shrink-0 bg-gradient-to-t from-visio-bg via-visio-bg to-transparent pt-10 pb-2">
-            <Composer
-              onSend={handleSendMessage}
-              isLoading={isLoading}
-              pendingPrompt={pendingPrompt}
-              onPromptUsed={() => setPendingPrompt(null)}
-              portalLocked={portalLocked}
-              onRequirePortal={() => {
-                setToastMessage('Complete your profile in Settings to unlock Research + Leads.');
-                navigateTo('settings');
-              }}
-              webSearchEnabled={webSearchEnabled}
-              onToggleWebSearch={() => setWebSearchEnabled((prev) => !prev)}
-            />
-          </div>
-        </>
-      ) : currentView === 'leads' ? (
-      portalLocked ? (
-      <PortalGate
-        onRefresh={async () => {
-          setIsLoading(true);
-          const profile = await loadArtistProfile();
-          if (profile) {
-            setArtistProfile(profile);
-            setToastMessage("Profile Found! Unlocking...");
-          } else {
-            setToastMessage("Still no profile found. Please complete setup in Settings.");
+          {/* Overlay for mobile sidebar */}
+          {
+            isSidebarOpen && (
+              <div
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+                onClick={() => setIsSidebarOpen(false)}
+              />
+            )
           }
-          setIsLoading(false);
-        }}
-        isLoading={isLoading}
-      />
-      ) : (
-      <LeadsGallery
-        leads={allLeads}
-        onSaveLead={handleSaveLead}
-      />
-      )
-      ) : currentView === 'billing' ? (
-      <Billing
-        currentSubscription={subscription}
-        onUpgrade={handleUpgrade}
-        userEmail={user?.email}
-      />
-      ) : currentView === 'reason' ? (
-      <ReasonPage onBack={() => navigateTo('overview')} />
-      ) : currentView === 'reach' ? (
-      <ReachPage onBack={() => navigateTo('overview')} />
-      ) : currentView === 'settings' ? (
-      <SettingsPage
-        subscription={subscription}
-        artistProfile={artistProfile}
-        onBack={() => navigateTo('overview')}
-        onNavigateHome={() => navigateTo('overview')}
-        onLogout={handleLogout}
-      />
-      ) : (
-      <div className="flex-1 flex items-center justify-center text-white/30">
-        <div className="text-center">
-          <p className="text-lg">Automations Module</p>
-          <p className="text-sm">Coming Soon</p>
-        </div>
-      </div>
-            )}
-    </main>
-
-          {/* Overlay for mobile sidebar */ }
-  {
-    isSidebarOpen && (
-      <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
-        onClick={() => setIsSidebarOpen(false)}
-      />
-    )
-  }
         </>
       )
-}
+      }
     </div >
   );
 }
