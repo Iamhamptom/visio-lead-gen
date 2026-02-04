@@ -177,14 +177,14 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSaveLead })
                         </div>
                     ) : (
                         <>
-                            <div className={`px-5 py-3 rounded-2xl backdrop-blur-sm text-sm leading-relaxed shadow-sm select-text cursor-text ${isUser
+                            <div className={`px-5 py-3 rounded-2xl backdrop-blur-sm text-sm leading-relaxed shadow-sm !select-text cursor-text relative z-10 ${isUser
                                 ? 'bg-white text-black rounded-tr-none'
                                 : 'bg-white/5 border border-white/10 text-white/90 rounded-tl-none'
                                 }`}>
                                 {isUser ? (
                                     <div className="whitespace-pre-wrap">{parsedContent.text}</div>
                                 ) : (
-                                    <div className="markdown-content">
+                                    <div className="markdown-content !select-text">
                                         <ReactMarkdown
                                             remarkPlugins={[remarkGfm]}
                                             components={{
