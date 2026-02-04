@@ -8,6 +8,7 @@ export interface ContextPack {
         genre: string; // From identity.genres.primary
         subGenre?: string; // From identity.genres.secondary
         brandVoice: string; // From brand.voice.tone
+        identityCheck?: any; // Allow passing the full identity check object
     };
     location: {
         city: string; // From identity.base.city
@@ -107,7 +108,8 @@ export async function getContextPack(): Promise<ContextPack | null> {
             name: profile.name,
             genre: profile.genre || '',
             subGenre: '', // Not consistently captured yet
-            brandVoice: profile.brand_voice || ''
+            brandVoice: profile.brand_voice || '',
+            identityCheck: profile.identity_check || null
         },
         location: {
             city: socials.location?.city || '',

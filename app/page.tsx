@@ -938,13 +938,12 @@ export default function Home() {
               </div>
             ) : currentView === 'dashboard' ? (
               <>
-                {/* Chat Area - Adjusted padding for fixed headers */}
+                {/* Chat Area - Native Scroll */}
                 <div className="flex-1 min-h-0 relative flex flex-col">
                   <div
                     ref={chatScrollRef}
                     onScroll={handleChatScroll}
-                    className="flex-1 min-h-0 overflow-y-auto touch-pan-y px-4 md:px-0 pb-32"
-                    style={{ WebkitOverflowScrolling: 'touch' }}
+                    className="flex-1 min-h-0 overflow-y-auto px-4 md:px-0 pb-32 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent"
                   >
                     <div className="max-w-3xl mx-auto flex flex-col pt-6 space-y-6">
                       {portalLocked && (
@@ -968,37 +967,18 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* Scroll rail + controls (right side) */}
-                  <div className="pointer-events-none absolute right-3 top-24 bottom-28 flex flex-col items-center z-30">
-                    <div className="w-1 flex-1 rounded-full bg-white/10 relative overflow-hidden">
-                      <div
-                        className="absolute left-0 right-0 rounded-full bg-white/50"
-                        style={{
-                          height: '40px',
-                          top: `calc(${Math.min(100, Math.max(0, scrollProgress * 100))}% - 20px)`
-                        }}
-                      />
-                    </div>
-                    <div className="flex flex-col gap-2 mt-3">
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); scrollToTop(); }}
-                        disabled={!isChatScrollable}
-                        className={`pointer-events-auto w-10 h-10 rounded-full bg-black/60 border border-white/10 backdrop-blur-md flex items-center justify-center transition-colors ${showScrollToTop ? 'text-white/90 hover:text-white' : 'text-white/40'} ${isChatScrollable ? 'hover:bg-white/10' : 'opacity-50 cursor-not-allowed'}`}
-                        aria-label="Scroll to top"
-                      >
-                        <ChevronUp size={18} />
-                      </button>
+                  {/* Scroll Controls (Floating, non-blocking) */}
+                  <div className="pointer-events-none absolute right-6 bottom-32 flex flex-col items-center gap-2 z-30">
+                    {showScrollToBottom && (
                       <button
                         type="button"
                         onClick={(e) => { e.stopPropagation(); scrollToBottom('smooth'); }}
-                        disabled={!isChatScrollable}
-                        className={`pointer-events-auto w-10 h-10 rounded-full bg-black/60 border border-white/10 backdrop-blur-md flex items-center justify-center transition-colors ${showScrollToBottom ? 'text-white/90 hover:text-white' : 'text-white/40'} ${isChatScrollable ? 'hover:bg-white/10' : 'opacity-50 cursor-not-allowed'}`}
-                        aria-label="Scroll to bottom"
+                        className="pointer-events-auto w-8 h-8 rounded-full bg-visio-teal text-black shadow-lg shadow-visio-teal/20 flex items-center justify-center hover:scale-105 transition-all"
+                        aria-label="New messages below"
                       >
-                        <ChevronDown size={18} />
+                        <ChevronDown size={16} />
                       </button>
-                    </div>
+                    )}
                   </div>
                 </div>
 

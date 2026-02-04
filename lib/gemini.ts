@@ -56,6 +56,11 @@ ${knowledgeContext ? `\n${knowledgeContext}\n` : 'No specific internal knowledge
 
 ${missingDataAlert}
 
+## 🌍 PUBLIC IDENTITY CONTEXT (Verified)
+${identity.identityCheck?.confirmed && identity.identityCheck.results?.length > 0
+            ? identity.identityCheck.results.map((r: any) => `- ${r.snippet}`).join('\n')
+            : 'No verified public identity context available.'}
+
 ## 🛡️ GUARDRAILS
 1. **General Chat**: You can chat freely about PR concepts, music trends, and advice using your "Visio Brain".
 2. **Lead Gen Failsafe**: 
