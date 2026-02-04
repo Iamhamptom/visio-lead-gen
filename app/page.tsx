@@ -822,13 +822,11 @@ export default function Home() {
             ) : currentView === 'dashboard' ? (
               <>
                 {/* Chat Area - Adjusted padding for fixed headers */}
-                {/* Chat Area - Adjusted padding for fixed headers */}
                 <div
                   ref={chatScrollRef}
                   onScroll={handleChatScroll}
                   className="flex-1 min-h-0 overflow-y-auto scroll-smooth touch-pan-y px-4 md:px-0 pb-32 relative"
                   style={{ WebkitOverflowScrolling: 'touch' }}
-                >
                 >
                   {!artistProfile ? (
                     <PortalGate
