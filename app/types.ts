@@ -41,6 +41,21 @@ export interface SocialLinks {
     email?: string;
 }
 
+export interface IdentityCheckResult {
+    title: string;
+    link: string;
+    snippet?: string;
+    source?: string;
+}
+
+export interface IdentityCheck {
+    confirmed?: boolean;
+    lastQueriedName?: string;
+    confirmedAt?: number;
+    dismissedAt?: number;
+    results?: IdentityCheckResult[];
+}
+
 export interface Lead {
     id: string; // Changed from number to string to match skin, will adapt parsing
     name: string;
@@ -90,6 +105,7 @@ export interface ArtistProfile {
     genre: string;
     description: string;
     socials: SocialLinks;
+    identityCheck?: IdentityCheck;
     connectedAccounts: {
         instagram?: boolean;
         twitter?: boolean;

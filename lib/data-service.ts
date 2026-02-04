@@ -46,6 +46,7 @@ export async function saveArtistProfile(profile: ArtistProfile): Promise<boolean
             lifeHighlights: profile.lifeHighlights,
             desiredCommunities: profile.desiredCommunities,
             referralSource: profile.referralSource, // Marketing Data
+            identityCheck: profile.identityCheck,
             website: profile.website,
             email: profile.socials?.email // Explicitly save email
         },
@@ -97,6 +98,7 @@ export async function loadArtistProfile(): Promise<ArtistProfile | null> {
             website: compoundSocials.website,
             email: compoundSocials.email
         },
+        identityCheck: compoundSocials.identityCheck,
         connectedAccounts: compoundSocials.connectedAccounts || {},
         similarArtists: [], // schema doesn't have this, maybe add to payload above?
         milestones: data.metrics || {},

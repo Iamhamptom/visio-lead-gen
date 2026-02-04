@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowLeft, User, Mail, Lock, LogOut, Home, ArrowUpRight, Music, MapPin } from 'lucide-react';
-import { Subscription, ArtistProfile } from '../types';
+import { Subscription, ArtistProfile, IdentityCheckResult } from '../types';
 import { saveArtistProfile } from '@/lib/data-service';
 import { ShinyButton } from './ui/ShinyButton';
 
@@ -25,6 +25,11 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     const [city, setCity] = useState(artistProfile?.location?.city || '');
     const [country, setCountry] = useState(artistProfile?.location?.country || '');
     const [isSaving, setIsSaving] = useState(false);
+    const [showIdentityModal, setShowIdentityModal] = useState(false);
+    const [identityResults, setIdentityResults] = useState<IdentityCheckResult[]>([]);
+    const [identityQuery, setIdentityQuery] = useState('');
+    const [identityLoading, setIdentityLoading] = useState(false);
+    const [identityError, setIdentityError] = useState<string | null>(null);
 
     // Sync state with profile prop
     React.useEffect(() => {
@@ -41,6 +46,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     const handleSave = async () => {
         if (!artistProfile) return;
         setIsSaving(true);
+        setIdentityError(null);
 
         const updatedProfile = {
             ...artistProfile,
@@ -62,10 +68,65 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         if (success) {
             window.dispatchEvent(new Event('artistProfileUpdated'));
             alert('Settings saved successfully!');
+            const normalizedName = name.trim();
+            const lastCheckedName = artistProfile.identityCheck?.lastQueriedName;
+            const shouldCheckIdentity = normalizedName.length > 0 && normalizedName !== lastCheckedName;
+            if (shouldCheckIdentity) {
+                await runIdentityCheck(normalizedName);
+            }
         } else {
             alert('Failed to save settings. Please try again.');
         }
         setIsSaving(false);
+    };
+
+    const runIdentityCheck = async (normalizedName: string) => {
+        setIdentityLoading(true);
+        setIdentityResults([]);
+        try {
+            const res = await fetch('/api/identity-lookup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: normalizedName,
+                    city,
+                    country
+                })
+            });
+            const data = await res.json();
+            setIdentityResults(Array.isArray(data?.results) ? data.results : []);
+            setIdentityQuery(data?.query || normalizedName);
+            setShowIdentityModal(true);
+        } catch (error) {
+            console.error('Identity lookup failed:', error);
+            setIdentityError('Identity lookup failed. Please try again.');
+        } finally {
+            setIdentityLoading(false);
+        }
+    };
+
+    const handleIdentityDecision = async (confirmed: boolean) => {
+        if (!artistProfile) return;
+        const normalizedName = name.trim();
+        const updatedProfile = {
+            ...artistProfile,
+            name,
+            genre,
+            location: { city, country },
+            socials: { ...artistProfile.socials, email },
+            identityCheck: {
+                confirmed,
+                lastQueriedName: normalizedName,
+                confirmedAt: confirmed ? Date.now() : undefined,
+                dismissedAt: confirmed ? undefined : Date.now(),
+                results: identityResults
+            }
+        };
+        const success = await saveArtistProfile(updatedProfile);
+        if (success) {
+            window.dispatchEvent(new Event('artistProfileUpdated'));
+        }
+        setShowIdentityModal(false);
     };
 
     return (
@@ -223,6 +284,62 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                     <p className="text-center text-white/20 text-xs">Visio Lead Gen v1.2.0</p>
                 </div>
             </div>
+
+            {/* Identity Check Modal */}
+            {showIdentityModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+                    <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-[#0A0A0A] p-6 shadow-2xl">
+                        <h3 className="text-xl font-bold mb-2">Is this you?</h3>
+                        <p className="text-white/50 text-sm mb-4">
+                            We searched the web for: <span className="text-white">{identityQuery}</span>
+                        </p>
+
+                        {identityLoading ? (
+                            <p className="text-white/40 text-sm">Searching...</p>
+                        ) : identityResults.length === 0 ? (
+                            <p className="text-white/40 text-sm">No obvious public results found. You can still confirm or skip.</p>
+                        ) : (
+                            <div className="space-y-3 max-h-72 overflow-y-auto pr-2">
+                                {identityResults.map((result, idx) => (
+                                    <div key={`${result.link}-${idx}`} className="rounded-xl border border-white/5 bg-white/5 p-4">
+                                        <div className="text-sm font-semibold text-white">{result.title}</div>
+                                        {result.snippet && (
+                                            <p className="text-xs text-white/50 mt-1">{result.snippet}</p>
+                                        )}
+                                        <a
+                                            href={result.link}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-xs text-visio-teal hover:underline mt-2 inline-block"
+                                        >
+                                            View source
+                                        </a>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {identityError && (
+                            <p className="text-xs text-red-400 mt-3">{identityError}</p>
+                        )}
+
+                        <div className="mt-6 flex items-center justify-end gap-3">
+                            <button
+                                onClick={() => handleIdentityDecision(false)}
+                                className="px-4 py-2 text-sm rounded-lg border border-white/10 text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+                            >
+                                Not me / Skip
+                            </button>
+                            <button
+                                onClick={() => handleIdentityDecision(true)}
+                                className="px-4 py-2 text-sm rounded-lg bg-visio-teal text-black font-semibold hover:brightness-110 transition-colors"
+                            >
+                                Yes, that’s me
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -151,7 +151,7 @@ export async function parseIntent(
 
         let prompt;
         if (isChatMode) {
-            prompt = `${systemPrompt}${historyText}\n\nUser: ${userMessage}\n\nRespond directly to the user as Visio. Do NOT use JSON. Keep it conversational.`;
+            prompt = `${systemPrompt}${historyText}\n\nUser: ${userMessage}\n\nRespond directly to the user as Visio. Do NOT use JSON. Write in natural, flowing paragraphs (no headings, no bullet lists unless explicitly requested). Avoid markdown styling. Be genuinely helpful and specific: aim for 4-8 sentences, and only ask one clarifying question if it truly helps move forward.`;
         } else {
             prompt = `${systemPrompt}${historyText}\n\nUser: ${userMessage}\n\nRespond with ONLY valid JSON:`;
         }
@@ -205,7 +205,7 @@ export async function generateResponse(
         const model = createGeminiClient(tier);
 
         const prompt = `You are Visio, a warm and strategic PR concierge (former Columbia Records PR Director, NYU Stern MBA).
-Write a brief 1-2 sentence response based on this context. Be conversational, strategic, and personable.
+Write a concise, conversational reply based on this context. No headings or bullet lists. Aim for 2-4 sentences that feel natural and helpful.
 
 Context: ${context}
 Results found: ${resultCount}

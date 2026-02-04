@@ -1,4 +1,4 @@
-import { createBrowserClient } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
 
 /**
  * Creates a Supabase client for use in browser/client components.
@@ -24,9 +24,18 @@ export function createSupabaseClient() {
         } as any;
     }
 
-    return createBrowserClient(
+    const isBrowser = typeof window !== 'undefined';
+    return createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                detectSessionInUrl: true,
+                storage: isBrowser ? window.localStorage : undefined
+            }
+        }
     );
 }
 
