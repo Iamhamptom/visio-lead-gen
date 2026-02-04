@@ -118,6 +118,7 @@ export async function saveSessions(sessions: Session[]): Promise<boolean> {
     if (!user) return false;
 
     const isUuid = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
+    let hadError = false;
 
     // Save each session and its messages
     for (const session of sessions) {
@@ -134,6 +135,7 @@ export async function saveSessions(sessions: Session[]): Promise<boolean> {
 
         if (sessionError) {
             console.error('Error saving session:', sessionError);
+            hadError = true;
             continue;
         }
 
@@ -155,15 +157,16 @@ export async function saveSessions(sessions: Session[]): Promise<boolean> {
         if (messagesToUpsert.length > 0) {
             const { error: msgError } = await supabase
                 .from('messages')
-                .upsert(messagesToUpsert, { onConflict: 'id' });
+                .upsert(messagesToUpsert, { onConflict: 'id', ignoreDuplicates: true });
 
             if (msgError) {
                 console.error('Error saving messages:', msgError);
+                hadError = true;
             }
         }
     }
 
-    return true;
+    return !hadError;
 }
 
 export async function loadSessions(): Promise<Session[]> {
