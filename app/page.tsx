@@ -41,7 +41,7 @@ const createInitialSession = (): Session => ({
   folderId: null, // Starts in Inbox
   lastUpdated: Date.now(),
   messages: [{
-    id: 'init',
+    id: crypto.randomUUID(),
     role: Role.AGENT,
     content: `Hello! I am Visio, your dedicated Research Concierge.\n\nI can help you build media lists, find influencer contacts, or draft pitch strategies for the **Music & Entertainment** industry.`,
     timestamp: Date.now()
