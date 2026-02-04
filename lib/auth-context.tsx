@@ -96,7 +96,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setUser(session.user ?? null);
                 setAuthStale(false);
                 storeSession(session);
-            } else if (authStale) {
+            } else {
+                // Always try to refresh if no session found
                 try {
                     const refreshed = await supabase.auth.refreshSession();
                     const nextSession = refreshed.data?.session ?? null;
@@ -112,15 +113,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
         };
 
+        // Periodic token refresh every 10 minutes to prevent session expiry
+        const refreshInterval = setInterval(async () => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) {
+                    // Automatically refresh the token
+                    const { data } = await supabase.auth.refreshSession();
+                    if (data?.session) {
+                        setSession(data.session);
+                        setUser(data.session.user ?? null);
+                        storeSession(data.session);
+                    }
+                }
+            } catch {
+                // Silent fail - don't log user out on network errors
+            }
+        }, 10 * 60 * 1000); // 10 minutes
+
         window.addEventListener('focus', handleVisibility);
         document.addEventListener('visibilitychange', handleVisibility);
 
         return () => {
             subscription.unsubscribe();
+            clearInterval(refreshInterval);
             window.removeEventListener('focus', handleVisibility);
             document.removeEventListener('visibilitychange', handleVisibility);
         };
-    }, [authStale]);
+    }, []);
 
     const signOut = async () => {
         await supabase.auth.signOut();

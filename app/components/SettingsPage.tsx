@@ -189,10 +189,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                     <div className="space-y-1">
                         <h3 className="font-bold text-lg">Support & Help</h3>
                         <p className="text-white/60 text-sm">Live chat is temporarily removed. Reach us via email and we’ll respond promptly.</p>
-                        <p className="text-white/70 text-sm font-mono">support@visio.ai</p>
+                        <p className="text-white/70 text-sm font-mono">admin@visiocorp.co</p>
                     </div>
                     <a
-                        href="mailto:support@visio.ai"
+                        href="mailto:admin@visiocorp.co"
                         className="inline-flex items-center gap-2 bg-visio-teal text-black px-4 py-2 rounded-xl font-semibold hover:bg-visio-teal/90 transition-colors"
                     >
                         Email Support
@@ -273,7 +273,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 <div className="space-y-6">
                     <h2 className="text-xl font-bold border-b border-white/10 pb-4">Security</h2>
                     <div className="space-y-2">
-                        <button className="flex items-center gap-3 text-visio-teal hover:text-white transition-colors text-sm font-medium">
+                        <button className="flex items-center gap-3 text-white/70 hover:text-white transition-colors text-sm font-medium">
                             <Lock size={16} />
                             Reset Password
                         </button>
