@@ -117,6 +117,8 @@ export async function saveSessions(sessions: Session[]): Promise<boolean> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;
 
+    const isUuid = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
+
     // Save each session and its messages
     for (const session of sessions) {
         // Upsert session
@@ -136,14 +138,19 @@ export async function saveSessions(sessions: Session[]): Promise<boolean> {
         }
 
         // Save messages for this session
-        const messagesToUpsert = session.messages.map(msg => ({
-            id: msg.id,
-            session_id: session.id,
-            role: (msg.role === 'model' ? Role.AGENT : Role.USER), // Ensure strict Role enum text
-            content: msg.content,
-            leads: msg.leads || [], // Add leads support
-            created_at: new Date(msg.timestamp).toISOString()
-        }));
+        const messagesToUpsert = session.messages
+            // Don't persist transient "thinking" placeholders (DB schema has no isThinking flag).
+            .filter(msg => !msg.isThinking)
+            // Defensive: Supabase schema uses UUID ids; skip invalid ids so one bad message doesn't block persistence.
+            .filter(msg => isUuid(msg.id))
+            .map(msg => ({
+                id: msg.id,
+                session_id: session.id,
+                role: msg.role, // 'user' | 'model'
+                content: msg.content,
+                leads: msg.leads || [], // Add leads support
+                created_at: new Date(msg.timestamp).toISOString()
+            }));
 
         if (messagesToUpsert.length > 0) {
             const { error: msgError } = await supabase

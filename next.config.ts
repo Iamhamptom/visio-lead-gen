@@ -8,11 +8,19 @@ const nextConfig: NextConfig = {
         destination: '/',
       },
       {
+        source: '/overview',
+        destination: '/',
+      },
+      {
         source: '/auth',
         destination: '/',
       },
       {
         source: '/login',
+        destination: '/',
+      },
+      {
+        source: '/signin',
         destination: '/',
       },
       {
@@ -29,6 +37,22 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/billing',
+        destination: '/',
+      },
+      {
+        source: '/leads',
+        destination: '/',
+      },
+      {
+        source: '/settings',
+        destination: '/',
+      },
+      {
+        source: '/reason',
+        destination: '/',
+      },
+      {
+        source: '/reach',
         destination: '/',
       },
     ];

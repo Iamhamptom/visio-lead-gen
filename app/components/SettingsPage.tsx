@@ -100,8 +100,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                                 <Home size={24} />
                             </div>
                             <div>
-                                <h3 className="font-bold text-lg">Home Page</h3>
-                                <p className="text-white/50 text-sm">Return to the landing page</p>
+                                <h3 className="font-bold text-lg">Dashboard</h3>
+                                <p className="text-white/50 text-sm">Return to your overview</p>
                             </div>
                         </div>
                         <ArrowUpRight size={20} className="text-visio-teal opacity-0 group-hover:opacity-100 transition-opacity" />

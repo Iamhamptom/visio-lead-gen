@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
     Plus,
     Home,
-    LayoutGrid,
     FolderOpen,
     Settings,
     MessageSquare,
@@ -261,12 +260,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <NavItem
                         icon={<Home size={18} />}
                         label="Home"
-                        active={activeView === 'landing'}
-                        onClick={() => onNavigate('landing')}
-                    />
-                    <NavItem
-                        icon={<LayoutGrid size={18} />}
-                        label="Overview"
                         active={activeView === 'overview'}
                         onClick={() => onNavigate('overview')}
                     />

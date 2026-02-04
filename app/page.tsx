@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { ChatMessage } from './components/ChatMessage';
 import { Composer } from './components/Composer';
@@ -16,7 +16,7 @@ import ReachPage from './reach/page';
 import { Toast } from './components/Toast';
 import { Message, Role, Campaign, ViewMode, Lead, Session, ArtistProfile, Subscription, SubscriptionTier, AgentMode } from './types';
 import { AITier } from './components/Composer';
-import { Menu, Loader2 } from 'lucide-react';
+import { Menu, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import { BackgroundBeams } from './components/ui/background-beams';
 import { CommandMenu, COMMAND_ACTIONS, ACTION_PROMPTS } from './components/ui/command-menu';
 import { useAuth } from '@/lib/auth-context';
@@ -41,7 +41,8 @@ const createInitialSession = (): Session => ({
   folderId: null, // Starts in Inbox
   lastUpdated: Date.now(),
   messages: [{
-    id: 'init',
+    // Must be a UUID because we persist messages to Supabase (messages.id is UUID).
+    id: crypto.randomUUID(),
     role: Role.AGENT,
     content: `Hello! I am Visio, your dedicated Research Concierge.\n\nI can help you build media lists, find influencer contacts, or draft pitch strategies for the **Music & Entertainment** industry.`,
     timestamp: Date.now()
@@ -72,11 +73,18 @@ export default function Home() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<{ setInput: (text: string) => void }>(null);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+  const isChatAtBottomRef = useRef(true);
+  const scrollRafRef = useRef<number | null>(null);
+
+  const [showScrollToTop, setShowScrollToTop] = useState(false);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
 
   // Helper to update view and URL
   const navigateTo = (view: ViewMode) => {
     setCurrentView(view);
-    const path = view === 'dashboard' ? '/' : `/${view}`;
+    // Keep "Overview" at `/` and the chat interface at `/dashboard` so refresh/deeplink works.
+    const path = view === 'overview' ? '/' : `/${view}`;
     // Only push if different (to avoid duplicate history entries)
     if (window.location.pathname !== path) {
       window.history.pushState(null, '', path);
@@ -114,13 +122,14 @@ export default function Home() {
 
       // 1. Map URL to View
       let targetView: ViewMode = 'landing';
-      if (path === '/' || path === '/dashboard') targetView = 'overview';
-      else if (path === '/overview') targetView = 'overview';
+      if (path === '/' || path === '/overview') targetView = 'overview';
+      else if (path === '/dashboard') targetView = 'dashboard';
       else if (path === '/auth' || path === '/login' || path === '/signin') targetView = 'auth';
       else if (path === '/onboarding') targetView = 'onboarding';
       else if (path === '/artist-portal') targetView = 'settings'; // Portal deferred; route to settings
       else if (path === '/billing') targetView = 'billing';
       else if (path === '/settings') targetView = 'settings';
+      else if (path === '/leads') targetView = 'leads';
       else if (path === '/reason') targetView = 'reason';
       else if (path === '/reach') targetView = 'reach';
       else if (path === '/landing') targetView = 'landing';
@@ -199,11 +208,30 @@ export default function Home() {
 
   // Artist profile loaded in main effect above
 
+  // If auth is lost (sign out or expired session), clear user-scoped state so we don't leak data across accounts.
+  useEffect(() => {
+    if (authLoading) return;
+    if (user) return;
+
+    setSessions([]);
+    setActiveSessionId('');
+    setSubscription({
+      tier: 'artist',
+      status: 'active',
+      currentPeriodEnd: 0,
+      interval: 'month'
+    });
+    setArtistProfile(null);
+    setIsSidebarOpen(false);
+  }, [user, authLoading]);
+
 
 
   const handleLogout = async () => {
     await signOut(); // Supabase sign out
     setArtistProfile(null);
+    setSessions([]);
+    setActiveSessionId('');
     navigateTo('landing');
   };
 
@@ -250,7 +278,13 @@ export default function Home() {
       const loadedSessions = await loadSessions();
       if (loadedSessions && loadedSessions.length > 0) {
         setSessions(loadedSessions);
-        setActiveSessionId(loadedSessions[0].id);
+        const lastSessionId = typeof window !== 'undefined'
+          ? window.localStorage.getItem(`visio:lastSessionId:${user.id}`)
+          : null;
+        const preferred = lastSessionId && loadedSessions.some(s => s.id === lastSessionId)
+          ? lastSessionId
+          : loadedSessions[0].id;
+        setActiveSessionId(preferred);
       } else {
         handleNewChat();
       }
@@ -261,6 +295,41 @@ export default function Home() {
       fetchSessions();
     }
   }, [user, authLoading]);
+
+  // Persist last active session per-user so returning users land back where they left off.
+  useEffect(() => {
+    if (!user || !activeSessionId) return;
+    try {
+      window.localStorage.setItem(`visio:lastSessionId:${user.id}`, activeSessionId);
+    } catch {
+      // Ignore storage errors (private mode, etc.)
+    }
+  }, [user, activeSessionId]);
+
+  // Flush saves when the user backgrounds/leaves the app (common on mobile "home button").
+  useEffect(() => {
+    if (!user) return;
+    if (sessions.length === 0) return;
+
+    const flush = () => {
+      if (sessions.length === 0) return;
+      void saveSessions(sessions);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') flush();
+    };
+
+    window.addEventListener('pagehide', flush);
+    window.addEventListener('beforeunload', flush);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('pagehide', flush);
+      window.removeEventListener('beforeunload', flush);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [user, sessions]);
 
   // Save Persistence
   useEffect(() => {
@@ -274,18 +343,44 @@ export default function Home() {
     }
   }, [sessions, user]);
 
-  // Scroll on new message
-  useEffect(() => {
-    if (currentView === 'dashboard') {
-      scrollToBottom();
-    }
-  }, [sessions, activeSessionId, currentView]);
+  const updateChatScrollState = useCallback(() => {
+    const el = chatScrollRef.current;
+    if (!el) return;
 
-  const scrollToBottom = () => {
+    const threshold = 80;
+    const atTop = el.scrollTop <= threshold;
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= threshold;
+
+    isChatAtBottomRef.current = atBottom;
+    setShowScrollToTop(!atTop);
+    setShowScrollToBottom(!atBottom);
+  }, []);
+
+  const handleChatScroll = useCallback(() => {
+    if (scrollRafRef.current) cancelAnimationFrame(scrollRafRef.current);
+    scrollRafRef.current = requestAnimationFrame(() => {
+      updateChatScrollState();
+    });
+  }, [updateChatScrollState]);
+
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
+    // Prefer scrolling to the sentinel so we don't fight layout/padding.
     setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-  };
+      messagesEndRef.current?.scrollIntoView({ behavior });
+    }, 0);
+  }, []);
+
+  const scrollToTop = useCallback(() => {
+    chatScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  // When switching sessions / entering the chat view, jump to the bottom.
+  useEffect(() => {
+    if (currentView !== 'dashboard') return;
+    scrollToBottom('auto');
+    // Recompute after layout settles
+    setTimeout(updateChatScrollState, 50);
+  }, [activeSessionId, currentView, scrollToBottom, updateChatScrollState]);
 
   // Listen for command menu events
   useEffect(() => {
@@ -348,8 +443,11 @@ export default function Home() {
     if (typeof window !== 'undefined' && window.innerWidth < 768) setIsSidebarOpen(false);
   };
 
-  const handleDeleteSession = (id: string) => {
+  const handleDeleteSession = async (id: string) => {
     if (confirm("Are you sure you want to delete this research?")) {
+      // Persist delete so it doesn't reappear on refresh.
+      await deleteSession(id);
+
       const newSessions = sessions.filter(s => s.id !== id);
       setSessions(newSessions);
 
@@ -454,7 +552,8 @@ export default function Home() {
     setIsLoading(true);
 
     // 2. Add Thinking (with tier for reasoning animation)
-    const tempId = (Date.now() + 1).toString();
+    // Must be UUID because we persist messages to Supabase (messages.id is UUID).
+    const tempId = crypto.randomUUID();
     const sessionWithThinking = {
       ...updatedSession,
       messages: [...newHistory, {
@@ -598,6 +697,16 @@ export default function Home() {
   }, [sessions]);
 
   const activeMessages = sessions.find(s => s.id === activeSessionId)?.messages || [];
+  const lastActiveMessageId = activeMessages[activeMessages.length - 1]?.id;
+
+  // On new messages: only auto-scroll if the user is already at the bottom.
+  useEffect(() => {
+    if (currentView !== 'dashboard') return;
+    if (isChatAtBottomRef.current) {
+      scrollToBottom('smooth');
+    }
+    setTimeout(updateChatScrollState, 50);
+  }, [lastActiveMessageId, currentView, scrollToBottom, updateChatScrollState]);
 
   // Show loading while auth is being determined
   if (authLoading) {
@@ -613,7 +722,7 @@ export default function Home() {
   }
 
   return (
-    <div className="flex min-h-screen w-full bg-visio-bg overflow-x-hidden text-white font-outfit relative">
+    <div className="flex h-screen w-full bg-visio-bg overflow-hidden text-white font-outfit relative">
 
       {/* Toast Notification */}
       {toastMessage && (
@@ -713,7 +822,12 @@ export default function Home() {
               <>
                 {/* Chat Area - Adjusted padding for fixed headers */}
                 {/* Chat Area - Adjusted padding for fixed headers */}
-                <div className="flex-1 min-h-0 overflow-y-auto px-4 md:px-0 pb-32 relative">
+                <div
+                  ref={chatScrollRef}
+                  onScroll={handleChatScroll}
+                  className="flex-1 min-h-0 overflow-y-auto scroll-smooth touch-pan-y px-4 md:px-0 pb-32 relative"
+                  style={{ WebkitOverflowScrolling: 'touch' }}
+                >
                   {!artistProfile ? (
                     <PortalGate
                       onRefresh={async () => {
@@ -735,6 +849,32 @@ export default function Home() {
                         <ChatMessage key={msg.id} message={msg} onSaveLead={handleSaveLead} />
                       ))}
                       <div ref={messagesEndRef} className="h-4" />
+                    </div>
+                  )}
+
+                  {/* Scroll controls (right side) */}
+                  {(showScrollToTop || showScrollToBottom) && (
+                    <div className="pointer-events-none absolute right-3 bottom-6 flex flex-col gap-2 items-center">
+                      {showScrollToTop && (
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); scrollToTop(); }}
+                          className="pointer-events-auto w-10 h-10 rounded-full glass-panel flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                          aria-label="Scroll to top"
+                        >
+                          <ChevronUp size={18} />
+                        </button>
+                      )}
+                      {showScrollToBottom && (
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); scrollToBottom('smooth'); }}
+                          className="pointer-events-auto w-10 h-10 rounded-full glass-panel flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                          aria-label="Scroll to bottom"
+                        >
+                          <ChevronDown size={18} />
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -765,13 +905,13 @@ export default function Home() {
             ) : currentView === 'reach' ? (
               <ReachPage onBack={() => navigateTo('overview')} />
             ) : currentView === 'settings' ? (
-              <SettingsPage
-                subscription={subscription}
-                artistProfile={artistProfile}
-                onBack={() => navigateTo('overview')}
-                onNavigateHome={() => navigateTo('landing')}
-                onLogout={handleLogout}
-              />
+                <SettingsPage
+                  subscription={subscription}
+                  artistProfile={artistProfile}
+                  onBack={() => navigateTo('overview')}
+                  onNavigateHome={() => navigateTo('overview')}
+                  onLogout={handleLogout}
+                />
             ) : (
               <div className="flex-1 flex items-center justify-center text-white/30">
                 <div className="text-center">
