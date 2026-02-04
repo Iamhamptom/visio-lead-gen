@@ -247,13 +247,38 @@ export async function updateSubscription(subscription: Partial<Subscription>): P
     return !error;
 }
 
+// ============ PAYMENT METHODS ============
+
+export async function updatePaymentMethod(method: { token: string; brand: string; last4: string; expiry?: string }): Promise<boolean> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    // We store payment details in the profiles table
+    // Assuming columns exist: payment_token, card_brand, card_last4, card_expiry
+    const { error } = await supabase
+        .from('profiles')
+        .update({
+            payment_token: method.token,
+            card_brand: method.brand,
+            card_last4: method.last4,
+            card_expiry: method.expiry
+        })
+        .eq('id', user.id);
+
+    if (error) {
+        console.error('Error updating payment method:', error);
+        return false;
+    }
+    return true;
+}
+
 export async function loadSubscription(): Promise<Subscription | null> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
 
     const { data, error } = await supabase
         .from('profiles')
-        .select('subscription_tier, subscription_status, subscription_period_end')
+        .select('subscription_tier, subscription_status, subscription_period_end, payment_token, card_brand, card_last4, card_expiry')
         .eq('id', user.id)
         .single();
 
@@ -263,7 +288,13 @@ export async function loadSubscription(): Promise<Subscription | null> {
         tier: data.subscription_tier as SubscriptionTier,
         status: data.subscription_status as 'active' | 'trialing' | 'past_due' | 'canceled',
         currentPeriodEnd: data.subscription_period_end ? new Date(data.subscription_period_end).getTime() : 0,
-        interval: 'month' // Defaulting for now as it's not in DB
+        interval: 'month',
+        paymentMethod: data.payment_token ? {
+            token: data.payment_token,
+            brand: data.card_brand || 'Card',
+            last4: data.card_last4 || '****',
+            expiry: data.card_expiry || ''
+        } : undefined
     };
 }
 

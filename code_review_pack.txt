@@ -1,0 +1,656 @@
+import { createSupabaseServerClient } from './supabase/server';
+import { ArtistProfile } from '@/app/types';
+
+// The "God Mode" Context Pack Structure
+// Mapped from the "Artist Portal" (Source of Truth) to "Visio PR Assistant" (Consumer)
+export interface ContextPack {
+    identity: {
+        name: string;
+        genre: string; // From identity.genres.primary
+        subGenre?: string; // From identity.genres.secondary
+        brandVoice: string; // From brand.voice.tone
+    };
+    location: {
+        city: string; // From identity.base.city
+        country: string; // From identity.base.country
+    };
+    campaign: {
+        budget: string; // From campaign.os.budget
+        timeline: string; // From campaign.os.timeline
+        goals: string[]; // From campaign.os.goals
+    };
+    assets: {
+        epkUrl?: string;
+        pressReleaseUrl?: string;
+        driveUrl?: string; // From content.os.drive
+    };
+    policies: {
+        causeAvoid: string[]; // From brand.policies.cause_avoid
+    };
+    story: {
+        summary: string; // From story.origin_story.summary_bullets
+    }
+}
+
+/**
+ * Fetches the Artist Profile from Supabase and maps it to the God Mode Context Pack.
+ * This ensures the PR Assistant only acts as a Consumer.
+ */
+export async function getContextPack(): Promise<ContextPack | null> {
+    const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return null;
+
+    const { data: profile, error } = await supabase
+        .from('artist_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+    if (error || !profile) return null;
+
+    // SCHEMA MAPPING LAYER
+    // Mapping existing flat schema to the God Mode structure
+    // As the Portal evolves, this mapping will become more direct (jsonb fields)
+
+    // Unpack logic (handling potential JSON fields or flat columns)
+    const socials = profile.socials || {};
+    const metrics = profile.metrics || {};
+    const contextPayload = profile.context_packs?.pr_assistant?.payload;
+
+    // 1. Prefer Direct Context Pack Payload if available (Future Proofing)
+    if (contextPayload) {
+        return contextPayload as ContextPack;
+    }
+
+    // 2. Fallback: Map from existing 'Legacy' Flat Schema
+    return {
+        identity: {
+            name: profile.name,
+            genre: profile.genre || '',
+            subGenre: '', // Not consistently captured yet
+            brandVoice: 'Professional, Strategic, Authentic' // Default if missing
+        },
+        location: {
+            city: socials.location?.city || '',
+            country: socials.location?.country || ''
+        },
+        campaign: {
+            budget: socials.goals?.budgetRange || '',
+            timeline: socials.goals?.timeline || '',
+            goals: [socials.goals?.primaryGoal].filter(Boolean) as string[]
+        },
+        assets: {
+            epkUrl: socials.website, // Using website as proxy for now
+            pressReleaseUrl: '',
+            driveUrl: ''
+        },
+        policies: {
+            causeAvoid: [] // Safe default
+        },
+        story: {
+            summary: profile.bio || profile.description || ''
+        }
+    };
+}
+import React from 'react';
+import { ExternalLink, RefreshCw, Lock } from 'lucide-react';
+
+interface PortalGateProps {
+    onRefresh: () => void;
+    isLoading?: boolean;
+}
+
+export const PortalGate: React.FC<PortalGateProps> = ({ onRefresh, isLoading = false }) => {
+    return (
+        <div className="flex flex-col items-center justify-center h-full w-full p-6 text-center z-50">
+            <div className="max-w-md w-full bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl relative overflow-hidden">
+                {/* Background Glow */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1/2 bg-visio-teal/10 blur-3xl rounded-full pointer-events-none" />
+
+                <div className="relative z-10 flex flex-col items-center">
+                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-6 ring-1 ring-white/10">
+                        <Lock className="w-8 h-8 text-visio-teal" />
+                    </div>
+
+                    <h2 className="text-2xl font-bold text-white mb-3 font-outfit">Unlock Your PR Assistant</h2>
+
+                    <p className="text-white/60 mb-8 leading-relaxed">
+                        To generate media leads and strategy, Visio needs to know your <span className="text-white font-medium">Sonic DNA</span> and <span className="text-white font-medium">Brand Identity</span>. Manage this in your Artist Portal.
+                    </p>
+
+                    <div className="flex flex-col w-full gap-3">
+                        <a
+                            href="https://portal.visio.ai"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-visio-teal to-visio-sage text-black font-bold py-3.5 rounded-xl hover:shadow-[0_0_20px_rgba(45,212,191,0.3)] transition-all transform hover:-translate-y-0.5"
+                        >
+                            Build My Artist Portal
+                            <ExternalLink size={16} />
+                        </a>
+
+                        <button
+                            onClick={onRefresh}
+                            disabled={isLoading}
+                            className="w-full flex items-center justify-center gap-2 bg-white/5 border border-white/10 text-white hover:bg-white/10 py-3 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isLoading ? (
+                                <>
+                                    <RefreshCw size={16} className="animate-spin" />
+                                    Checking...
+                                </>
+                            ) : (
+                                <>
+                                    <RefreshCw size={16} />
+                                    I've Updated My Portal
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+import { NextRequest, NextResponse } from 'next/server';
+import { parseIntent, ParsedIntent } from '@/lib/gemini';
+import { getLeadsByCountry, filterLeads, getDatabaseSummary, DBLead, FilterOptions } from '@/lib/db';
+import { performSmartSearch } from '@/lib/search';
+
+// ... (keep interface definitions and helper functions like normalizeCountry, mapLeadsToResponse if needed, 
+// OR just include the full file content if you are doing a full overwrite. Assuming full overwrite based on tool usage)
+
+interface LeadResponse {
+    id: number;
+    name: string;
+    company?: string;
+    title?: string;
+    email?: string;
+    url: string;
+    snippet: string;
+    source?: string;
+    instagram?: string;
+    tiktok?: string;
+    twitter?: string;
+    followers?: string;
+}
+
+// Normalize country input
+function normalizeCountry(input: string | null | undefined): string {
+    if (!input) return 'ZA';
+    const clean = input.toUpperCase().replace(/\s/g, '');
+
+    if (['SOUTHAFRICA', 'SA', 'MZANSI', 'RSA', 'ZA'].includes(clean)) return 'ZA';
+    if (['UK', 'UNITEDKINGDOM', 'ENGLAND', 'BRITAIN'].includes(clean)) return 'UK';
+    if (['USA', 'UNITEDSTATES', 'AMERICA', 'US'].includes(clean)) return 'USA';
+    if (['CANADA', 'CA'].includes(clean)) return 'CANADA';
+
+    return clean || 'ZA';
+}
+
+// Convert DB leads to API response format
+function mapLeadsToResponse(leads: DBLead[], country: string): LeadResponse[] {
+    return leads.map((l, i) => ({
+        id: parseInt(l.id) || i + 1,
+        name: l.person,
+        company: l.company,
+        title: l.title || l.industry,
+        email: l.email || '',
+        url: '',
+        snippet: `${l.industry} • ${country} Database`,
+        source: 'Local Database (Instant)',
+        instagram: (l as any).instagram || '',
+        tiktok: (l as any).tiktok || '',
+        twitter: (l as any).twitter || '',
+        followers: (l as any).followers || ''
+    }));
+}
+
+// Basic keyword parsing fallback
+function parseBasicIntent(message: string, lastState?: any): ParsedIntent {
+    const lower = message.toLowerCase();
+
+    // Check for continuation
+    if (lastState && (lower.includes('more') || lower.includes('next') || lower.includes('continue'))) {
+        return {
+            action: 'continue',
+            filters: lastState.filters || {},
+            limit: 50,
+            message: 'Loading more results...'
+        };
+    }
+
+    const intent: ParsedIntent = {
+        action: 'search',
+        filters: {},
+        limit: 50,
+        message: ''
+    };
+
+    // Extract country
+    if (lower.includes('uk') || lower.includes('united kingdom')) intent.filters.country = 'UK';
+    else if (lower.includes('usa') || lower.includes('america')) intent.filters.country = 'USA';
+    else intent.filters.country = 'ZA';
+
+    // Extract category
+    if (lower.includes('amapiano')) intent.filters.category = 'Amapiano';
+    else if (lower.includes('hip hop') || lower.includes('rap')) intent.filters.category = 'Hip-Hop';
+    else if (lower.includes('podcast')) intent.filters.category = 'Podcast';
+
+    intent.filters.searchTerm = message;
+
+    return intent;
+}
+
+// Local performExaSearch removed. Using lib/search.ts instead.
+
+
+import { getContextPack } from '@/lib/god-mode';
+
+// ... (existing imports)
+
+export async function POST(request: NextRequest) {
+    try {
+        const body = await request.json();
+        // REMOVE artistContext from body - we fetch it server-side now (Source of Truth)
+        const { message, conversationHistory = [], lastSearchState, tier = 'instant', mode = 'chat' } = body;
+
+        // Legacy support: if old 'query' field is used
+        const userMessage = message || body.query;
+
+        if (!userMessage) {
+            return NextResponse.json({
+                error: 'Message required',
+                message: '❌ Please provide a message.',
+                leads: []
+            }, { status: 400 });
+        }
+
+        // FETCH GOD MODE CONTEXT
+        const artistContext = await getContextPack();
+
+        const logs: string[] = [];
+        let leads: LeadResponse[] = [];
+        let intent: ParsedIntent;
+
+        // Tier-based logging
+        const tierLabels = {
+            instant: '⚡ Instant Mode',
+            business: '💼 Business Mode',
+            enterprise: '🚀 Enterprise Mode'
+        };
+        logs.push(`${tierLabels[tier as keyof typeof tierLabels] || tierLabels.instant}`);
+        logs.push(mode === 'research' ? '🔬 Research Mode Active' : '💬 Chat Mode Active');
+        if (!artistContext) logs.push('⚠️ No Artist Portal Context Found');
+        else logs.push(`👤 Context Loaded: ${artistContext.identity.name}`);
+
+        // Check if Gemini API is available
+        const hasGemini = !!process.env.GEMINI_API_KEY;
+
+        if (mode === 'research') {
+            // FORCE RESEARCH MODE
+            // We can still use Gemini to parse *filters* (country, genre) but the action is forced to 'search'
+            logs.push('🧠 Visio: Analyzing research parameters...');
+
+            if (hasGemini) {
+                intent = await parseIntent(userMessage, conversationHistory, artistContext || undefined, tier as any, 'research'); // Use existing parser for filters
+            } else {
+                intent = parseBasicIntent(userMessage, lastSearchState);
+            }
+
+            // OVERRIDE: Force action to search, enforce limits
+            intent.action = 'search';
+
+            // Limit Logic: 100 for Enterprise, 30 for others
+            const limit = tier === 'enterprise' ? 100 : 30;
+            intent.limit = limit;
+            logs.push(`🎯 Target: Finding top ${limit} leads`);
+
+        } else {
+            // CHAT MODE (Default)
+            if (hasGemini) {
+                // Use AI to parse intent with tier
+                logs.push('🧠 Visio: Analyzing your request...');
+                intent = await parseIntent(userMessage, conversationHistory, artistContext || undefined, tier as 'instant' | 'business' | 'enterprise', mode as 'chat' | 'research');
+
+                // If the user explicitly asks to "find leads" or "search", we honor it.
+                // Otherwise, the prompt should naturally lean towards chat.
+                // We'll trust the parser, but we can add a nudge if needed.
+                logs.push(`📋 Strategy: ${intent.action}`);
+            } else {
+                // Fallback: basic keyword parsing
+                logs.push('⚠️ AI offline - using basic mode');
+                intent = parseBasicIntent(userMessage, lastSearchState);
+            }
+        }
+
+        // Handle different actions
+        switch (intent.action) {
+            case 'search': {
+                const country = normalizeCountry(intent.filters?.country);
+
+                // 1. Try Local Database First (if South Africa)
+                if (country === 'ZA') {
+                    logs.push('📂 Searching local ZA database...');
+
+                    const options: FilterOptions = {
+                        category: intent.filters?.category || undefined,
+                        minFollowers: intent.filters?.minFollowers || undefined,
+                        maxFollowers: intent.filters?.maxFollowers || undefined,
+                        searchTerm: intent.filters?.searchTerm || undefined
+                    };
+
+                    const dbLeads = getLeadsByCountry('ZA');
+                    const filtered = filterLeads(dbLeads, options);
+
+                    if (filtered.results.length > 0) {
+                        leads = mapLeadsToResponse(filtered.results.slice(0, intent.limit || 50), 'South Africa');
+                        logs.push(`✅ Found ${leads.length} leads in database`);
+                    } else {
+                        logs.push('⚠️ No local matches found, trying external search...');
+                    }
+                }
+
+                // 2. Fallback to Exa (External Search) if no local leads or country is not ZA
+                // OR if user specifically asked for "web" or "search" (logic can be refined)
+                if (leads.length === 0) {
+                    const status = country === 'ZA' ? 'expand' : 'external';
+                    logs.push(status === 'expand' ? '🌐 Expanding search to the web...' : `🌐 Searching external sources in ${country}...`);
+
+                    const exaLeads = await performSmartSearch(intent.filters?.searchTerm || userMessage, country);
+                    // Map SearchResult to LeadResponse structure 
+                    const mappedExaLeads: LeadResponse[] = exaLeads.map(lead => ({
+                        ...lead,
+                        // Ensure all LeadResponse fields are present if missing optional ones
+                        snippet: lead.snippet || '',
+                        source: lead.source || 'Exa Neural Search'
+                    }));
+                    leads = [...leads, ...mappedExaLeads];
+                    logs.push(`✅ Found ${exaLeads.length} web results`);
+                }
+
+                break;
+            }
+
+            case 'continue': {
+                logs.push('🔄 Loading more results...');
+                // Implementation for pagination would go here
+                break;
+            }
+
+            case 'clarify': {
+                logs.push('❓ Needs clarification');
+                break;
+            }
+
+            case 'unavailable': {
+                logs.push('❌ Request out of scope/unavailable');
+                break;
+            }
+
+            case 'data_gap': {
+                logs.push('⚠️ Failsafe Triggered: Missing Portal Data');
+                break;
+            }
+        }
+
+        let assistantMessage = intent.message || "Here are the results.";
+
+        // If searching, generate a summary response based on results
+        if (intent.action === 'search' && !intent.message) {
+            // We can add a small helper here to summarize results if Gemini didn't provide a specific message
+            assistantMessage = `Found ${leads.length} results for your search.`;
+        }
+
+        return NextResponse.json({
+            message: assistantMessage,
+            leads: leads,
+            logs: logs,
+            intent: intent,
+            meta: {
+                total: leads.length,
+                source: leads.some(l => l.source?.includes('Exa')) ? 'Hybrid (DB + Web)' : 'Local DB'
+            }
+        });
+
+    } catch (error: any) {
+        console.error('Agent Error:', error);
+        return NextResponse.json({
+            error: 'Internal processing error',
+            message: 'Sorry, I encountered an error processing your request.'
+        }, { status: 500 });
+    }
+}
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+// ============================================================================
+// VISIO AI - PR SPECIALIST CHARACTER
+// ============================================================================
+// Character Profile:
+// - Name: Visio
+// - Background: Former PR Director at Columbia Records, MBA from NYU Stern
+// - Personality: Warm, direct, strategic. Uses industry jargon naturally.
+// - Voice: Professional yet personable. Uses "we" language. Strategic rationale.
+// ============================================================================
+
+import { ContextPack } from './god-mode';
+
+// ============================================================================
+// VISIO AI - PR SPECIALIST CHARACTER (GOD MODE CONSUMER)
+// ============================================================================
+
+export const GENERATE_SYSTEM_PROMPT = (context?: ContextPack, allowJson: boolean = true) => {
+    // 1. Safe Defaults & Extraction
+    const identity = context?.identity || { name: 'Artist', genre: '', brandVoice: 'Professional' };
+    const location = context?.location || { city: '', country: '' };
+    const campaign = context?.campaign || { budget: '', timeline: '', goals: [] };
+    const story = context?.story || { summary: '' };
+
+    // 2. Data Health Check (For Failsafe)
+    const missingFields = [];
+    if (!identity.genre) missingFields.push('Genre');
+    if (!location.country) missingFields.push('Target Location');
+
+    const missingDataAlert = missingFields.length > 0
+        ? `\n⚠️ **MISSING DATA ALERT**: The Artist Portal is missing: ${missingFields.join(', ')}. \nIf the user asks for a search/strategy that requires these, YOU MUST REFUSE and ask them to "Update your Portal".`
+        : '';
+
+    // 3. Construct Prompt
+    const basePrompt = `# VISIO - Global PR Strategist (Consumer Mode)
+
+## 🎭 YOUR ROLE
+You are **Visio**, a high-level PR strategist. 
+**CRITICAL**: You are a CONSUMER of the "Visio Artist Portal". 
+- You READ the "Context Pack" provided below.
+- You DO NOT ask the user for basic info (Genre, Location, Bio) - you assume the Portal is the source of truth.
+- If the Portal is empty, you direct them to fix it there.
+
+## 📂 CONTEXT PACK (Source of Truth)
+**Artist Identity**:
+- Name: ${identity.name}
+- Genre: ${identity.genre || 'UNKNOWN'}
+- Brand Voice: ${identity.brandVoice}
+
+**Targeting**:
+- Base: ${location.city || 'Unknown City'}, ${location.country || 'Unknown Country'}
+- Budget: ${campaign.budget || 'Not set'}
+- Timeline: ${campaign.timeline || 'Not set'}
+
+**Story/Pitch**:
+${story.summary || 'No bio available.'}
+
+${missingDataAlert}
+
+## 🛡️ "GOD MODE" GUARDRAILS
+1. **Never Hallucinate Context**: If the 'Genre' is empty above, do NOT guess it.
+2. **The "Data Hunter" Failsafe**: 
+   - If the user requests a media search (e.g. "Find blogs", "Search for curators")...
+   - AND 'Genre' or 'Location' is missing above...
+   - **STOP**. Respond EXACTLY: "I see your Artist Portal is missing your **[Missing Field]**. I need this to find relevant results. Please click the button below to update it."
+   - Do NOT run the search.
+
+## 🧠 STRATEGIC APPROACH
+- **Tone**: ${identity.brandVoice}. (If "Professional", be concise. If "Hype", be energetic).
+- **Consultative**: Use the Campaign Goals (${campaign.goals.join(', ') || 'Growth'}) to frame your advice.
+- **Reference Assets**: If an EPK link exists (${context?.assets?.epkUrl ? 'Yes' : 'No'}), mention using it in pitches.
+`;
+
+    if (!allowJson) return basePrompt;
+
+    return `${basePrompt}
+## Response Format
+Respond with a JSON object. 
+
+{
+  "action": "search" | "continue" | "clarify" | "unavailable" | "data_gap",
+  "filters": {
+    "country": "ZA" | "USA" | "UK" | null,
+    "category": string | null,
+    "minFollowers": number | null,
+    "maxFollowers": number | null,
+    "searchTerm": string | null
+  },
+  "limit": number | null,
+  "offset": number | null,
+  "message": "Your strategic response. If triggering Failsafe, ask them to update Portal."
+}
+
+**IMPORTANT:**
+- Use "action": "data_gap" if you are triggering the Failsafe for missing Portal data.
+- For 'searchTerm': Rewrite queries to be industry-specific (e.g. "drill" -> "UK drill music blogs").
+`;
+};
+
+// Initialize Gemini client with tier support
+export function createGeminiClient(tier: 'instant' | 'business' | 'enterprise' = 'instant') {
+    const apiKey = process.env.GEMINI_API_KEY;
+
+    if (!apiKey) {
+        throw new Error('GEMINI_API_KEY is not set in environment variables');
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+
+    // Model selection based on tier - using stable Gemini models
+    const modelName = tier === 'enterprise'
+        ? 'gemini-2.5-pro'  // Most intelligent, supports 1M context with thinking
+        : tier === 'business'
+            ? 'gemini-2.5-flash'  // Fast mid-size model with thinking
+            : 'gemini-2.0-flash';  // Instant - fastest responses
+
+    return genAI.getGenerativeModel({ model: modelName });
+}
+
+export interface ParsedIntent {
+    action: 'search' | 'continue' | 'clarify' | 'unavailable' | 'data_gap'; // Added data_gap
+    filters: {
+        country?: string | null;
+        category?: string | null;
+        minFollowers?: number | null;
+        maxFollowers?: number | null;
+        searchTerm?: string | null;
+    };
+    limit?: number | null;
+    offset?: number | null;
+    message?: string;
+}
+
+// Parse user message into structured intent
+export async function parseIntent(
+    userMessage: string,
+    conversationHistory: { role: string; content: string }[] = [],
+    artistContext?: ContextPack, // Updated Type
+    tier: 'instant' | 'business' | 'enterprise' = 'instant',
+    mode: 'chat' | 'research' = 'research'
+): Promise<ParsedIntent> {
+    try {
+        const model = createGeminiClient(tier);
+
+        // Build conversation context
+        const historyText = conversationHistory.length > 0
+            ? `\n\nPrevious conversation:\n${conversationHistory.map(m => `${m.role}: ${m.content}`).join('\n')}`
+            : '';
+
+        // If CHAT mode, no JSON needed. Faster, cleaner.
+        const isChatMode = mode === 'chat';
+        const systemPrompt = GENERATE_SYSTEM_PROMPT(artistContext, !isChatMode);
+
+        let prompt;
+        if (isChatMode) {
+            prompt = `${systemPrompt}${historyText}\n\nUser: ${userMessage}\n\nRespond directly to the user as Visio. Do NOT use JSON. Keep it conversational.`;
+        } else {
+            prompt = `${systemPrompt}${historyText}\n\nUser: ${userMessage}\n\nRespond with ONLY valid JSON:`;
+        }
+
+        const result = await model.generateContent(prompt);
+        const response = result.response.text();
+
+        // Optimized Return for Chat Mode
+        if (isChatMode) {
+            return {
+                action: 'clarify',
+                filters: {},
+                limit: 0,
+                message: response // This is the plain text response
+            };
+        }
+
+        // JSON Parsing for Research Mode
+        let jsonStr = response.trim();
+        if (jsonStr.startsWith('```')) {
+            jsonStr = jsonStr.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
+        }
+
+        const parsed = JSON.parse(jsonStr) as ParsedIntent;
+        return parsed;
+
+    } catch (error: any) {
+        console.error('Gemini parse error:', error);
+
+        // Fallback with personality
+        return {
+            action: 'search',
+            filters: {
+                country: 'ZA',
+                searchTerm: userMessage
+            },
+            limit: 50,
+            message: `Let me dig into that for you - searching for "${userMessage}"...`
+        };
+    }
+}
+
+// Generate a natural response after showing results
+export async function generateResponse(
+    context: string,
+    resultCount: number,
+    hasMore: boolean,
+    tier: 'instant' | 'business' | 'enterprise' = 'instant'
+): Promise<string> {
+    try {
+        const model = createGeminiClient(tier);
+
+        const prompt = `You are Visio, a warm and strategic PR concierge (former Columbia Records PR Director, NYU Stern MBA).
+Write a brief 1-2 sentence response based on this context. Be conversational, strategic, and personable.
+
+Context: ${context}
+Results found: ${resultCount}
+More results available: ${hasMore}
+
+Use phrases like "Here's what I found...", "These look promising because...", "My top picks would be...". Be warm but efficient.`;
+
+        const result = await model.generateContent(prompt);
+        return result.response.text().trim();
+
+    } catch (error) {
+        // Fallback response with personality
+        if (resultCount === 0) {
+            return "Hmm, that search came up empty. Let's try a different angle - can you give me more specifics about what you're looking for?";
+        }
+        return hasMore
+            ? `Found ${resultCount} solid options. Want me to pull more, or should we dig into these first?`
+            : `Here's what I found - ${resultCount} results that match your criteria.`;
+    }
+}

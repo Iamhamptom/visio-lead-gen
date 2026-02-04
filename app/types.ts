@@ -22,6 +22,12 @@ export interface Subscription {
     status: 'active' | 'trialing' | 'past_due' | 'canceled';
     currentPeriodEnd: number;
     interval: 'month' | 'year';
+    paymentMethod?: {
+        token: string;
+        brand: string;
+        last4: string;
+        expiry: string;
+    };
 }
 
 
