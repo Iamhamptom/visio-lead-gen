@@ -465,7 +465,7 @@ export default function Home() {
     setIsLoading(true);
 
     // 2. Add Thinking (with tier for reasoning animation)
-    const tempId = (Date.now() + 1).toString();
+    const tempId = crypto.randomUUID();
     const sessionWithThinking = {
       ...updatedSession,
       messages: [...newHistory, {
