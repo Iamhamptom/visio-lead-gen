@@ -106,7 +106,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                             onClick={onGetStarted}
                             className="group relative px-8 py-4 rounded-full bg-white text-black font-bold text-lg hover:scale-105 transition-transform flex items-center gap-3 shadow-[0_0_40px_rgba(255,255,255,0.3)] overflow-hidden"
                         >
-                            <span className="relative z-10 flex items-center gap-2">Start Free Trial <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" /></span>
+                            <span className="relative z-10 flex items-center gap-2">Start 7-Day Trial <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" /></span>
                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                         </button>
                         <button className="px-8 py-4 rounded-full font-medium text-white border border-white/10 hover:bg-white/5 hover:border-white/20 transition-all flex items-center gap-2 backdrop-blur-sm">
