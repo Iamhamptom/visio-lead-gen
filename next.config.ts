@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+
+// Force Vercel Rebuild: Added new About, Features, How It Works pages
 const nextConfig: NextConfig = {
   async rewrites() {
     return [
