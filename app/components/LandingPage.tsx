@@ -219,7 +219,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
             </div>
 
             <footer className="py-12 text-center text-white/20 text-sm border-t border-white/5">
-                <p>&copy; 2026 Visio Lead Gen. Built for the Culture.</p>
+                <p>&copy; 2026 Visio Lead Gen. Built for the Culture. <span className="text-white/10 ml-2">v2.1 (Live)</span></p>
             </footer>
         </div>
     );
