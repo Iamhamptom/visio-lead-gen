@@ -36,19 +36,34 @@ export default function AboutPage() {
                 </div>
             </header>
 
-            {/* Hero */}
-            <section className="relative py-20 md:py-32 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-b from-visio-teal/5 via-transparent to-transparent" />
+            {/* Hero with Video Background */}
+            <section className="relative py-20 md:py-32 overflow-hidden min-h-[80vh] flex items-center">
+                {/* Video Background */}
+                <div className="absolute inset-0 z-0">
+                    <video
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        className="w-full h-full object-cover"
+                    >
+                        <source src="/hero-video-1.mp4" type="video/mp4" />
+                    </video>
+                    {/* Dark Overlay */}
+                    <div className="absolute inset-0 bg-black/70" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-visio-bg via-transparent to-visio-bg" />
+                </div>
+
                 <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-visio-teal/10 border border-visio-teal/20 text-visio-teal text-sm font-medium mb-8">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-visio-teal/20 border border-visio-teal/30 text-visio-teal text-sm font-medium mb-8 backdrop-blur-sm">
                         <Sparkles size={16} />
                         AI-Powered PR Engine
                     </div>
-                    <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+                    <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight drop-shadow-lg">
                         Turn Your Music Into<br />
                         <span className="bg-gradient-to-r from-visio-teal to-visio-sage bg-clip-text text-transparent">Global Reach</span>
                     </h1>
-                    <p className="text-lg md:text-xl text-white/60 max-w-2xl mx-auto leading-relaxed">
+                    <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto leading-relaxed drop-shadow-md">
                         Visio AI PR Assistant helps artists plan PR campaigns, generate targeted industry contact lists,
                         and run outreach—so they can scale globally beyond their borders.
                     </p>
