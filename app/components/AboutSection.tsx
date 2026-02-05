@@ -25,7 +25,7 @@ export default function AboutSection() {
                         playsInline
                         className="w-full h-full object-cover"
                     >
-                        <source src="/hero-video-1.mp4" type="video/mp4" />
+                        <source src="/hero-video-2.mp4" type="video/mp4" />
                     </video>
                     {/* Dark Overlay */}
                     <div className="absolute inset-0 bg-black/70" />

@@ -22,10 +22,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
     };
     return (
         <div className="min-h-screen bg-visio-bg text-white font-outfit relative overflow-hidden">
-            <BackgroundBeams className="opacity-40" />
+            {/* Hero Video Background (Top) */}
+            <div className="absolute inset-0 h-[100vh] z-0">
+                <video
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="w-full h-full object-cover opacity-60"
+                >
+                    <source src="/hero-video-1.mp4" type="video/mp4" />
+                </video>
+                <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-visio-bg" />
+            </div>
 
-            {/* Ambient Hero Glow */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-visio-teal/10 rounded-full blur-[120px] pointer-events-none" />
+            {/* Ambient Hero Glow (Overlay on video) */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-visio-teal/20 rounded-full blur-[120px] pointer-events-none z-0" />
 
             {/* Navbar */}
             <nav className="relative z-10 flex items-center justify-between px-6 py-8 max-w-7xl mx-auto">
