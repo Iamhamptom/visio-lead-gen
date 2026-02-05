@@ -49,6 +49,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                     <button onClick={() => scrollToSection('about')} className="text-sm font-medium text-white/50 hover:text-white transition-colors">About</button>
                     <button onClick={() => scrollToSection('features')} className="text-sm font-medium text-white/50 hover:text-white transition-colors">Features</button>
                     <button onClick={() => scrollToSection('how-it-works')} className="text-sm font-medium text-white/50 hover:text-white transition-colors">How It Works</button>
+                    <Link href="/labs" className="text-sm font-medium text-visio-teal/80 hover:text-visio-teal transition-colors flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-visio-teal animate-pulse"></span>
+                        Labs
+                    </Link>
                 </div>
                 <div className="flex items-center gap-6">
                     <button onClick={onLogin} className="text-sm font-medium text-white/50 hover:text-white transition-colors tracking-wide">
