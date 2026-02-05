@@ -1,8 +1,12 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Check, Zap, Globe, Music, Shield, Play, Search } from 'lucide-react';
+import Link from 'next/link';
 import { ShinyButton } from './ui/ShinyButton';
 import { BackgroundBeams } from './ui/background-beams';
+import AboutSection from './AboutSection';
+import FeaturesSection from './FeaturesSection';
+import HowItWorksSection from './HowItWorksSection';
 
 interface LandingPageProps {
     onGetStarted: () => void;
@@ -10,6 +14,12 @@ interface LandingPageProps {
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin }) => {
+    const scrollToSection = (id: string) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
     return (
         <div className="min-h-screen bg-visio-bg text-white font-outfit relative overflow-hidden">
             <BackgroundBeams className="opacity-40" />
@@ -22,6 +32,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-visio-teal to-visio-sage flex items-center justify-center text-black font-extrabold text-lg shadow-lg shadow-visio-teal/20">V</div>
                     <span className="font-bold text-2xl tracking-tight text-white">Visio</span>
+                </div>
+                <div className="hidden md:flex items-center gap-8">
+                    <button onClick={() => scrollToSection('about')} className="text-sm font-medium text-white/50 hover:text-white transition-colors">About</button>
+                    <button onClick={() => scrollToSection('features')} className="text-sm font-medium text-white/50 hover:text-white transition-colors">Features</button>
+                    <button onClick={() => scrollToSection('how-it-works')} className="text-sm font-medium text-white/50 hover:text-white transition-colors">How It Works</button>
                 </div>
                 <div className="flex items-center gap-6">
                     <button onClick={onLogin} className="text-sm font-medium text-white/50 hover:text-white transition-colors tracking-wide">
@@ -130,58 +145,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                 </div>
             </div>
 
-            {/* Features Strip */}
-            <div className="py-24 relative">
-                <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <FeatureItem
-                        icon={<Globe className="text-visio-teal" />}
-                        title="Global Database"
-                        desc="Access 10M+ contacts for playlists, blogs, labels, and influencers instantly."
-                    />
-                    <FeatureItem
-                        icon={<Zap className="text-yellow-200" />}
-                        title="AI Strategy"
-                        desc="Generate personalized pitch angles and email copy in seconds."
-                    />
-                    <FeatureItem
-                        icon={<Shield className="text-visio-sage" />}
-                        title="Verified Profiles"
-                        desc="Claim your artist profile and manage your EPK in one secure place."
-                    />
-                </div>
-            </div>
+            {/* About Section (Video Background) */}
+            <AboutSection />
 
-            {/* How It Works */}
-            <div className="py-24 relative z-10 bg-black/40 backdrop-blur-md border-y border-white/5">
-                <div className="max-w-7xl mx-auto px-6 text-center">
-                    <p className="text-visio-teal font-bold uppercase tracking-widest text-sm mb-4">The Workflow</p>
-                    <h2 className="text-4xl md:text-5xl font-bold text-white mb-16 tracking-tight">Stop sending emails into the void.</h2>
+            {/* Features Section */}
+            <FeaturesSection />
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-                        <div className="flex flex-col items-center group">
-                            <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 shadow-xl shadow-visio-teal/5">
-                                <Search size={32} className="text-visio-teal" />
-                            </div>
-                            <h3 className="text-2xl font-bold text-white mb-4">1. Find Contacts</h3>
-                            <p className="text-white/50 leading-relaxed max-w-xs">Instantly access a database of 10M+ playlists, curators, and industry professionals filtering by your specific genre.</p>
-                        </div>
-                        <div className="flex flex-col items-center group">
-                            <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 delay-100 shadow-xl shadow-visio-sage/5">
-                                <Zap size={32} className="text-visio-sage" />
-                            </div>
-                            <h3 className="text-2xl font-bold text-white mb-4">2. AI Outreach</h3>
-                            <p className="text-white/50 leading-relaxed max-w-xs">Our AI reads their recent posts and drafts a hyper-personalized pitch that actually gets opened.</p>
-                        </div>
-                        <div className="flex flex-col items-center group">
-                            <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 delay-200 shadow-xl shadow-purple-500/5">
-                                <Shield size={32} className="text-purple-400" />
-                            </div>
-                            <h3 className="text-2xl font-bold text-white mb-4">3. Get Placed</h3>
-                            <p className="text-white/50 leading-relaxed max-w-xs">Track opens, replies, and placements directly from your dashboard. Close more deals in less time.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            {/* How It Works Section */}
+            <HowItWorksSection />
 
             {/* Pricing Section */}
             <div className="py-32 relative">
