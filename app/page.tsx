@@ -739,7 +739,7 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-screen w-full bg-visio-bg overflow-hidden text-white font-outfit relative">
+    <div className="flex h-[100dvh] w-full bg-visio-bg overflow-hidden text-white font-outfit relative">
 
       {/* Toast Notification */}
       {toastMessage && (
