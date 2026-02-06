@@ -14,6 +14,7 @@ interface ComposerProps {
     onRequirePortal?: () => void;
     webSearchEnabled: boolean;
     onToggleWebSearch: () => void;
+    isRestricted?: boolean;
 }
 
 const TIER_CONFIG = {
@@ -51,7 +52,8 @@ export const Composer: React.FC<ComposerProps> = ({
     portalLocked = false,
     onRequirePortal,
     webSearchEnabled,
-    onToggleWebSearch
+    onToggleWebSearch,
+    isRestricted = false
 }) => {
     const [input, setInput] = useState('');
     const [tier, setTier] = useState<AITier>('business');
@@ -125,6 +127,15 @@ export const Composer: React.FC<ComposerProps> = ({
 
                 <div className="relative bg-[#0A0A0A] border border-white/10 rounded-3xl flex flex-col shadow-2xl">
 
+                    {isRestricted && (
+                        <div className="mx-4 mt-3 py-1.5 px-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg flex items-center gap-2 text-[10px] text-yellow-200/70">
+                            <Lock size={10} />
+                            <span className="font-medium uppercase tracking-wide">Preview Mode Active</span>
+                            <span className="opacity-50 mx-1">|</span>
+                            <span>Full research capabilties are locked pending approval.</span>
+                        </div>
+                    )}
+
                     {/* Tier Selector Bar */}
                     <div className="flex items-center justify-between px-4 pt-3 pb-1 border-b border-white/5">
                         <div className="relative" ref={tierMenuRef}>
@@ -182,27 +193,27 @@ export const Composer: React.FC<ComposerProps> = ({
                                 Web Search
                             </button>
                             <div className="flex bg-white/5 rounded-lg p-1 border border-white/5">
-                            <button
-                                onClick={() => setMode('chat')}
-                                className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${mode === 'chat' ? 'bg-visio-teal/20 text-visio-teal shadow-sm' : 'text-white/40 hover:text-white/60'
-                                    }`}
-                            >
-                                Chat
-                            </button>
-                            <button
-                                onClick={() => {
-                                    if (isResearchLocked) {
-                                        onRequirePortal?.();
-                                        return;
-                                    }
-                                    setMode('research');
-                                }}
-                                aria-disabled={isResearchLocked}
-                                className={`px-3 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1 ${mode === 'research' ? 'bg-visio-accent/20 text-visio-accent shadow-sm' : 'text-white/40 hover:text-white/60'} ${isResearchLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            >
-                                {isResearchLocked && <Lock size={12} className="text-white/50" />}
-                                Research
-                            </button>
+                                <button
+                                    onClick={() => setMode('chat')}
+                                    className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${mode === 'chat' ? 'bg-visio-teal/20 text-visio-teal shadow-sm' : 'text-white/40 hover:text-white/60'
+                                        }`}
+                                >
+                                    Chat
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        if (isResearchLocked) {
+                                            onRequirePortal?.();
+                                            return;
+                                        }
+                                        setMode('research');
+                                    }}
+                                    aria-disabled={isResearchLocked}
+                                    className={`px-3 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1 ${mode === 'research' ? 'bg-visio-accent/20 text-visio-accent shadow-sm' : 'text-white/40 hover:text-white/60'} ${isResearchLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
+                                    {isResearchLocked && <Lock size={12} className="text-white/50" />}
+                                    Research
+                                </button>
                             </div>
                         </div>
                     </div>

@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface LeadsGalleryProps {
     leads: Lead[];
     onSaveLead: (lead: Lead) => void;
+    isRestricted?: boolean;
 }
 
 const container = {
@@ -24,7 +25,7 @@ const item = {
     show: { opacity: 1, y: 0 }
 };
 
-export const LeadsGallery: React.FC<LeadsGalleryProps> = ({ leads, onSaveLead }) => {
+export const LeadsGallery: React.FC<LeadsGalleryProps> = ({ leads, onSaveLead, isRestricted = false }) => {
     const [copied, setCopied] = useState(false);
 
     const generateMarkdown = () => {
@@ -115,8 +116,13 @@ export const LeadsGallery: React.FC<LeadsGalleryProps> = ({ leads, onSaveLead })
                     variants={container}
                     initial="hidden"
                     animate="show"
-                    className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6"
+                    className={`max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 relative ${isRestricted ? 'blur-sm pointer-events-none select-none' : ''}`}
                 >
+                    {isRestricted && (
+                        <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-auto">
+                            {/* Overlay handled outside the blurred container usually but here it's easier to put sibling */}
+                        </div>
+                    )}
                     {leads.length === 0 ? (
                         <div className="col-span-full flex flex-col items-center justify-center py-20 text-center">
                             <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
@@ -133,7 +139,25 @@ export const LeadsGallery: React.FC<LeadsGalleryProps> = ({ leads, onSaveLead })
                         ))
                     )}
                 </motion.div>
+
+
+                {isRestricted && (
+                    <div className="absolute inset-0 z-30 flex items-center justify-center">
+                        <div className="bg-black/80 backdrop-blur-xl border border-white/10 p-8 rounded-2xl text-center max-w-md mx-4 shadow-2xl">
+                            <div className="w-16 h-16 rounded-full bg-visio-teal/10 flex items-center justify-center mx-auto mb-4 ring-1 ring-visio-teal/30">
+                                <Search className="text-visio-teal w-8 h-8" />
+                            </div>
+                            <h3 className="text-2xl font-bold text-white mb-2">Results Hidden</h3>
+                            <p className="text-white/60 mb-6">
+                                Your account is currently in Preview Mode. Please wait for admin approval to view full lead generation results.
+                            </p>
+                            <button className="px-6 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors pointer-events-auto">
+                                Refresh Status
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
-        </div>
+        </div >
     );
 };

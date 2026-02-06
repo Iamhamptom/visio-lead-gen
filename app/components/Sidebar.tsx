@@ -175,6 +175,7 @@ interface SidebarProps {
     onShareSession: (sessionId: string) => void;
     subscription?: Subscription;
     artistProfile: ArtistProfile | null;
+    isRestricted?: boolean;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -191,7 +192,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
     onShareSession,
     subscription = { tier: 'artist', status: 'active', currentPeriodEnd: 0, interval: 'month' },
-    artistProfile
+    artistProfile,
+    isRestricted = false
 }) => {
 
     // State for collapsible folders
@@ -238,6 +240,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <div className="flex items-center gap-2 text-white">
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-visio-teal to-visio-sage flex items-center justify-center text-black font-bold text-xl">V</div>
                     <span className="font-outfit text-xl font-medium tracking-tight">Visio<span className="opacity-50 font-light">AI</span></span>
+                    {isRestricted && (
+                        <div className="ml-2 px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-500 text-[9px] font-bold border border-yellow-500/20 uppercase tracking-widest">
+                            Preview
+                        </div>
+                    )}
                 </div>
             </div>
 

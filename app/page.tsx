@@ -52,6 +52,7 @@ const createInitialSession = (): Session => ({
 
 export default function Home() {
   const { user, loading: authLoading, signOut } = useAuth();
+  const isApproved = user?.app_metadata?.approved === true;
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // State: Views and Sessions
@@ -146,28 +147,26 @@ export default function Home() {
         }
         setCurrentView(targetView);
       } else {
-        // Logged In - Check Approval FIRST
+        // Logged In - Feature Gating (Soft Gate)
         const isApproved = user?.app_metadata?.approved === true;
 
+        /* REMOVED HARD REDIRECT
         if (!isApproved) {
-          // Force pending view if not approved
-          if (targetView !== 'pending') {
+            if (targetView !== 'pending') {
+                setCurrentView('pending');
+                return;
+            }
             setCurrentView('pending');
             return;
-          }
-          setCurrentView('pending');
-          return;
         }
+        */
 
-        // Check onboarding/profile if approved
+        // Check onboarding/profile
         if (!hasCompletedOnboarding && !hasProfile) {
-          // Force onboarding if not done
-          // Force portal gate check if not done
           if (targetView !== 'auth' && targetView !== 'landing') {
-            // We'll handle the gate inside the dashboard view or main layout
+            // We'll handle the gate inside dashboard
           }
         } else {
-          // Fully setup
           if (targetView === 'landing' || targetView === 'auth') {
             navigateTo('overview');
             return;
@@ -175,6 +174,8 @@ export default function Home() {
           setCurrentView(targetView);
         }
       }
+
+
     };
 
     checkUserStatus();
@@ -787,6 +788,7 @@ export default function Home() {
             onShareSession={handleShareSession}
             subscription={subscription}
             artistProfile={artistProfile}
+            isRestricted={!isApproved}
           />
 
           {/* Mobile Sidebar Overlay Backdrop */}
@@ -906,6 +908,7 @@ export default function Home() {
                     onPromptUsed={() => setPendingPrompt(null)}
                     webSearchEnabled={webSearchEnabled}
                     onToggleWebSearch={() => setWebSearchEnabled(prev => !prev)}
+                    isRestricted={!isApproved}
                   />
                 </div>
               </>
@@ -913,6 +916,7 @@ export default function Home() {
               <LeadsGallery
                 leads={allLeads}
                 onSaveLead={handleSaveLead}
+                isRestricted={!isApproved}
               />
             ) : currentView === 'billing' ? (
               <Billing
