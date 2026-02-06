@@ -33,12 +33,12 @@ export const LeadsGallery: React.FC<LeadsGalleryProps> = ({ leads, onSaveLead })
 
         leads.forEach(lead => {
             md += `### ${lead.name}\n`;
-            md += `- **Role:** ${lead.role}\n`;
-            md += `- **Company:** ${lead.company}\n`;
+            md += `- **Role:** ${lead.title}\n`;
+            md += `- **Company:** ${lead.company || 'N/A'}\n`;
             md += `- **Email:** ${lead.email || 'N/A'}\n`;
-            md += `- **LinkedIn:** ${lead.linkedin || 'N/A'}\n`;
-            md += `- **Match Score:** ${lead.fitScore}%\n`;
-            md += `- **Notes:** ${lead.lastAction || 'No notes'}\n\n`;
+            md += `- **LinkedIn:** ${lead.socials?.linkedin || 'N/A'}\n`;
+            md += `- **Match Score:** ${lead.matchScore}%\n`;
+            md += `- **Summary:** ${lead.snippet || 'No summary available'}\n\n`;
             md += `---\n\n`;
         });
 
