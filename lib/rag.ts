@@ -2,8 +2,18 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { createSupabaseAdminClient } from './supabase/server';
 
 // Initialize Gemini for Embeddings
-// We use a separate client instantiation to ensure we use the correct model for embeddings
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+// We use a lazy initialization to ensure environment variables are loaded
+let genAI: GoogleGenerativeAI | null = null;
+
+function getGenAI() {
+    if (!genAI) {
+        if (!process.env.GEMINI_API_KEY) {
+            throw new Error("GEMINI_API_KEY is not set");
+        }
+        genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    }
+    return genAI;
+}
 
 export interface KnowledgeChunk {
     id: number;
@@ -18,10 +28,10 @@ export interface KnowledgeChunk {
  */
 export async function embedText(text: string): Promise<number[]> {
     try {
-        const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
+        const ai = getGenAI();
+        const model = ai.getGenerativeModel({ model: "models/gemini-embedding-001" });
         const result = await model.embedContent(text);
-        const embedding = result.embedding;
-        return embedding.values;
+        return result.embedding.values;
     } catch (error) {
         console.error("Error generating embedding:", error);
         return [];
