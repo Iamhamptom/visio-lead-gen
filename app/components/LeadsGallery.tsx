@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Lead } from '../types';
 import { LeadCard } from './LeadCard';
-import { Search, Filter } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Search, Filter, Download, Copy, Check } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface LeadsGalleryProps {
     leads: Lead[];
@@ -25,6 +25,46 @@ const item = {
 };
 
 export const LeadsGallery: React.FC<LeadsGalleryProps> = ({ leads, onSaveLead }) => {
+    const [copied, setCopied] = useState(false);
+
+    const generateMarkdown = () => {
+        const date = new Date().toLocaleDateString();
+        let md = `# Visio Leads Export\nDate: ${date}\nTotal Leads: ${leads.length}\n\n## Contact List\n\n`;
+
+        leads.forEach(lead => {
+            md += `### ${lead.name}\n`;
+            md += `- **Role:** ${lead.role}\n`;
+            md += `- **Company:** ${lead.company}\n`;
+            md += `- **Email:** ${lead.email || 'N/A'}\n`;
+            md += `- **LinkedIn:** ${lead.linkedin || 'N/A'}\n`;
+            md += `- **Match Score:** ${lead.fitScore}%\n`;
+            md += `- **Notes:** ${lead.lastAction || 'No notes'}\n\n`;
+            md += `---\n\n`;
+        });
+
+        return md;
+    };
+
+    const handleDownload = () => {
+        const md = generateMarkdown();
+        const blob = new Blob([md], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `visio-leads-${new Date().toISOString().split('T')[0]}.md`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
+    const handleCopy = () => {
+        const md = generateMarkdown();
+        navigator.clipboard.writeText(md);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
     return (
         <div className="flex flex-col h-full w-full">
 
@@ -45,9 +85,26 @@ export const LeadsGallery: React.FC<LeadsGalleryProps> = ({ leads, onSaveLead })
                                 className="bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm text-white focus:outline-none focus:border-visio-teal/50 transition-colors w-64"
                             />
                         </div>
-                        <button className="p-2 border border-white/10 rounded-xl hover:bg-white/5 text-white/60 hover:text-white transition-colors">
-                            <Filter size={18} />
-                        </button>
+
+                        {/* Export Actions */}
+                        <div className="flex items-center gap-1 pl-2 border-l border-white/10 ml-2">
+                            <button
+                                onClick={handleCopy}
+                                className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-white/5 text-white/60 hover:text-white transition-colors text-sm font-medium"
+                                title="Copy Markdown to Clipboard"
+                            >
+                                {copied ? <Check size={16} className="text-visio-teal" /> : <Copy size={16} />}
+                                <span className="hidden sm:inline">{copied ? 'Copied' : 'Copy MD'}</span>
+                            </button>
+                            <button
+                                onClick={handleDownload}
+                                className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white font-medium text-sm transition-colors"
+                                title="Download Markdown File"
+                            >
+                                <Download size={16} />
+                                <span className="hidden sm:inline">Export MD</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
