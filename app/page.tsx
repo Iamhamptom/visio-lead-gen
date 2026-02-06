@@ -134,6 +134,7 @@ export default function Home() {
       else if (path === '/leads') targetView = 'leads';
       else if (path === '/reason') targetView = 'reason';
       else if (path === '/reach') targetView = 'reach';
+      else if (path === '/pending') targetView = 'pending';
       else if (path === '/landing') targetView = 'landing';
 
       // 2. Auth Guards
