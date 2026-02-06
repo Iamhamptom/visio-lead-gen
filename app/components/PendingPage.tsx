@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { BackgroundBeams } from './ui/background-beams';
 import { ShieldCheck, Clock } from 'lucide-react';
