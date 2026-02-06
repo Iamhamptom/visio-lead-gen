@@ -8,6 +8,7 @@ import { LeadsGallery } from './components/LeadsGallery';
 import { PortalGate } from './components/PortalGate';
 import { LandingPage } from './components/LandingPage';
 import { AuthPage } from './components/AuthPage';
+import { PendingPage } from './components/PendingPage';
 import { SettingsPage } from './components/SettingsPage';
 import { Billing } from './components/Billing';
 import { DashboardOverview } from './components/DashboardOverview';
@@ -144,7 +145,20 @@ export default function Home() {
         }
         setCurrentView(targetView);
       } else {
-        // Logged In
+        // Logged In - Check Approval FIRST
+        const isApproved = user?.app_metadata?.approved === true;
+
+        if (!isApproved) {
+          // Force pending view if not approved
+          if (targetView !== 'pending') {
+            setCurrentView('pending');
+            return;
+          }
+          setCurrentView('pending');
+          return;
+        }
+
+        // Check onboarding/profile if approved
         if (!hasCompletedOnboarding && !hasProfile) {
           // Force onboarding if not done
           // Force portal gate check if not done
@@ -745,6 +759,8 @@ export default function Home() {
         <div className="flex-1 w-full h-full overflow-y-auto">
           <AuthPage key={authMode} onComplete={handleAuthComplete} initialMode={authMode} />
         </div>
+      ) : currentView === 'pending' ? (
+        <PendingPage />
       ) : (
         <>
           <Sidebar

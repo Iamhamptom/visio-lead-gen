@@ -13,7 +13,8 @@ export type ViewMode =
     | 'billing'
     | 'reason'
     | 'reach'
-    | 'settings';
+    | 'settings'
+    | 'pending';
 
 export type SubscriptionTier = 'artist' | 'starter' | 'artiste' | 'starter_label' | 'label' | 'agency' | 'enterprise';
 
