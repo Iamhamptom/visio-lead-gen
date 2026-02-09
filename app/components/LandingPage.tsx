@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Check, Zap, Globe, Music, Shield, Play, Search } from 'lucide-react';
+import { ArrowRight, Check, Zap, Globe, Music, Shield, Play, Search, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { ShinyButton } from './ui/ShinyButton';
 import { BackgroundBeams } from './ui/background-beams';
@@ -39,6 +39,7 @@ const VIDEOS = {
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin }) => {
     const [playingId, setPlayingId] = React.useState<string | null>(null);
+    const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
     // Override onGetStarted to redirect to Artist Portal
     onGetStarted = () => {
@@ -49,10 +50,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
         const element = document.getElementById(id);
         if (element) {
             element.scrollIntoView({ behavior: 'smooth' });
+            setMobileMenuOpen(false);
         }
     };
     return (
-        <div className="min-h-screen bg-visio-bg text-white font-outfit relative overflow-hidden">
+        <div className="min-h-screen bg-visio-bg text-white font-outfit relative overflow-x-hidden">
             {/* Hero Video Background (Top) */}
             <div className="absolute inset-0 h-[100vh] z-0">
                 <video
@@ -71,11 +73,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-visio-teal/20 rounded-full blur-[120px] pointer-events-none z-0" />
 
             {/* Navbar */}
-            <nav className="relative z-10 flex items-center justify-between px-6 py-8 max-w-7xl mx-auto">
+            <nav className="relative z-50 flex items-center justify-between px-6 py-6 md:py-8 max-w-7xl mx-auto">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-visio-teal to-visio-sage flex items-center justify-center text-black font-extrabold text-lg shadow-lg shadow-visio-teal/20">V</div>
                     <span className="font-bold text-2xl tracking-tight text-white">Visio</span>
                 </div>
+
+                {/* Desktop Nav */}
                 <div className="hidden md:flex items-center gap-8">
                     <button onClick={() => scrollToSection('about')} className="text-sm font-medium text-white/50 hover:text-white transition-colors">About</button>
                     <button onClick={() => scrollToSection('features')} className="text-sm font-medium text-white/50 hover:text-white transition-colors">Features</button>
@@ -85,7 +89,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                         Labs
                     </Link>
                 </div>
-                <div className="flex items-center gap-6">
+
+                {/* Desktop Actions */}
+                <div className="hidden md:flex items-center gap-6">
                     <button onClick={onLogin} className="text-sm font-medium text-white/50 hover:text-white transition-colors tracking-wide">
                         Log In
                     </button>
@@ -95,7 +101,31 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                         className="bg-white text-black px-6 py-2.5 text-sm font-bold shadow-[0_0_20px_rgba(255,255,255,0.2)]"
                     />
                 </div>
+
+                {/* Mobile Menu Toggle */}
+                <div className="flex items-center gap-4 md:hidden">
+                    <ShinyButton
+                        text="Get App"
+                        onClick={onGetStarted}
+                        className="bg-white text-black px-4 py-2 text-xs font-bold"
+                    />
+                    <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 text-white/70 hover:text-white">
+                        {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                    </button>
+                </div>
             </nav>
+
+            {/* Mobile Menu Overlay */}
+            {mobileMenuOpen && (
+                <div className="fixed inset-0 z-40 bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center gap-8 md:hidden animate-in fade-in duration-200">
+                    <button onClick={() => scrollToSection('about')} className="text-2xl font-bold text-white/80">About</button>
+                    <button onClick={() => scrollToSection('features')} className="text-2xl font-bold text-white/80">Features</button>
+                    <button onClick={() => scrollToSection('how-it-works')} className="text-2xl font-bold text-white/80">How It Works</button>
+                    <Link href="/labs" className="text-2xl font-bold text-visio-teal">Labs</Link>
+                    <div className="h-px w-20 bg-white/10 my-4" />
+                    <button onClick={onLogin} className="text-xl font-medium text-white/50">Log In</button>
+                </div>
+            )}
 
             {/* Hero */}
             <main className="relative z-10 pt-24 pb-32 px-6">
@@ -117,7 +147,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6, delay: 0.1 }}
-                        className="text-5xl md:text-8xl font-bold tracking-tight leading-[1.1] text-white"
+                        className="text-4xl md:text-8xl font-bold tracking-tight leading-[1.1] text-white"
                     >
                         Your PR <span className="text-transparent bg-clip-text bg-gradient-to-r from-visio-teal via-visio-sage to-white animate-text-shimmer bg-[length:200%_auto]">Ai Assistant</span>
                     </motion.h1>
@@ -300,7 +330,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                                 <li className="flex gap-3 text-white/70"><Check size={18} className="text-purple-400" /> API Access</li>
                                 <li className="flex gap-3 text-white/70"><Check size={18} className="text-purple-400" /> Unlimited Profiles</li>
                             </ul>
-                            <button onClick={onGetStarted} className="w-full py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold transition-colors">Contact Sales</button>
+                            <a href="mailto:admin@visiocorp.co" className="block w-full text-center py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold transition-colors">Contact Sales</a>
                         </div>
                     </div>
                 </div>

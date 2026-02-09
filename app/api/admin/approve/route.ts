@@ -15,6 +15,11 @@ export async function POST(req: Request) {
 
         if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+        // 2. Verify Admin Role
+        if (user.app_metadata.role !== 'admin') {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
         // 2. Update User Metadata
         const { data, error } = await supabaseAdmin.auth.admin.updateUserById(
             userId,

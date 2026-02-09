@@ -2,10 +2,11 @@
 
 import React, { useEffect, useState } from 'react';
 import { BackgroundBeams } from '../components/ui/background-beams';
-import { Loader2, CheckCircle, XCircle, Shield, Search } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Loader2, CheckCircle, XCircle, Shield, Search, Users, Zap, LayoutDashboard, MessageSquare } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase/client';
 
+// Types
 interface AdminUser {
     id: string;
     email: string;
@@ -18,42 +19,69 @@ interface AdminUser {
     user_metadata: {
         full_name?: string;
     };
+    subscription?: {
+        subscription_tier: string;
+        subscription_status: string;
+    } | null;
+}
+
+interface LeadRequest {
+    id: string;
+    content: string;
+    created_at: string;
+    session: {
+        user_id: string;
+    };
+    user_email?: string;
+    user_name?: string;
 }
 
 export default function AdminPage() {
+    const [view, setView] = useState<'users' | 'leads'>('users');
     const [users, setUsers] = useState<AdminUser[]>([]);
+    const [leads, setLeads] = useState<LeadRequest[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [error, setError] = useState<string | null>(null);
 
-    const fetchUsers = async () => {
+    // Fetch Data
+    const fetchData = async () => {
+        setLoading(true);
         try {
             const { data: { session } } = await supabase.auth.getSession();
             const token = session?.access_token;
+            if (!token) throw new Error("No session found");
 
-            const res = await fetch('/api/admin/users', {
-                headers: {
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-                }
-            });
+            const headers = { 'Authorization': `Bearer ${token}` };
 
-            if (res.status === 401) {
-                setError("Unauthorized. Are you logged in as Admin?");
+            // Parallel Fetch
+            const [usersRes, leadsRes] = await Promise.all([
+                fetch('/api/admin/users', { headers }),
+                fetch('/api/admin/leads', { headers })
+            ]);
+
+            if (usersRes.status === 401 || usersRes.status === 403) {
+                setError("Unauthorized Access");
                 setLoading(false);
                 return;
             }
-            if (!res.ok) throw new Error('Failed to fetch users');
-            const data = await res.json();
-            setUsers(data.users || []);
+
+            const usersData = await usersRes.json();
+            const leadsData = await leadsRes.json();
+
+            setUsers(usersData.users || []);
+            setLeads(leadsData.leads || []);
+
         } catch (err: any) {
-            setError(err.message);
+            console.error(err);
+            setError(err.message || "Failed to load dashboard data");
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchUsers();
+        fetchData();
     }, []);
 
     const toggleApproval = async (userId: string, currentStatus: boolean) => {
@@ -68,23 +96,22 @@ export default function AdminPage() {
             const { data: { session } } = await supabase.auth.getSession();
             const token = session?.access_token;
 
-            const res = await fetch('/api/admin/approve', {
+            await fetch('/api/admin/approve', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({ userId, approved: !currentStatus })
             });
-            if (!res.ok) throw new Error('Update failed');
         } catch (err) {
-            // Revert on error
+            // Revert
             setUsers(prev => prev.map(u =>
                 u.id === userId
                     ? { ...u, app_metadata: { ...u.app_metadata, approved: currentStatus } }
                     : u
             ));
-            alert("Failed to update user status");
+            alert("Failed to update status");
         }
     };
 
@@ -93,111 +120,219 @@ export default function AdminPage() {
         u.user_metadata?.full_name?.toLowerCase().includes(search.toLowerCase())
     );
 
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-visio-bg flex items-center justify-center text-white">
-                <Loader2 className="animate-spin" />
-            </div>
-        );
-    }
-
+    // Only render safe content
     if (error) {
         return (
             <div className="min-h-screen bg-visio-bg flex items-center justify-center text-white font-outfit">
                 <div className="text-center p-8 bg-white/5 rounded-2xl border border-red-500/20">
                     <Shield className="w-12 h-12 text-red-500 mx-auto mb-4" />
-                    <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
-                    <p className="text-white/60">{error}</p>
-                    <button
-                        onClick={() => window.location.href = '/'}
-                        className="mt-6 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
-                    >
-                        Return Home
-                    </button>
+                    <h1 className="text-2xl font-bold mb-2">Access Restricted</h1>
+                    <p className="text-white/60 mb-6">{error}</p>
+                    <button onClick={() => window.location.href = '/'} className="px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20">Return Home</button>
+                    <div className="mt-4 pt-4 border-t border-white/5">
+                        <p className="text-xs text-white/30">First time? Use the setup link provided by support.</p>
+                    </div>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-visio-bg text-white font-outfit p-8">
+        <div className="min-h-screen bg-visio-bg text-white font-outfit flex">
             <BackgroundBeams className="fixed inset-0 z-0 opacity-20 pointer-events-none" />
 
-            <div className="max-w-6xl mx-auto relative z-10">
-                <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold flex items-center gap-3">
-                            <Shield className="text-visio-teal" />
-                            Admin Console
-                        </h1>
-                        <p className="text-white/50 mt-1">Manage user access and approvals</p>
+            {/* Sidebar */}
+            <div className="w-64 border-r border-white/10 p-6 flex flex-col z-10 bg-visio-bg/50 backdrop-blur-xl fixed h-full">
+                <div className="flex items-center gap-3 mb-10 px-2">
+                    <div className="w-8 h-8 bg-visio-teal rounded-lg flex items-center justify-center">
+                        <Shield size={18} className="text-black" />
                     </div>
-
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" size={16} />
-                        <input
-                            type="text"
-                            placeholder="Search users..."
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                            className="bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2 focus:outline-none focus:border-visio-teal/50 transition-colors w-64"
-                        />
-                    </div>
+                    <span className="font-bold text-lg">Admin</span>
                 </div>
 
-                <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden shadow-2xl backdrop-blur-sm">
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-white/5 text-white/40 uppercase tracking-wider font-medium">
-                            <tr>
-                                <th className="p-4 pl-6">User</th>
-                                <th className="p-4">Created</th>
-                                <th className="p-4 text-center">Status</th>
-                                <th className="p-4 text-right pr-6">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-white/5">
-                            {filteredUsers.map(user => {
-                                const isApproved = user.app_metadata?.approved === true;
-                                return (
-                                    <tr key={user.id} className="hover:bg-white/5 transition-colors">
-                                        <td className="p-4 pl-6">
-                                            <div className="font-medium text-white">{user.user_metadata?.full_name || 'Unknown'}</div>
-                                            <div className="text-white/50 text-xs">{user.email}</div>
-                                        </td>
-                                        <td className="p-4 text-white/60">
-                                            {new Date(user.created_at).toLocaleDateString()}
-                                        </td>
-                                        <td className="p-4 text-center">
-                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${isApproved
-                                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                                : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
-                                                }`}>
-                                                {isApproved ? 'Approved' : 'Pending'}
-                                            </span>
-                                        </td>
-                                        <td className="p-4 text-right pr-6">
-                                            <button
-                                                onClick={() => toggleApproval(user.id, isApproved)}
-                                                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${isApproved
-                                                    ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20'
-                                                    : 'bg-visio-teal text-black hover:bg-visio-teal/90'
-                                                    }`}
-                                            >
-                                                {isApproved ? 'Revoke' : 'Approve'}
-                                            </button>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
+                <nav className="space-y-2 flex-1">
+                    <button
+                        onClick={() => setView('users')}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-sm font-medium ${view === 'users' ? 'bg-white/10 text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+                    >
+                        <Users size={18} />
+                        Users & Access
+                    </button>
+                    <button
+                        onClick={() => setView('leads')}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-sm font-medium ${view === 'leads' ? 'bg-white/10 text-white' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+                    >
+                        <Zap size={18} />
+                        Lead Requests
+                    </button>
+                </nav>
 
-                    {filteredUsers.length === 0 && (
-                        <div className="p-12 text-center text-white/40">
-                            No users found.
+                <div className="mt-auto px-4 py-4 border-t border-white/5">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-visio-teal to-purple-500" />
+                        <div>
+                            <p className="text-xs font-bold">Admin User</p>
+                            <p className="text-[10px] text-white/40">Super Admin</p>
                         </div>
-                    )}
+                    </div>
                 </div>
+            </div>
+
+            {/* Main Content */}
+            <div className="flex-1 ml-64 p-10 z-10">
+                <header className="flex justify-between items-center mb-8">
+                    <div>
+                        <h1 className="text-3xl font-bold">{view === 'users' ? 'User Management' : 'Live Lead Requests'}</h1>
+                        <p className="text-white/50">{view === 'users' ? 'Manage approvals and subscriptions' : 'Real-time feed of user generation requests'}</p>
+                    </div>
+
+                    <button onClick={fetchData} className="p-2 hover:bg-white/10 rounded-full transition-colors" title="Reload Data">
+                        <Loader2 size={20} className={loading ? 'animate-spin' : ''} />
+                    </button>
+                </header>
+
+                <AnimatePresence mode="wait">
+                    {view === 'users' ? (
+                        <motion.div
+                            key="users"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="space-y-6"
+                        >
+                            {/* Stats */}
+                            <div className="grid grid-cols-3 gap-6">
+                                <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
+                                    <p className="text-white/40 text-xs uppercase font-bold tracking-wider mb-2">Total Users</p>
+                                    <p className="text-3xl font-bold">{users.length}</p>
+                                </div>
+                                <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
+                                    <p className="text-white/40 text-xs uppercase font-bold tracking-wider mb-2">Pending</p>
+                                    <p className="text-3xl font-bold text-yellow-400">{users.filter(u => !u.app_metadata?.approved).length}</p>
+                                </div>
+                                <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
+                                    <p className="text-white/40 text-xs uppercase font-bold tracking-wider mb-2">Premium</p>
+                                    <p className="text-3xl font-bold text-visio-teal">{users.filter(u => u.subscription?.subscription_tier && u.subscription.subscription_tier !== 'artist').length}</p>
+                                </div>
+                            </div>
+
+                            {/* Search */}
+                            <div className="relative">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={18} />
+                                <input
+                                    type="text"
+                                    placeholder="Search by name or email..."
+                                    value={search}
+                                    onChange={e => setSearch(e.target.value)}
+                                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:border-visio-teal/50 transition-colors"
+                                />
+                            </div>
+
+                            {/* Table */}
+                            <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+                                <table className="w-full text-left text-sm">
+                                    <thead className="bg-white/5 text-white/40 uppercase tracking-wider font-medium">
+                                        <tr>
+                                            <th className="p-4 pl-6">User</th>
+                                            <th className="p-4">Plan</th>
+                                            <th className="p-4 text-center">Status</th>
+                                            <th className="p-4 text-right pr-6">Access</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-white/5">
+                                        {filteredUsers.map(user => {
+                                            const isApproved = user.app_metadata?.approved === true;
+                                            const isPremium = user.subscription?.subscription_tier && user.subscription?.subscription_tier !== 'artist';
+
+                                            return (
+                                                <tr key={user.id} className="hover:bg-white/5 transition-colors">
+                                                    <td className="p-4 pl-6">
+                                                        <div className="font-medium text-white">{user.user_metadata?.full_name || 'Unknown'}</div>
+                                                        <div className="text-white/50 text-xs">{user.email}</div>
+                                                    </td>
+                                                    <td className="p-4">
+                                                        {user.subscription ? (
+                                                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize ${isPremium ? 'bg-purple-500/10 text-purple-400' : 'bg-white/10 text-white/60'
+                                                                }`}>
+                                                                {user.subscription.subscription_tier}
+                                                            </span>
+                                                        ) : <span className="text-white/20">-</span>}
+                                                    </td>
+                                                    <td className="p-4 text-center">
+                                                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${isApproved
+                                                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                                            : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                                                            }`}>
+                                                            {isApproved ? 'Approved' : 'Pending'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-4 text-right pr-6">
+                                                        <button
+                                                            onClick={() => toggleApproval(user.id, isApproved)}
+                                                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${isApproved
+                                                                ? 'text-white/40 hover:text-red-400 hover:bg-red-500/10'
+                                                                : 'bg-visio-teal text-black hover:bg-visio-teal/90'
+                                                                }`}
+                                                        >
+                                                            {isApproved ? 'Revoke' : 'Approve Access'}
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                                {filteredUsers.length === 0 && <div className="p-8 text-center text-white/40">No users match your search.</div>}
+                            </div>
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            key="leads"
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: -20 }}
+                            className="space-y-4"
+                        >
+                            {/* Lead Stream */}
+                            <div className="grid grid-cols-1 gap-4">
+                                {leads.map((lead) => (
+                                    <div key={lead.id} className="bg-white/5 border border-white/10 p-6 rounded-2xl hover:border-visio-teal/30 transition-colors group">
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center text-purple-400">
+                                                    <Users size={20} />
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-white">{lead.user_name || 'Anonymous User'}</p>
+                                                    <p className="text-xs text-white/50">{lead.user_email}</p>
+                                                </div>
+                                            </div>
+                                            <span className="text-xs text-white/30 font-mono">
+                                                {new Date(lead.created_at).toLocaleString()}
+                                            </span>
+                                        </div>
+
+                                        <div className="bg-black/30 p-4 rounded-xl border border-white/5 relative">
+                                            <MessageSquare size={16} className="absolute top-4 right-4 text-visio-teal opacity-50" />
+                                            <p className="text-white/80 italic">"{lead.content}"</p>
+                                        </div>
+
+                                        <div className="mt-4 flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button className="text-xs text-white/40 hover:text-white px-3 py-2">Archive</button>
+                                            <button className="bg-visio-teal text-black text-xs font-bold px-4 py-2 rounded-lg hover:brightness-110">Process Lead</button>
+                                        </div>
+                                    </div>
+                                ))}
+                                {leads.length === 0 && (
+                                    <div className="p-12 text-center border-2 border-dashed border-white/10 rounded-3xl">
+                                        <p className="text-white/40 mb-2">No active lead requests.</p>
+                                        <p className="text-xs text-white/20">Requests will appear here when users ask for leads.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
         </div>
     );

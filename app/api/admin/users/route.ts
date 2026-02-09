@@ -27,29 +27,33 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Unauthorized - Invalid Token' }, { status: 401 });
         }
 
-        // Mock session object for compatibility with existing logic
-        const session = { user };
+        // 2. Verify Admin Role
+        const isAdmin = user.app_metadata.role === 'admin';
 
-        // 2. Verify Admin Email (Hardcoded for Launch)
-        const ADMIN_EMAILS = [
-            'hampton@visio.ai', // Replace with actual admin email
-            'visio-admin@test.com'
-        ];
-
-        // Allow if email matches OR if user has 'admin' metadata
-        const isAdmin = ADMIN_EMAILS.includes(session.user.email || '') || session.user.app_metadata.role === 'admin';
-
-        /* 
-           TEMPORARY logic comment...
-        */
+        if (!isAdmin) {
+            return NextResponse.json({ error: 'Forbidden - Admins Only' }, { status: 403 });
+        }
 
         // Fetch all users
         const { data: { users }, error } = await supabaseAdmin.auth.admin.listUsers();
 
         if (error) throw error;
 
-        // Sort by created_at desc
-        const sorted = users.sort((a, b) =>
+        // Fetch profiles to get subscription info
+        const { data: profiles, error: profileError } = await supabaseAdmin
+            .from('profiles')
+            .select('id, subscription_tier, subscription_status');
+
+        if (profileError) console.error('Error fetching profiles:', profileError);
+
+        // Map profiles by ID for easy lookup
+        const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+
+        // Merge adn Sort by created_at desc
+        const sorted = users.map(u => ({
+            ...u,
+            subscription: profileMap.get(u.id) || null
+        })).sort((a, b) =>
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
 

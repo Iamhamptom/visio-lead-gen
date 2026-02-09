@@ -125,7 +125,9 @@ body {
   color: #ffffff;
   font-family: var(--font-outfit), system-ui, sans-serif;
   /* Lock body scroll - content scrolls internally */
-  overflow: hidden;
+  /* Re-enabling scroll for "stupid issue" fix */
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* Custom Scrollbar - Always Visible & Styled */

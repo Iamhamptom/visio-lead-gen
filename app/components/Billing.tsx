@@ -139,7 +139,7 @@ export const Billing: React.FC<BillingProps> = ({
         if (tier === 'artist' || tier === 'enterprise') {
             // Free tier or enterprise (contact sales)
             if (tier === 'enterprise') {
-                window.open('mailto:sales@visio.ai?subject=Enterprise Plan Inquiry', '_blank');
+                window.open('mailto:admin@visiocorp.co?subject=Enterprise Plan Inquiry', '_blank');
             }
             return;
         }

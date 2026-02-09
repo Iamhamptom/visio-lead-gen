@@ -48,7 +48,7 @@ export const PendingPage = () => {
                 </div>
 
                 <button
-                    onClick={() => window.location.href = 'mailto:support@visio.ai'}
+                    onClick={() => window.location.href = 'mailto:admin@visiocorp.co'}
                     className="text-white/40 hover:text-white text-sm transition-colors"
                 >
                     Contact Support
