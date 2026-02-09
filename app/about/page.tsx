@@ -235,13 +235,13 @@ export default function AboutPage() {
                     <p className="text-white/60 mb-8">
                         Join artists who are using Visio AI to break into new markets and grow their audience globally.
                     </p>
-                    <Link
-                        href="/"
+                    <a
+                        href="https://visio-artist-portal.vercel.app"
                         className="inline-flex items-center gap-2 bg-visio-teal text-black px-8 py-4 rounded-xl font-bold hover:bg-visio-teal/90 transition-all hover:scale-105"
                     >
                         Get Started Free
                         <Rocket size={18} />
-                    </Link>
+                    </a>
                 </div>
             </section>
 

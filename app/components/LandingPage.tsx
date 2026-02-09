@@ -40,6 +40,11 @@ const VIDEOS = {
 export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin }) => {
     const [playingId, setPlayingId] = React.useState<string | null>(null);
 
+    // Override onGetStarted to redirect to Artist Portal
+    onGetStarted = () => {
+        window.location.href = 'https://visio-artist-portal.vercel.app';
+    };
+
     const scrollToSection = (id: string) => {
         const element = document.getElementById(id);
         if (element) {

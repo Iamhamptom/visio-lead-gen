@@ -162,8 +162,36 @@ export async function POST(request: NextRequest) {
             // CHAT MODE
             if (hasGemini) {
                 const intentMode = 'chat'; // Explicitly typed
-                // PASS KNOWLEDGE CONTEXT
-                logs.push('🧠 Visio: Thinking (Chat Mode)...');
+
+                // --- VISIO PR ASSISTANT PERSONA PROMPT ---
+                const prAssistantPersona = `
+                SYSTEM: You are the "Visio PR Assistant".
+                
+                WHO YOU ARE:
+                - An elite, intelligent AI publicist and music manager.
+                - You are smart, strategic, and highly context-aware of the user's Artist Portal data.
+                - Your tone is professional, encouraging, industry-savvy, and concise.
+
+                YOUR MISSION:
+                - Help artists and teams plan campaigns, refine their brand, and prepare for outreach.
+                - Guide them to success using their specific data (genre, location, goals).
+
+                CRITICAL RULE FOR LEAD GENERATION:
+                - If the user asks to "Find leads", "Generate leads", "Get contacts", or anything related to building/getting the contact list:
+                - YOU MUST STRICTLY RESPOND WITH THIS EXACT PHRASE (or a very close variation):
+                - "Agents deployed, we'll let you know as soon as we got your leads."
+                - DO NOT attempt to fake a search or give a list for these specific requests.
+                - Context: The actual lead generation happens via a separate background agent system that notifies them later.
+                
+                KNOWLEDGE CONTEXT:
+                ${knowledgeContext || "No specific internal knowledge found."}
+                
+                ARTIST CONTEXT:
+                ${artistContext ? JSON.stringify(artistContext).slice(0, 2000) : "No artist portal data connected yet."}
+                `;
+
+                logs.push('🧠 Visio: Thinking (PR Assistant Mode)...');
+
                 const toolInstructions: Record<string, string> = {
                     web_search: 'Use SEARCH_REQUEST if the user needs fresh facts. Keep the query short and specific.',
                     summarize_chat: 'Summarize the conversation so far in 4-6 sentences. Focus on decisions and next steps. No headings.',
@@ -173,9 +201,10 @@ export async function POST(request: NextRequest) {
                     market_research: 'Give a quick market snapshot with key trends and what they mean for the artist. 4-6 sentences.'
                 };
                 const toolInstruction = toolInstructions[activeTool] || '';
-                const toolWrappedMessage = toolInstruction
-                    ? `${toolInstruction}\n\nUser request: ${userMessage}`
-                    : userMessage;
+
+                // Wrap message with Persona
+                const toolWrappedMessage = `${prAssistantPersona}\n\n${toolInstruction ? toolInstruction + '\n\n' : ''}User request: ${userMessage}`;
+
                 if (toolInstruction && activeTool !== 'web_search') {
                     toolUsed = activeTool;
                 }
@@ -209,9 +238,9 @@ export async function POST(request: NextRequest) {
                         // Format results for the AI
                         const contextBlock = searchResults.map(r => `Title: ${r.name}\nSnippet: ${r.snippet}\nSource: ${r.source}`).join('\n\n');
 
-                    // Re-prompt Gemini with the results
-                    logs.push(`✅ Found ${searchResults.length} results. Re-prompting AI...`);
-                    const toolPrompt = `
+                        // Re-prompt Gemini with the results
+                        logs.push(`✅ Found ${searchResults.length} results. Re-prompting AI...`);
+                        const toolPrompt = `
 SYSTEM: You requested a search for "${query}". 
 Here are the results:
 ${contextBlock}
@@ -219,8 +248,8 @@ ${contextBlock}
 INSTRUCTION: Now, using these search results, answer the user's original question: "${userMessage}".
 Cite the sources naturally if relevant. Write in your standard Visio persona (warm, professional, strategic).
 `;
-                    // We call parseIntent again (effectively a "Tool Output" turn) but treat it as a new standard chat generation
-                    // We clear history for this specific turn or append? Appending is safer.
+                        // We call parseIntent again (effectively a "Tool Output" turn) but treat it as a new standard chat generation
+                        // We clear history for this specific turn or append? Appending is safer.
                         const finalIntent = await parseIntent(toolPrompt, conversationHistory, artistContext || undefined, tier as any, 'chat', '');
                         intent = finalIntent; // Replace the "SEARCH_REQUEST" intent with the final answer
                     }

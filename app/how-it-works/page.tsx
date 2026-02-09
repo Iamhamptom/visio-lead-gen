@@ -246,13 +246,13 @@ export default function HowItWorksPage() {
                     <p className="text-white/60 mb-8">
                         Your first campaign is just a conversation away.
                     </p>
-                    <Link
-                        href="/"
+                    <a
+                        href="https://visio-artist-portal.vercel.app"
                         className="inline-flex items-center gap-2 bg-visio-teal text-black px-8 py-4 rounded-xl font-bold hover:bg-visio-teal/90 transition-all hover:scale-105"
                     >
                         Get Started
                         <Rocket size={18} />
-                    </Link>
+                    </a>
                 </div>
             </section>
 
