@@ -112,9 +112,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.6, delay: 0.1 }}
-                        className="text-6xl md:text-8xl font-bold tracking-tight leading-[1.1] text-white"
+                        className="text-5xl md:text-8xl font-bold tracking-tight leading-[1.1] text-white"
                     >
-                        Your AI <span className="text-transparent bg-clip-text bg-gradient-to-r from-visio-teal via-visio-sage to-white animate-text-shimmer bg-[length:200%_auto]">Music Manager</span>
+                        Your PR <span className="text-transparent bg-clip-text bg-gradient-to-r from-visio-teal via-visio-sage to-white animate-text-shimmer bg-[length:200%_auto]">Ai Assistant</span>
                     </motion.h1>
 
                     <motion.p
@@ -125,6 +125,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                     >
                         Visio helps artists and labels find contacts, draft pitches, and manage campaigns using an intelligent AI agent. Stop searching, start closing.
                     </motion.p>
+
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.25 }}
+                        className="text-sm font-medium text-visio-teal/80 uppercase tracking-wider"
+                    >
+                        More agents and assistants coming soon, join waiting list
+                    </motion.div>
 
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
