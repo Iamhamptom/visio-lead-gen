@@ -29,17 +29,24 @@ const VideoCard = ({ src, title, index, isPlaying, onPlay, className = "aspect-v
         onPlay();
     };
 
+    // Ensure video has a thumbnail frame by appending #t=1 if not present
+    const videoSrc = React.useMemo(() => {
+        if (src.includes('#t=')) return src;
+        return `${src}#t=1`;
+    }, [src]);
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
             className={`group relative rounded-xl overflow-hidden cursor-pointer ${className}`}
             onClick={togglePlay}
         >
             <video
                 ref={videoRef}
-                src={src}
+                src={videoSrc}
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 playsInline
                 preload="metadata"

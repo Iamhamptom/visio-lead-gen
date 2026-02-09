@@ -59,7 +59,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                 >
                     <source src="/hero-video-1.mp4" type="video/mp4" />
                 </video>
-                <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-visio-bg" />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-visio-bg pointer-events-none" />
             </div>
 
             {/* Ambient Hero Glow (Overlay on video) */}

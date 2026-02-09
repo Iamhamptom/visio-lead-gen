@@ -869,14 +869,14 @@ export default function Home() {
 
       {/* Conditional Layout based on View */}
       {currentView === 'landing' ? (
-        <div className="flex-1 w-full h-full overflow-y-auto">
+        <div className="flex-1 w-full h-full overflow-y-auto overflow-x-hidden relative z-10">
           <LandingPage
             onGetStarted={handleGetStarted}
             onLogin={handleLogin}
           />
         </div>
       ) : currentView === 'auth' ? (
-        <div className="flex-1 w-full h-full overflow-y-auto">
+        <div className="flex-1 w-full h-full overflow-y-auto overflow-x-hidden relative z-10">
           <AuthPage key={authMode} onComplete={handleAuthComplete} initialMode={authMode} />
         </div>
       ) : currentView === 'pending' ? (
@@ -909,17 +909,17 @@ export default function Home() {
             isRestricted={!isApproved}
           />
 
-          {/* Mobile Sidebar Overlay Backdrop */}
+          {/* Mobile Sidebar Overlay Backdrop - Fixed z-index */}
           {isSidebarOpen && (
             <div
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 md:hidden"
               onClick={() => setIsSidebarOpen(false)}
               aria-label="Close sidebar"
             />
           )}
 
           {/* Main Content */}
-          <main className="flex-1 flex flex-col md:ml-64 relative z-10 h-full min-h-0 bg-visio-bg/50">
+          <main className="flex-1 flex flex-col md:ml-64 relative z-10 h-full min-h-0 bg-visio-bg/50 overflow-y-auto overflow-x-hidden">
 
             {/* Mobile Header */}
             <header className="md:hidden flex items-center justify-between p-4 border-b border-white/5 bg-black/40 backdrop-blur-md sticky top-0 z-20">

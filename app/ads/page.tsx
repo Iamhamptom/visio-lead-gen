@@ -35,7 +35,9 @@ export default function AdsPage() {
 
     return (
         <div className="h-screen w-full bg-visio-bg text-white font-outfit relative overflow-y-auto overflow-x-hidden">
-            <BackgroundBeams className="opacity-40" />
+            <div className="fixed inset-0 pointer-events-none z-0">
+                <BackgroundBeams className="opacity-40" />
+            </div>
 
             {/* Navbar / Back Button */}
             <nav className="relative z-10 px-6 py-6 max-w-7xl mx-auto flex items-center justify-between">
