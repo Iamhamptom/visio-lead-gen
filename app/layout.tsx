@@ -16,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={outfit.variable}>
+    <html lang="en" className={outfit.variable} suppressHydrationWarning>
       <head>
         {/* Fallback if next/font fails or for dev speed */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />

@@ -19,7 +19,7 @@ const KNOWLEDGE_DIR = join(process.cwd(), 'knowledge');
 
 async function embedText(text: string): Promise<number[]> {
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-embedding-001" });
+        const model = genAI.getGenerativeModel({ model: "text-embedding-004" });
         const result = await model.embedContent(text);
         return result.embedding.values;
     } catch (error) {
@@ -90,7 +90,7 @@ async function indexKnowledge() {
                     content: chunk.content,
                     source_title: file,
                     embedding: embedding
-                });
+                }, { onConflict: 'content' }); // Prevent duplicates based on content? Ideally ID or unique constraint.
             // For now, simpler to just insert. Wiping table first is safer for re-runs.
 
             if (error) {
@@ -113,6 +113,6 @@ async function clearKnowledge() {
 
 // Main execution
 (async () => {
-    await clearKnowledge(); // Uncomment to wipe clean before indexing
+    // await clearKnowledge(); // Uncomment to wipe clean before indexing
     await indexKnowledge();
 })();

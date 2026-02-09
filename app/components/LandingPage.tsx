@@ -7,13 +7,39 @@ import { BackgroundBeams } from './ui/background-beams';
 import AboutSection from './AboutSection';
 import FeaturesSection from './FeaturesSection';
 import HowItWorksSection from './HowItWorksSection';
+import VideoCard from './VideoCard';
 
 interface LandingPageProps {
     onGetStarted: () => void;
     onLogin: () => void;
 }
 
+// Video Data (Duplicated for now to avoid prop drilling complex data, or could be moved to a shared constant file)
+const VIDEOS = {
+    corporate: [
+        { id: 'corp-1', src: '/ads/Co-perate/The_Visio_AI_PR_Assistant.mp4', title: 'The Visio AI PR Assistant' },
+        { id: 'corp-2', src: '/ads/Co-perate/hf_20260208_174655_8b98b0a1-6dd6-4e29-9898-940dfbd3578b.mp4', title: 'Corporate Identity' },
+    ],
+    live: [
+        { id: 'live-1', src: '/ads/Live/hf_20260208_165317_5d0cf35e-7d61-4d3b-81c9-b95ac751d531.mp4', title: 'Live Session 1' },
+        { id: 'live-2', src: '/ads/Live/hf_20260208_165440_a0a596e9-401c-448a-a4be-db5cd684536c.mp4', title: 'Live Session 2' },
+        { id: 'live-3', src: '/ads/Live/hf_20260208_165506_022e7724-f7a7-408f-ab44-2037006d1a73 (1).mp4', title: 'Live Session 3' },
+        { id: 'live-4', src: '/ads/Live/hf_20260208_165907_0ddd917a-575a-45c1-a100-5597cddfd99b.mp4', title: 'Live Session 4' },
+        { id: 'live-5', src: '/ads/Live/hf_20260208_165925_fdfeb3ca-2385-432b-8cc4-5e9fc4dbd666.mp4', title: 'Live Session 5' },
+        { id: 'live-6', src: '/ads/Live/hf_20260208_170538_fd58205b-8499-4050-a1ee-cbb84b0fa5da.mp4', title: 'Live Session 6' },
+    ],
+    tv: [
+        { id: 'tv-1', src: '/ads/TV AD/hf_20260208_170124_2de6bca5-6b09-4cf2-b941-4272fd2b8871 (1).mp4', title: 'TV Spot 1' },
+        { id: 'tv-2', src: '/ads/TV AD/hf_20260208_171017_4f65375d-1f82-43f8-9d7c-7fafa0d12a55 (1).mp4', title: 'TV Spot 2' },
+        { id: 'tv-3', src: '/ads/TV AD/hf_20260208_191001_10b31258-cd9e-4994-9604-eba3e948c70d.mp4', title: 'TV Spot 3' },
+        { id: 'tv-4', src: '/ads/TV AD/hf_20260208_191921_e7967494-e9a6-4e5e-8d47-d3e62268f27e.mp4', title: 'TV Spot 4' },
+        { id: 'tv-5', src: '/ads/TV AD/hf_20260208_201453_32859a77-46de-4c10-af29-8ac5d3836e03.mp4', title: 'TV Spot 5' },
+    ]
+};
+
 export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin }) => {
+    const [playingId, setPlayingId] = React.useState<string | null>(null);
+
     const scrollToSection = (id: string) => {
         const element = document.getElementById(id);
         if (element) {
@@ -113,19 +139,42 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                             <span className="relative z-10 flex items-center gap-2">Start 7-Day Trial <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" /></span>
                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-700" />
                         </button>
-                        <button className="px-8 py-4 rounded-full font-medium text-white border border-white/10 hover:bg-white/5 hover:border-white/20 transition-all flex items-center gap-2 backdrop-blur-sm">
+                        <Link href="/ads" className="px-8 py-4 rounded-full font-medium text-white border border-white/10 hover:bg-white/5 hover:border-white/20 transition-all flex items-center gap-2 backdrop-blur-sm">
                             <Play size={18} fill="currentColor" />
                             Watch Demo
-                        </button>
+                        </Link>
                     </motion.div>
                 </div>
+
+                {/* Live Videos Carousel */}
+                <motion.div
+                    initial={{ opacity: 0, y: 40 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, delay: 0.4 }}
+                    className="mt-24"
+                >
+                    <p className="text-center text-sm font-bold text-white/20 uppercase tracking-[0.3em] mb-8">Generated with Visio AI</p>
+                    <div className="flex overflow-x-auto gap-4 pb-8 snap-x snap-mandatory scrollbar-hide -mx-6 px-6 max-w-7xl mx-auto">
+                        {VIDEOS.live.map((video, i) => (
+                            <div key={video.id} className="flex-none w-[200px] md:w-[240px] snap-center">
+                                <VideoCard
+                                    index={i}
+                                    {...video}
+                                    isPlaying={playingId === video.id}
+                                    onPlay={() => setPlayingId(playingId === video.id ? null : video.id)}
+                                    className="aspect-[9/16] shadow-2xl shadow-black/50"
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </motion.div>
 
                 {/* Dashboard Preview */}
                 <motion.div
                     initial={{ opacity: 0, y: 40 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, delay: 0.5 }}
-                    className="mt-32 max-w-6xl mx-auto relative group"
+                    className="mt-20 max-w-6xl mx-auto relative group"
                 >
                     <div className="absolute -inset-1 bg-gradient-to-r from-visio-teal via-visio-sage to-visio-teal rounded-3xl blur opacity-20 group-hover:opacity-40 transition duration-1000 will-change-transform"></div>
                     <div className="relative rounded-2xl border border-white/10 bg-[#0A0A0A]/80 backdrop-blur-2xl overflow-hidden shadow-2xl">
@@ -138,7 +187,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                         </div>
                         <div className="aspect-[16/9] flex items-center justify-center bg-visio-bg/50 relative overflow-hidden group-hover:scale-[1.01] transition-transform duration-700">
                             {/* Abstract Dashboard Hint */}
-                            <div className="absolute inset-x-20 top-20 bottom-0 border-x border-white/5 bg-white/[0.02]" />
+                            <div className="absolute inset-x-20 top-20 bottom-0 border-x border-white/5 bg-white/[0.02] pointer-events-none" />
                             <div className="absolute inset-y-0 left-1/3 w-px bg-white/5" />
                             <p className="relative z-10 text-white/20 font-mono text-sm tracking-[0.2em] uppercase">Interactive Dashboard</p>
 
@@ -147,6 +196,31 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                         </div>
                     </div>
                 </motion.div>
+
+                {/* TV & Corporate Carousel */}
+                <motion.div
+                    initial={{ opacity: 0, y: 40 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8 }}
+                    className="mt-32 max-w-7xl mx-auto"
+                >
+                    <p className="text-center text-sm font-bold text-white/20 uppercase tracking-[0.3em] mb-12">Campaign Assets</p>
+                    <div className="flex overflow-x-auto gap-6 pb-8 snap-x snap-mandatory scrollbar-hide -mx-6 px-6">
+                        {[...VIDEOS.tv, ...VIDEOS.corporate].map((video, i) => (
+                            <div key={video.id} className="flex-none w-[320px] md:w-[400px] snap-center">
+                                <VideoCard
+                                    index={i}
+                                    {...video}
+                                    isPlaying={playingId === video.id}
+                                    onPlay={() => setPlayingId(playingId === video.id ? null : video.id)}
+                                    className="aspect-video shadow-2xl shadow-black/50"
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </motion.div>
+
             </main>
 
             {/* Trusted By Section (As requested) */}
