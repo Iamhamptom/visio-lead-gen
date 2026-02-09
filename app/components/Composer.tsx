@@ -253,8 +253,19 @@ export const Composer: React.FC<ComposerProps> = ({
                     </div>
                 </div>
 
-                <p className="text-center text-[10px] text-white/20 mt-3 font-medium">
-                    Visio AI can make mistakes. Please verify important contact information.
+                <p className="text-center text-[10px] text-white/20 mt-3 font-medium flex items-center justify-center gap-4">
+                    <span>Visio AI can make mistakes. Please verify important contact information.</span>
+                    <button
+                        onClick={() => {
+                            const data = prompt("Paste your Artist Portal JSON/Text here:");
+                            if (data) {
+                                onSend(`IMPORT_PORTAL_DATA: ${data}`, 'business', 'chat');
+                            }
+                        }}
+                        className="text-visio-teal/50 hover:text-visio-teal transition-colors underline decoration-dotted"
+                    >
+                        Import from Portal
+                    </button>
                 </p>
             </div>
         </div>

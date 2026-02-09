@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
+export const dynamic = 'force-dynamic'; // Prevent static generation attempts
+
 // Simple security check - in production you'd want robust role-based auth
 // For this launch, we'll check if the headers contain a secret or just rely on the fact 
 // that this is an internal route.

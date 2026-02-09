@@ -45,7 +45,7 @@ const createInitialSession = (): Session => ({
     // Must be a UUID because we persist messages to Supabase (messages.id is UUID).
     id: crypto.randomUUID(),
     role: Role.AGENT,
-    content: `Hello! I am Visio, your dedicated Research Concierge.\n\nI can help you build media lists, find influencer contacts, or draft pitch strategies for the **Music & Entertainment** industry.`,
+    content: `Hello! I am the **Visio PR Assistant**.\n\nI can help you build media lists, draft pitches, and plan campaigns.\n\nTo get the best results, please **Import your Profile** using the button below so I know your genre and goals.`,
     timestamp: Date.now()
   }]
 });
@@ -642,6 +642,41 @@ export default function Home() {
     if (activeSessionIndex === -1) return;
 
     const currentSession = sessions[activeSessionIndex];
+
+    // --- INTERCEPT IMPORT COMMAND ---
+    if (text.startsWith('IMPORT_PORTAL_DATA:')) {
+      try {
+        const jsonStr = text.replace('IMPORT_PORTAL_DATA:', '').trim();
+        const profileData = JSON.parse(jsonStr);
+
+        // Optimistically update local state
+        setArtistProfile(profileData);
+
+        // Save to DB
+        await saveArtistProfile(profileData);
+
+        setToastMessage("✅ Artist Profile Imported Successfully!");
+
+        // Add system message confirming import
+        const importMsg: Message = {
+          id: crypto.randomUUID(),
+          role: Role.AGENT,
+          content: `✅ **Profile Imported**: I've updated your context with data for **${profileData.name}**.\n\nI now know your genre (${profileData.genre}), location, and brand voice. Let's get to work!`,
+          timestamp: Date.now()
+        };
+
+        const newHistory = [...currentSession.messages, importMsg];
+        const updatedSession = { ...currentSession, messages: newHistory, lastUpdated: Date.now() };
+        const updatedSessions = [...sessions];
+        updatedSessions[activeSessionIndex] = updatedSession;
+        setSessions(updatedSessions);
+        return;
+
+      } catch (e) {
+        setToastMessage("❌ Import Failed: Invalid JSON format.");
+        return;
+      }
+    }
 
     // 1. Add User Message
     const userMsg: Message = {
