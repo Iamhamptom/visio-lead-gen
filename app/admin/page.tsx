@@ -61,7 +61,15 @@ export default function AdminPage() {
             ]);
 
             if (usersRes.status === 401 || usersRes.status === 403) {
-                setError("Unauthorized Access");
+                // Try to parse the error message from the response
+                let errorMsg = "Unauthorized Access";
+                try {
+                    const errorData = await usersRes.json();
+                    if (errorData.error) errorMsg = errorData.error;
+                } catch (e) {
+                    // Ignore JSON parse error, stick to default
+                }
+                setError(errorMsg);
                 setLoading(false);
                 return;
             }
@@ -151,10 +159,19 @@ export default function AdminPage() {
 
     // Only render safe content
     if (error) {
-        // If undefined session/auth error, redirect to login
+        // If undefined session/auth error, show login button but don't auto-redirect to avoid loops if session is flaky
         if (error === "No session found") {
-            if (typeof window !== 'undefined') window.location.href = '/auth';
-            return <div className="min-h-screen bg-visio-bg flex items-center justify-center"><Loader2 className="animate-spin text-visio-teal" /></div>;
+            return (
+                <div className="min-h-screen bg-visio-bg flex flex-col items-center justify-center gap-4 text-white font-outfit">
+                    <Loader2 className="animate-spin text-visio-teal w-8 h-8" />
+                    <p>Session check failed. Please log in again.</p>
+                    <button onClick={() => window.location.href = '/auth'} className="px-6 py-2 bg-visio-teal text-black rounded-lg font-bold hover:bg-visio-teal/90 transition-colors">Log In</button>
+                    <button onClick={() => window.location.href = '/'} className="text-white/40 text-sm hover:text-white">Back to Home</button>
+                    <div className="mt-4 text-xs text-white/20 font-mono">
+                        Debug: {typeof window !== 'undefined' ? window.location.origin : 'SSR'}
+                    </div>
+                </div>
+            );
         }
 
         return (
@@ -162,7 +179,7 @@ export default function AdminPage() {
                 <div className="text-center p-8 bg-white/5 rounded-2xl border border-red-500/20 max-w-md w-full">
                     <Shield className="w-12 h-12 text-red-500 mx-auto mb-4" />
                     <h1 className="text-2xl font-bold mb-2">Access Restricted</h1>
-                    <p className="text-white/60 mb-6">{error}</p>
+                    <p className="text-white/60 mb-6 font-mono text-sm bg-black/20 p-2 rounded break-all">{error}</p>
 
                     <div className="flex flex-col gap-3">
                         <button
@@ -182,8 +199,9 @@ export default function AdminPage() {
                     <div className="mt-6 pt-6 border-t border-white/5 text-left text-xs text-white/30">
                         <p className="font-mono mb-2">Debug Info:</p>
                         <ul className="list-disc pl-4 space-y-1">
-                            <li>Ensure you are logged in with an authorized email.</li>
-                            <li>Current authorized list: tonydavidhampton@gmail.com</li>
+                            <li><strong>Error Message:</strong> {error}</li>
+                            <li><strong>Session Status:</strong> {loading ? 'Checking...' : 'Loaded'}</li>
+                            <li><strong>Environment:</strong> {process.env.NODE_ENV}</li>
                         </ul>
                     </div>
                 </div>
