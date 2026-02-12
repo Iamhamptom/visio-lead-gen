@@ -15,8 +15,11 @@ export async function POST(req: Request) {
 
         if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-        // 2. Verify Admin Role
-        if (user.app_metadata.role !== 'admin') {
+        // 2. Verify Admin Email
+        const ADMIN_EMAILS = ['tonydavidhampton@gmail.com', 'hamptonmusicgroup@gmail.com'];
+        const userEmail = user.email ? user.email.toLowerCase().trim() : '';
+
+        if (!userEmail || !ADMIN_EMAILS.includes(userEmail)) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 

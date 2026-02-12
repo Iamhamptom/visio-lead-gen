@@ -273,7 +273,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 <div className="space-y-6">
                     <h2 className="text-xl font-bold border-b border-white/10 pb-4">Security</h2>
                     <div className="space-y-2">
-                        <button className="flex items-center gap-3 text-white/70 hover:text-white transition-colors text-sm font-medium">
+                        <button
+                            onClick={() => alert("Password reset functionality is handled via your email provider for this beta.")}
+                            className="flex items-center gap-3 text-white/70 hover:text-white transition-colors text-sm font-medium"
+                        >
                             <Lock size={16} />
                             Reset Password
                         </button>

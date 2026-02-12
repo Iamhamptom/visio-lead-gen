@@ -195,10 +195,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSaveLead })
                                                 ol: ({ node, ...props }) => <ol className="list-decimal pl-6 mb-4 space-y-2 text-white/90" {...props} />,
                                                 li: ({ node, ...props }) => <li className="pl-1" {...props} />,
 
-                                                // Headings (render as paragraphs for a smoother ChatGPT-like flow)
-                                                h1: ({ node, ...props }) => <p className="mb-4 last:mb-0 text-white/90 leading-relaxed text-[15px]" {...props} />,
-                                                h2: ({ node, ...props }) => <p className="mb-4 last:mb-0 text-white/90 leading-relaxed text-[15px]" {...props} />,
-                                                h3: ({ node, ...props }) => <p className="mb-4 last:mb-0 text-white/90 leading-relaxed text-[15px]" {...props} />,
+                                                // Headings (Distinct styles for visual hierarchy)
+                                                h1: ({ node, ...props }) => <h1 className="mb-3 mt-4 text-lg font-bold text-white leading-tight" {...props} />,
+                                                h2: ({ node, ...props }) => <h2 className="mb-2 mt-4 text-base font-bold text-white/95 leading-snug" {...props} />,
+                                                h3: ({ node, ...props }) => <h3 className="mb-2 mt-2 text-sm font-bold text-white/90 leading-snug uppercase tracking-wide" {...props} />,
 
                                                 // Formatting
                                                 strong: ({ node, ...props }) => <strong className="font-bold text-white" {...props} />,

@@ -15,38 +15,44 @@ interface DashboardOverviewProps {
     artistProfile: ArtistProfile | null;
     onNavigate: (view: any) => void;
     onNewChat: () => void;
+    stats?: {
+        leads: number;
+        actions: number;
+        campaigns: number;
+    };
 }
 
 export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
     artistProfile,
     onNavigate,
-    onNewChat
+    onNewChat,
+    stats = { leads: 0, actions: 0, campaigns: 0 }
 }) => {
-    // Mock Stats - In a real app these would come from the backend
-    const stats = [
+    // Real Stats
+    const dashboardStats = [
         {
-            label: "PR Compliance",
-            value: "0%",
+            label: "Total Leads",
+            value: stats.leads.toString(),
             icon: CheckCircle2,
             color: "text-visio-teal",
             bg: "bg-visio-teal/10",
-            trend: "+0% this week"
+            trend: "Saved contacts"
         },
         {
-            label: "Opportunities",
-            value: "0",
+            label: "Actions Taken",
+            value: stats.actions.toString(),
             icon: Sparkles,
             color: "text-purple-400",
             bg: "bg-purple-500/10",
-            trend: "New matches found"
+            trend: "Messages & tasks"
         },
         {
-            label: "Work Done",
-            value: "0",
+            label: "Campaigns",
+            value: stats.campaigns.toString(),
             icon: Briefcase,
             color: "text-blue-400",
             bg: "bg-blue-500/10",
-            trend: "Tasks completed"
+            trend: "Active projects"
         }
     ];
 
@@ -69,7 +75,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {stats.map((stat, i) => (
+                {dashboardStats.map((stat, i) => (
                     <motion.div
                         key={i}
                         initial={{ opacity: 0, y: 20 }}

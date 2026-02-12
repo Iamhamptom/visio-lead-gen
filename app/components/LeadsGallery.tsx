@@ -27,12 +27,23 @@ const item = {
 
 export const LeadsGallery: React.FC<LeadsGalleryProps> = ({ leads, onSaveLead, isRestricted = false }) => {
     const [copied, setCopied] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const filteredLeads = leads.filter(lead =>
+        searchQuery ? (
+            lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            lead.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            lead.title?.toLowerCase().includes(searchQuery.toLowerCase())
+        ) : true
+    );
 
     const generateMarkdown = () => {
         const date = new Date().toLocaleDateString();
-        let md = `# Visio Leads Export\nDate: ${date}\nTotal Leads: ${leads.length}\n\n## Contact List\n\n`;
+        // Export ALL leads or just filtered? Let's export what is visible.
+        const listToExport = searchQuery ? filteredLeads : leads;
+        let md = `# Visio Leads Export\nDate: ${date}\nTotal Leads: ${listToExport.length}\n\n## Contact List\n\n`;
 
-        leads.forEach(lead => {
+        listToExport.forEach(lead => {
             md += `### ${lead.name}\n`;
             md += `- **Role:** ${lead.title}\n`;
             md += `- **Company:** ${lead.company || 'N/A'}\n`;
@@ -74,7 +85,7 @@ export const LeadsGallery: React.FC<LeadsGalleryProps> = ({ leads, onSaveLead, i
                 <div className="max-w-7xl mx-auto w-full flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h2 className="text-2xl font-bold text-white mb-1">My Leads</h2>
-                        <p className="text-sm text-white/40">Found {leads.length} contacts across all campaigns.</p>
+                        <p className="text-sm text-white/40">Found {filteredLeads.length} contacts {searchQuery ? '(filtered)' : 'across all campaigns'}.</p>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -82,6 +93,8 @@ export const LeadsGallery: React.FC<LeadsGalleryProps> = ({ leads, onSaveLead, i
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-visio-teal transition-colors" size={16} />
                             <input
                                 type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Search leads..."
                                 className="bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm text-white focus:outline-none focus:border-visio-teal/50 transition-colors w-64"
                             />
@@ -116,6 +129,7 @@ export const LeadsGallery: React.FC<LeadsGalleryProps> = ({ leads, onSaveLead, i
                     variants={container}
                     initial="hidden"
                     animate="show"
+                    key={searchQuery} // Re-animate on search
                     className={`max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 relative ${isRestricted ? 'blur-sm pointer-events-none select-none' : ''}`}
                 >
                     {isRestricted && (
@@ -123,16 +137,18 @@ export const LeadsGallery: React.FC<LeadsGalleryProps> = ({ leads, onSaveLead, i
                             {/* Overlay handled outside the blurred container usually but here it's easier to put sibling */}
                         </div>
                     )}
-                    {leads.length === 0 ? (
+                    {filteredLeads.length === 0 ? (
                         <div className="col-span-full flex flex-col items-center justify-center py-20 text-center">
                             <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
                                 <Search size={24} className="text-white/20" />
                             </div>
-                            <p className="text-white/40 text-lg">No leads found yet.</p>
-                            <p className="text-white/20 text-sm">Ask Visio to find contacts to populate this list.</p>
+                            <p className="text-white/40 text-lg">No leads found.</p>
+                            <p className="text-white/20 text-sm">
+                                {searchQuery ? 'Try a different search term.' : 'Ask Visio to find contacts to populate this list.'}
+                            </p>
                         </div>
                     ) : (
-                        leads.map(lead => (
+                        filteredLeads.map(lead => (
                             <motion.div key={lead.id} variants={item} className="flex justify-center h-full">
                                 <LeadCard lead={lead} onSave={onSaveLead} />
                             </motion.div>

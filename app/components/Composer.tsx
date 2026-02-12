@@ -220,7 +220,10 @@ export const Composer: React.FC<ComposerProps> = ({
 
                     {/* Input Area */}
                     <div className="flex items-end p-2">
-                        <button className="p-3 text-white/40 hover:text-visio-accent transition-colors rounded-full hover:bg-white/5">
+                        <button
+                            onClick={() => alert("File attachments coming soon!")}
+                            className="p-3 text-white/40 hover:text-visio-accent transition-colors rounded-full hover:bg-white/5"
+                        >
                             <Paperclip size={20} />
                         </button>
 
@@ -236,7 +239,10 @@ export const Composer: React.FC<ComposerProps> = ({
                         />
 
                         <div className="flex items-center gap-1 pb-1">
-                            <button className="p-2 text-white/40 hover:text-white transition-colors rounded-full hover:bg-white/5">
+                            <button
+                                onClick={() => alert("Voice mode coming soon!")}
+                                className="p-2 text-white/40 hover:text-white transition-colors rounded-full hover:bg-white/5"
+                            >
                                 <Mic size={18} />
                             </button>
                             <button

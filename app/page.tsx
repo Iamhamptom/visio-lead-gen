@@ -188,7 +188,37 @@ export default function Home() {
         if (profile) {
           setArtistProfile(profile);
         } else {
-          setArtistProfile(null);
+          // Social Auth First Run: No profile exists yet. Auto-create one to prevent "Portal Gate" lock.
+          console.log("Creating default profile for new Social Auth user...");
+
+          const metadata = user.user_metadata || {};
+          const name = metadata.name || metadata.full_name || user.email?.split('@')[0] || 'Artist';
+
+          const defaultProfile: ArtistProfile = {
+            name: name,
+            genre: '',
+            description: '',
+            socials: { email: user.email },
+            connectedAccounts: {},
+            similarArtists: [],
+            milestones: { instagramFollowers: 0, monthlyListeners: 0 },
+            location: { city: '', country: '' },
+            promotionalFocus: 'Streaming',
+            careerHighlights: [],
+            lifeHighlights: [],
+            desiredCommunities: []
+          };
+
+          // Save and set immediately
+          await saveArtistProfile(defaultProfile);
+          setArtistProfile(defaultProfile);
+
+          // Launch Tutorial for first-timers
+          const tutorialDone = userId ? localStorage.getItem(`visio:tutorial_complete:${userId}`) === 'true' : false;
+          if (!tutorialDone) {
+            setShowTutorial(true);
+            trackEvent('tutorial_started');
+          }
         }
       }
 
@@ -1039,7 +1069,7 @@ export default function Home() {
           {/* Mobile Sidebar Overlay Backdrop - Fixed z-index */}
           {isSidebarOpen && (
             <div
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 md:hidden"
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
               onClick={() => setIsSidebarOpen(false)}
               aria-label="Close sidebar"
             />
@@ -1081,6 +1111,11 @@ export default function Home() {
                   artistProfile={artistProfile}
                   onNavigate={navigateTo}
                   onNewChat={handleNewChat}
+                  stats={{
+                    leads: allLeads.length,
+                    actions: sessions.reduce((acc, s) => acc + s.messages.length, 0),
+                    campaigns: 0 // Placeholder until campaigns are fully implemented
+                  }}
                 />
               </div>
             ) : currentView === 'dashboard' ? (

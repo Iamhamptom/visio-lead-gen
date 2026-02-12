@@ -130,11 +130,7 @@ body {
   overflow-x: hidden;
 }
 
-/* Custom Scrollbar - Always Visible & Styled */
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
+/* Custom Scrollbar - Handled in utilities layer below */
 
 @layer utilities {
   .text-balance {
