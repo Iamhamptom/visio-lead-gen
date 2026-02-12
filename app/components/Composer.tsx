@@ -120,7 +120,7 @@ export const Composer: React.FC<ComposerProps> = ({
 
     return (
         <div className="w-full max-w-4xl mx-auto px-4 pb-6">
-            <div className="relativePath group">
+            <div className="relative group">
 
                 {/* Gradient Border Effect */}
                 <div className="absolute -inset-[1px] bg-gradient-to-r from-visio-teal/40 via-visio-accent/40 to-visio-teal/40 rounded-3xl opacity-0 group-focus-within:opacity-100 transition duration-500 blur-sm"></div>
