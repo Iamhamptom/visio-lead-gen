@@ -29,7 +29,10 @@ export async function GET(req: Request) {
 
         // 2. Verify Admin Email
         const ADMIN_EMAILS = ['tonydavidhampton@gmail.com', 'hamptonmusicgroup@gmail.com'];
-        if (!user.email || !ADMIN_EMAILS.includes(user.email)) {
+        const userEmail = user.email ? user.email.toLowerCase().trim() : '';
+
+        if (!userEmail || !ADMIN_EMAILS.includes(userEmail)) {
+            console.error('Forbidden Access Attempt:', user.email);
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 

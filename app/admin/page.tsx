@@ -151,15 +151,40 @@ export default function AdminPage() {
 
     // Only render safe content
     if (error) {
+        // If undefined session/auth error, redirect to login
+        if (error === "No session found") {
+            if (typeof window !== 'undefined') window.location.href = '/auth';
+            return <div className="min-h-screen bg-visio-bg flex items-center justify-center"><Loader2 className="animate-spin text-visio-teal" /></div>;
+        }
+
         return (
             <div className="min-h-screen bg-visio-bg flex items-center justify-center text-white font-outfit">
-                <div className="text-center p-8 bg-white/5 rounded-2xl border border-red-500/20">
+                <div className="text-center p-8 bg-white/5 rounded-2xl border border-red-500/20 max-w-md w-full">
                     <Shield className="w-12 h-12 text-red-500 mx-auto mb-4" />
                     <h1 className="text-2xl font-bold mb-2">Access Restricted</h1>
                     <p className="text-white/60 mb-6">{error}</p>
-                    <button onClick={() => window.location.href = '/'} className="px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20">Return Home</button>
-                    <div className="mt-4 pt-4 border-t border-white/5">
-                        <p className="text-xs text-white/30">First time? Use the setup link provided by support.</p>
+
+                    <div className="flex flex-col gap-3">
+                        <button
+                            onClick={() => window.location.href = '/auth'}
+                            className="px-4 py-3 bg-visio-teal text-black font-bold rounded-xl hover:bg-visio-teal/90 transition-colors"
+                        >
+                            Switch Account
+                        </button>
+                        <button
+                            onClick={() => window.location.href = '/'}
+                            className="px-4 py-3 bg-white/5 text-white/60 font-medium rounded-xl hover:bg-white/10 hover:text-white transition-colors"
+                        >
+                            Return Home
+                        </button>
+                    </div>
+
+                    <div className="mt-6 pt-6 border-t border-white/5 text-left text-xs text-white/30">
+                        <p className="font-mono mb-2">Debug Info:</p>
+                        <ul className="list-disc pl-4 space-y-1">
+                            <li>Ensure you are logged in with an authorized email.</li>
+                            <li>Current authorized list: tonydavidhampton@gmail.com</li>
+                        </ul>
                     </div>
                 </div>
             </div>
