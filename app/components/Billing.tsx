@@ -9,7 +9,8 @@ import {
     Download,
     Zap,
     Briefcase,
-    Rocket,
+    Rocket
+} from 'lucide-react';
 import { TIER_DETAILS } from '../data/pricing';
 
 export const Billing: React.FC<BillingProps> = ({
