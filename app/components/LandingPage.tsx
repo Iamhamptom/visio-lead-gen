@@ -17,23 +17,23 @@ interface LandingPageProps {
 // Video Data (Duplicated for now to avoid prop drilling complex data, or could be moved to a shared constant file)
 const VIDEOS = {
     corporate: [
-        { id: 'corp-1', src: '/ads/Co-perate/The_Visio_AI_PR_Assistant.mp4', title: 'The Visio AI PR Assistant' },
-        { id: 'corp-2', src: '/ads/Co-perate/hf_20260208_174655_8b98b0a1-6dd6-4e29-9898-940dfbd3578b.mp4', title: 'Corporate Identity' },
+        { id: 'corp-1', src: '/ads/Co-perate/The_Visio_AI_PR_Assistant.mp4', title: 'The Visio AI PR Assistant', thumbnail: '/ads/thumbnails/The_Visio_AI_PR_Assistant.jpg' },
+        { id: 'corp-2', src: '/ads/Co-perate/hf_20260208_174655_8b98b0a1-6dd6-4e29-9898-940dfbd3578b.mp4', title: 'Corporate Identity', thumbnail: '/ads/thumbnails/hf_20260208_174655_8b98b0a1-6dd6-4e29-9898-940dfbd3578b.jpg' },
     ],
     live: [
-        { id: 'live-1', src: '/ads/Live/hf_20260208_165317_5d0cf35e-7d61-4d3b-81c9-b95ac751d531.mp4', title: 'Live Session 1' },
-        { id: 'live-2', src: '/ads/Live/hf_20260208_165440_a0a596e9-401c-448a-a4be-db5cd684536c.mp4', title: 'Live Session 2' },
-        { id: 'live-3', src: '/ads/Live/hf_20260208_165506_022e7724-f7a7-408f-ab44-2037006d1a73 (1).mp4', title: 'Live Session 3' },
-        { id: 'live-4', src: '/ads/Live/hf_20260208_165907_0ddd917a-575a-45c1-a100-5597cddfd99b.mp4', title: 'Live Session 4' },
-        { id: 'live-5', src: '/ads/Live/hf_20260208_165925_fdfeb3ca-2385-432b-8cc4-5e9fc4dbd666.mp4', title: 'Live Session 5' },
-        { id: 'live-6', src: '/ads/Live/hf_20260208_170538_fd58205b-8499-4050-a1ee-cbb84b0fa5da.mp4', title: 'Live Session 6' },
+        { id: 'live-1', src: '/ads/Live/hf_20260208_165317_5d0cf35e-7d61-4d3b-81c9-b95ac751d531.mp4', title: 'Live Session 1', thumbnail: '/ads/thumbnails/hf_20260208_165317_5d0cf35e-7d61-4d3b-81c9-b95ac751d531.jpg' },
+        { id: 'live-2', src: '/ads/Live/hf_20260208_165440_a0a596e9-401c-448a-a4be-db5cd684536c.mp4', title: 'Live Session 2', thumbnail: '/ads/thumbnails/hf_20260208_165440_a0a596e9-401c-448a-a4be-db5cd684536c.jpg' },
+        { id: 'live-3', src: '/ads/Live/hf_20260208_165506_022e7724-f7a7-408f-ab44-2037006d1a73 (1).mp4', title: 'Live Session 3', thumbnail: '/ads/thumbnails/hf_20260208_165506_022e7724-f7a7-408f-ab44-2037006d1a73_-1-.jpg' },
+        { id: 'live-4', src: '/ads/Live/hf_20260208_165907_0ddd917a-575a-45c1-a100-5597cddfd99b.mp4', title: 'Live Session 4', thumbnail: '/ads/thumbnails/hf_20260208_165907_0ddd917a-575a-45c1-a100-5597cddfd99b.jpg' },
+        { id: 'live-5', src: '/ads/Live/hf_20260208_165925_fdfeb3ca-2385-432b-8cc4-5e9fc4dbd666.mp4', title: 'Live Session 5', thumbnail: '/ads/thumbnails/hf_20260208_165925_fdfeb3ca-2385-432b-8cc4-5e9fc4dbd666.jpg' },
+        { id: 'live-6', src: '/ads/Live/hf_20260208_170538_fd58205b-8499-4050-a1ee-cbb84b0fa5da.mp4', title: 'Live Session 6', thumbnail: '/ads/thumbnails/hf_20260208_170538_fd58205b-8499-4050-a1ee-cbb84b0fa5da.jpg' },
     ],
     tv: [
-        { id: 'tv-1', src: '/ads/TV AD/hf_20260208_170124_2de6bca5-6b09-4cf2-b941-4272fd2b8871 (1).mp4', title: 'TV Spot 1' },
-        { id: 'tv-2', src: '/ads/TV AD/hf_20260208_171017_4f65375d-1f82-43f8-9d7c-7fafa0d12a55 (1).mp4', title: 'TV Spot 2' },
-        { id: 'tv-3', src: '/ads/TV AD/hf_20260208_191001_10b31258-cd9e-4994-9604-eba3e948c70d.mp4', title: 'TV Spot 3' },
-        { id: 'tv-4', src: '/ads/TV AD/hf_20260208_191921_e7967494-e9a6-4e5e-8d47-d3e62268f27e.mp4', title: 'TV Spot 4' },
-        { id: 'tv-5', src: '/ads/TV AD/hf_20260208_201453_32859a77-46de-4c10-af29-8ac5d3836e03.mp4', title: 'TV Spot 5' },
+        { id: 'tv-1', src: '/ads/TV AD/hf_20260208_170124_2de6bca5-6b09-4cf2-b941-4272fd2b8871 (1).mp4', title: 'TV Spot 1', thumbnail: '/ads/thumbnails/hf_20260208_170124_2de6bca5-6b09-4cf2-b941-4272fd2b8871_-1-.jpg' },
+        { id: 'tv-2', src: '/ads/TV AD/hf_20260208_171017_4f65375d-1f82-43f8-9d7c-7fafa0d12a55 (1).mp4', title: 'TV Spot 2', thumbnail: '/ads/thumbnails/hf_20260208_171017_4f65375d-1f82-43f8-9d7c-7fafa0d12a55_-1-.jpg' },
+        { id: 'tv-3', src: '/ads/TV AD/hf_20260208_191001_10b31258-cd9e-4994-9604-eba3e948c70d.mp4', title: 'TV Spot 3', thumbnail: '/ads/thumbnails/hf_20260208_191001_10b31258-cd9e-4994-9604-eba3e948c70d.jpg' },
+        { id: 'tv-4', src: '/ads/TV AD/hf_20260208_191921_e7967494-e9a6-4e5e-8d47-d3e62268f27e.mp4', title: 'TV Spot 4', thumbnail: '/ads/thumbnails/hf_20260208_191921_e7967494-e9a6-4e5e-8d47-d3e62268f27e.jpg' },
+        { id: 'tv-5', src: '/ads/TV AD/hf_20260208_201453_32859a77-46de-4c10-af29-8ac5d3836e03.mp4', title: 'TV Spot 5', thumbnail: '/ads/thumbnails/hf_20260208_201453_32859a77-46de-4c10-af29-8ac5d3836e03.jpg' },
     ]
 };
 
@@ -62,6 +62,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                     muted
                     loop
                     playsInline
+                    poster="/hero-poster.jpg"
+                    preload="none"
                     className="w-full h-full object-cover opacity-60"
                 >
                     <source src="/hero-video-1.mp4" type="video/mp4" />
