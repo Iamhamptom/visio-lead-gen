@@ -422,6 +422,70 @@ export default function Home() {
       // Ignore storage errors (private mode, etc.)
     }
   }, [activeSessionId, localLastSessionKey]);
+  // Load Persistence
+  useEffect(() => {
+    if (authLoading || !user) return;
+
+    const loadData = async () => {
+      setIsLoading(true); // Don't block UI completely, but show indicator
+      try {
+        // 1. Try remote load
+        const remoteSessions = await loadSessions(); // Should return [] on error, not throw
+
+        // 2. Load local
+        const localSessions = loadLocalSessions();
+
+        // 3. Merge
+        const merged = mergeSessions(localSessions, remoteSessions);
+
+        // 4. Update State
+        if (merged.length > 0) {
+          setSessions(merged);
+          // Identify most recent session to activate
+          const lastActive = window.localStorage.getItem(localLastSessionKey());
+          if (lastActive && merged.find(s => s.id === lastActive)) {
+            setActiveSessionId(lastActive);
+          } else {
+            setActiveSessionId(merged[0].id);
+          }
+        } else {
+          // Initialize First Session
+          const initial = createInitialSession();
+          setSessions([initial]);
+          setActiveSessionId(initial.id);
+          // Save immediately
+          saveLocalSessions([initial]);
+          await attemptRemoteSave([initial]);
+        }
+
+      } catch (err) {
+        console.error('Failed to load session data:', err);
+        setToastMessage('Error loading history');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [user, authLoading, localLastSessionKey, mergeSessions, loadLocalSessions, saveLocalSessions, attemptRemoteSave]);
+
+  // Sync to Storage on Change (Debounced)
+  useEffect(() => {
+    if (!user || sessions.length === 0) return;
+
+    // Save to LocalStorage immediately
+    saveLocalSessions(sessions);
+    if (activeSessionId) {
+      window.localStorage.setItem(localLastSessionKey(), activeSessionId);
+    }
+
+    // Debounce Remote Save
+    const timeout = setTimeout(() => {
+      attemptRemoteSave(sessions);
+    }, 2000);
+
+    return () => clearTimeout(timeout);
+  }, [sessions, activeSessionId, user, saveLocalSessions, localLastSessionKey, attemptRemoteSave]);
 
   // Flush saves when the user backgrounds/leaves the app (common on mobile "home button").
   useEffect(() => {
@@ -567,55 +631,65 @@ export default function Home() {
 
   const handleNewChat = () => {
     const newSession = createInitialSession();
-    setSessions(prev => [newSession, ...prev]); // Add to top
+    setSessions([newSession, ...sessions]);
     setActiveSessionId(newSession.id);
     navigateTo('dashboard');
-    trackEvent('chat_started');
-    if (typeof window !== 'undefined' && window.innerWidth < 768) setIsSidebarOpen(false);
   };
 
+  // Helper Handlers
   const handleSelectSession = (id: string) => {
     setActiveSessionId(id);
     navigateTo('dashboard');
-    if (typeof window !== 'undefined' && window.innerWidth < 768) setIsSidebarOpen(false);
   };
 
   const handleDeleteSession = async (id: string) => {
-    if (confirm("Are you sure you want to delete this research?")) {
-      // Persist delete so it doesn't reappear on refresh.
-      await deleteSession(id);
+    // Optimistic Update
+    const newSessions = sessions.filter(s => s.id !== id);
+    let nextId = '';
 
-      const newSessions = sessions.filter(s => s.id !== id);
-      setSessions(newSessions);
+    if (activeSessionId === id) {
+      nextId = newSessions[0]?.id || '';
+    } else {
+      nextId = activeSessionId;
+    }
 
-      if (activeSessionId === id) {
-        if (newSessions.length > 0) {
-          setActiveSessionId(newSessions[0].id);
-        } else {
-          handleNewChat();
-        }
-      }
-      setToastMessage("Research deleted");
+    setSessions(newSessions);
+    setActiveSessionId(nextId);
+
+    // Persist
+    saveLocalSessions(newSessions);
+    await deleteSession(id);
+
+    if (newSessions.length === 0) {
+      // Re-init if empty
+      const initial = createInitialSession();
+      setSessions([initial]);
+      setActiveSessionId(initial.id);
     }
   };
 
-  const handleMoveSession = (sessionId: string, folderId: string | null) => {
-    setSessions(prev => prev.map(s => {
+  const handleMoveSession = async (sessionId: string, folderId: string | null) => {
+    // Check Campaign Cap
+    if (folderId) {
+      // Moving to a folder - check limit? 
+      // Logic for limits handled in creation, moving existing is fine for now.
+    }
+
+    const newSessions = sessions.map(s => {
       if (s.id === sessionId) {
-        return { ...s, folderId };
+        return { ...s, folderId, lastUpdated: Date.now() };
       }
       return s;
-    }));
-
-    const folderName = folderId
-      ? DEFAULT_CAMPAIGNS.find(c => c.id === folderId)?.name
-      : "Inbox";
-    setToastMessage(`Moved to ${folderName}`);
+    });
+    setSessions(newSessions);
+    // Persist handled by effect
   };
 
   const handleShareSession = (sessionId: string) => {
-    // Mock share
-    setToastMessage("Share link copied to clipboard");
+    // Generate Share Link (Mock)
+    const url = `${window.location.origin}/share/${sessionId}`;
+    navigator.clipboard.writeText(url);
+    setToastMessage('Link copied to clipboard');
   };
 
   const handleSendMessage = async (text: string, tier: AITier = 'instant', mode: AgentMode = 'chat') => {
@@ -815,29 +889,18 @@ export default function Home() {
   };
 
   const handleSaveLead = (lead: Lead) => {
-    setToastMessage(`Saved ${lead.name} to Database`);
-    trackEvent('lead_saved', { source: 'chat' });
-    // Ideally call backend to save
+    // Find current session and update message with 'saved' status...
+    // Actually we just need to ensure it's in our lead database.
+    // For now, toast.
+    setToastMessage(`Saved lead: ${lead.name}`);
   };
 
-  const handleUpgrade = async (tier: SubscriptionTier) => {
-    const newDetails = {
-      tier: tier,
-      status: 'active' as const,
-      currentPeriodEnd: Date.now() + 1000 * 60 * 60 * 24 * 30
-    };
-
-    setSubscription(prev => ({
-      ...prev,
-      ...newDetails
-    }));
-
-    // Persist
-    await updateSubscription(newDetails);
-
-    setToastMessage(`Upgraded to ${tier} plan!`);
-    trackEvent('plan_upgraded', { tier });
-    navigateTo('settings'); // Direct users to profile/settings
+  const handleUpgrade = (tier: SubscriptionTier) => {
+    // In real app, redirect to Stripe
+    updateSubscription({ tier });
+    setSubscription(prev => ({ ...prev, tier }));
+    setToastMessage(`Upgraded to ${tier.toUpperCase()} plan!`);
+    navigateTo('overview');
   };
 
   // --- Derived Data ---
@@ -1046,10 +1109,43 @@ export default function Home() {
                       />
                     ) : (
                       <div className="max-w-3xl mx-auto flex flex-col pt-6 space-y-6">
-                        {activeMessages.map((msg) => (
-                          <ChatMessage key={msg.id} message={msg} onSaveLead={handleSaveLead} />
-                        ))}
-                        <div ref={messagesEndRef} className="h-4" />
+                        {activeMessages.length > 0 ? (
+                          <>
+                            {activeMessages.map((msg) => (
+                              <ChatMessage key={msg.id} message={msg} onSaveLead={handleSaveLead} />
+                            ))}
+                            <div ref={messagesEndRef} className="h-4" />
+                          </>
+                        ) : (
+                          // Empty State with Suggested Actions -- Enhances UX for "stagnant" feeling
+                          <div className="flex flex-col items-center justify-center py-20 text-center space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-visio-teal/20 to-visio-sage/20 border border-visio-teal/30 flex items-center justify-center mb-2 shadow-[0_0_30px_rgba(182,240,156,0.1)]">
+                              <span className="text-2xl font-bold bg-gradient-to-br from-visio-teal to-visio-sage bg-clip-text text-transparent">V</span>
+                            </div>
+                            <div className="space-y-2 max-w-md px-4">
+                              <h3 className="text-2xl font-semibold text-white">How can I help today?</h3>
+                              <p className="text-white/40 text-sm">I can find industry contacts, draft pitches, plan campaigns, or research competitors for you.</p>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-lg px-4">
+                              {[
+                                { label: "Find Playlist Curators", prompt: "Find playlist curators for my genre", icon: "🎵" },
+                                { label: "Draft a Pitch Email", prompt: "Help me draft a pitch email for a music blog", icon: "✉️" },
+                                { label: "Research Competitors", prompt: "Research similar artists in my genre and their strategy", icon: "🔍" },
+                                { label: "Plan a Release Campaign", prompt: "Create a 4-week release campaign plan for my next single", icon: "📅" }
+                              ].map((action, i) => (
+                                <button
+                                  key={i}
+                                  onClick={() => handleSendMessage(action.prompt)}
+                                  className="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-visio-teal/30 hover:scale-[1.02] active:scale-[0.98] transition-all text-left text-sm group"
+                                >
+                                  <span className="text-xl group-hover:scale-110 transition-transform duration-300">{action.icon}</span>
+                                  <span className="text-white/70 group-hover:text-white font-medium">{action.label}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
