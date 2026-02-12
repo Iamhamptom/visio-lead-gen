@@ -8,7 +8,14 @@ export interface SerperResult {
     imageUrl?: string;
 }
 
-export async function performGoogleSearch(query: string, country: string = 'gl=za'): Promise<SerperResult[]> {
+const COUNTRY_MAP: Record<string, string> = {
+    'ZA': 'za', 'UK': 'uk', 'USA': 'us', 'US': 'us',
+    'NG': 'ng', 'GH': 'gh', 'KE': 'ke',
+    'DE': 'de', 'FR': 'fr', 'AU': 'au',
+    'CA': 'ca', 'JP': 'jp', 'BR': 'br'
+};
+
+export async function performGoogleSearch(query: string, country: string = 'ZA'): Promise<SerperResult[]> {
     const apiKey = process.env.SERPER_API_KEY;
     if (!apiKey) {
         console.warn('SERPER_API_KEY not configured');
@@ -16,6 +23,8 @@ export async function performGoogleSearch(query: string, country: string = 'gl=z
     }
 
     try {
+        const gl = COUNTRY_MAP[country.toUpperCase()] || 'us';
+
         const response = await fetch('https://google.serper.dev/search', {
             method: 'POST',
             headers: {
@@ -24,8 +33,8 @@ export async function performGoogleSearch(query: string, country: string = 'gl=z
             },
             body: JSON.stringify({
                 q: query,
-                gl: country === 'ZA' ? 'za' : 'us', // Basic mapping, can be expanded
-                num: 10
+                gl,
+                num: 15
             })
         });
 

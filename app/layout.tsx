@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Outfit } from 'next/font/google';
 import { AuthProvider } from '@/lib/auth-context';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit' });
 
@@ -28,6 +30,8 @@ export default function RootLayout({
         <AuthProvider>
           {children}
         </AuthProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

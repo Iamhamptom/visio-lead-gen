@@ -1,191 +1,235 @@
-// Real web scraper that extracts actual contact data from websites
+/**
+ * Visio Web Scraper
+ * 
+ * Cheerio-based contact extraction from web pages.
+ * Extracts emails, social links, names, and titles from HTML.
+ * Works on Vercel (no headless browser needed).
+ */
 
 import * as cheerio from 'cheerio';
 
-interface ExtractedData {
+// ─── Types ─────────────────────────────────────────────
+export interface ScrapedContact {
+    name?: string;
+    email?: string;
+    title?: string;
+    company?: string;
+    url?: string;
+    instagram?: string;
+    twitter?: string;
+    tiktok?: string;
+    linkedin?: string;
+    youtube?: string;
+    soundcloud?: string;
+    phone?: string;
+    source: string;
+}
+
+export interface ScrapeResult {
+    contacts: ScrapedContact[];
     emails: string[];
-    phones: string[];
-    socialLinks: {
-        linkedin?: string;
-        twitter?: string;
-        facebook?: string;
-    };
-    companyInfo: {
-        name?: string;
-        description?: string;
-        address?: string;
-    };
-    people: Array<{
-        name: string;
-        title?: string;
-        email?: string;
-        linkedin?: string;
-    }>;
+    socialLinks: SocialLinks;
+    rawText: string;
+    success: boolean;
+    error?: string;
 }
 
-// Extract emails from text
-function extractEmails(text: string): string[] {
-    const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-    const matches = text.match(emailRegex) || [];
-    // Filter out common false positives
-    return [...new Set(matches)].filter(email =>
-        !email.includes('example.com') &&
-        !email.includes('domain.com') &&
-        !email.includes('@2x') &&
-        !email.includes('.png') &&
-        !email.includes('.jpg')
-    );
+export interface SocialLinks {
+    instagram: string[];
+    twitter: string[];
+    tiktok: string[];
+    linkedin: string[];
+    youtube: string[];
+    soundcloud: string[];
+    facebook: string[];
+    spotify: string[];
 }
 
-// Extract phone numbers
-function extractPhones(text: string): string[] {
-    const phoneRegex = /(?:\+1[-.\s]?)?(?:\(?\d{3}\)?[-.\s]?)?\d{3}[-.\s]?\d{4}/g;
-    const matches = text.match(phoneRegex) || [];
-    return [...new Set(matches)].filter(p => p.replace(/\D/g, '').length >= 10);
-}
+// ─── Email Extraction ──────────────────────────────────
+const EMAIL_REGEX = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
 
-// Extract social media links
-function extractSocialLinks(html: string): { linkedin?: string; twitter?: string; facebook?: string } {
-    const $ = cheerio.load(html);
-    const links: { linkedin?: string; twitter?: string; facebook?: string } = {};
+/** Emails to exclude (common false positives) */
+const EMAIL_BLACKLIST = [
+    'example.com', 'test.com', 'domain.com', 'email.com',
+    'yourname@', 'name@', 'user@', 'info@example',
+    '.png', '.jpg', '.gif', '.svg', '.css', '.js'
+];
 
-    $('a[href]').each((_, el) => {
-        const href = $(el).attr('href') || '';
-        if (href.includes('linkedin.com')) links.linkedin = href;
-        if (href.includes('twitter.com') || href.includes('x.com')) links.twitter = href;
-        if (href.includes('facebook.com')) links.facebook = href;
+export function extractEmailsFromText(text: string): string[] {
+    const matches = text.match(EMAIL_REGEX) || [];
+    return [...new Set(matches)].filter(email => {
+        const lower = email.toLowerCase();
+        return !EMAIL_BLACKLIST.some(bl => lower.includes(bl));
     });
+}
+
+// ─── Social Link Extraction ───────────────────────────
+const SOCIAL_PATTERNS: Record<keyof SocialLinks, RegExp> = {
+    instagram: /https?:\/\/(www\.)?instagram\.com\/[a-zA-Z0-9_.]+/g,
+    twitter: /https?:\/\/(www\.)?(twitter\.com|x\.com)\/[a-zA-Z0-9_]+/g,
+    tiktok: /https?:\/\/(www\.)?tiktok\.com\/@[a-zA-Z0-9_.]+/g,
+    linkedin: /https?:\/\/(www\.)?linkedin\.com\/(in|company)\/[a-zA-Z0-9\-]+/g,
+    youtube: /https?:\/\/(www\.)?youtube\.com\/(channel|c|@)[\/a-zA-Z0-9\-_]+/g,
+    soundcloud: /https?:\/\/(www\.)?soundcloud\.com\/[a-zA-Z0-9\-]+/g,
+    facebook: /https?:\/\/(www\.)?facebook\.com\/[a-zA-Z0-9.\-]+/g,
+    spotify: /https?:\/\/open\.spotify\.com\/(artist|user)\/[a-zA-Z0-9]+/g,
+};
+
+export function extractSocialLinks(text: string): SocialLinks {
+    const links: SocialLinks = {
+        instagram: [], twitter: [], tiktok: [], linkedin: [],
+        youtube: [], soundcloud: [], facebook: [], spotify: []
+    };
+
+    for (const [platform, regex] of Object.entries(SOCIAL_PATTERNS)) {
+        const matches = text.match(regex) || [];
+        (links as any)[platform] = [...new Set(matches)];
+    }
 
     return links;
 }
 
-// Extract people from team/about pages
-function extractPeople(html: string): Array<{ name: string; title?: string; email?: string; linkedin?: string }> {
-    const $ = cheerio.load(html);
-    const people: Array<{ name: string; title?: string; email?: string; linkedin?: string }> = [];
+// ─── Phone Number Extraction ──────────────────────────
+const PHONE_REGEX = /(?:\+?\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{3,4}[-.\s]?\d{3,4}/g;
 
-    // Common patterns for team sections
-    const teamSelectors = [
-        '.team-member', '.team-card', '.member', '.person',
-        '[class*="team"]', '[class*="member"]', '[class*="staff"]',
-        '.about-team div', '.leadership div'
-    ];
+export function extractPhoneNumbers(text: string): string[] {
+    const matches = text.match(PHONE_REGEX) || [];
+    return [...new Set(matches)].filter(p => p.replace(/\D/g, '').length >= 8);
+}
 
-    for (const selector of teamSelectors) {
-        $(selector).each((_, el) => {
-            const $el = $(el);
-            const text = $el.text();
+// ─── Main Scraper ─────────────────────────────────────
+/**
+ * Fetch and scrape a URL for contact information.
+ * Uses cheerio (no headless browser) — works on Vercel.
+ */
+export async function scrapeContactsFromUrl(url: string): Promise<ScrapeResult> {
+    try {
+        console.log(`[Scraper] Scraping ${url}...`);
 
-            // Look for name patterns (usually larger/bolder text)
-            const name = $el.find('h3, h4, h5, .name, [class*="name"]').first().text().trim();
-            const title = $el.find('.title, .position, .role, [class*="title"], [class*="position"]').first().text().trim();
-            const linkedin = $el.find('a[href*="linkedin"]').attr('href');
-            const emails = extractEmails(text);
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+            },
+            signal: AbortSignal.timeout(10000),
+        });
 
-            if (name && name.length > 2 && name.length < 50) {
-                people.push({
+        if (!response.ok) {
+            return { contacts: [], emails: [], socialLinks: emptySocialLinks(), rawText: '', success: false, error: `HTTP ${response.status}` };
+        }
+
+        const html = await response.text();
+        const $ = cheerio.load(html);
+
+        // Remove scripts, styles to focus on content
+        $('script, style, noscript, iframe').remove();
+
+        const bodyText = $('body').text().replace(/\s+/g, ' ').trim();
+        const fullHtml = $.html();
+
+        // Extract data
+        const emails = extractEmailsFromText(bodyText + ' ' + fullHtml);
+        const socialLinks = extractSocialLinks(fullHtml);
+        const phones = extractPhoneNumbers(bodyText);
+
+        // Build contacts from structured data
+        const contacts: ScrapedContact[] = [];
+
+        // Look for structured contact elements
+        $('[itemtype*="Person"], .team-member, .staff, .contact-card, .author, [class*="team"], [class*="author"]').each((_, el) => {
+            const name = $(el).find('[itemprop="name"], h2, h3, h4, .name').first().text().trim();
+            const title = $(el).find('[itemprop="jobTitle"], .title, .position, .role').first().text().trim();
+            const email = $(el).find('a[href^="mailto:"]').first().attr('href')?.replace('mailto:', '') || '';
+
+            if (name && name.length > 2 && name.length < 100) {
+                contacts.push({
                     name,
                     title: title || undefined,
-                    email: emails[0],
-                    linkedin
+                    email: email || undefined,
+                    url,
+                    source: `Scraped from ${new URL(url).hostname}`
                 });
             }
         });
 
-        if (people.length > 0) break;
-    }
-
-    // Fallback: look for patterns in text
-    if (people.length === 0) {
-        const text = $('body').text();
-        const personPattern = /([A-Z][a-z]+ [A-Z][a-z]+)(?:,?\s*|\s+[-–]\s+)(CEO|Founder|CTO|COO|President|Director|VP|Head|Manager|Partner|Owner)/gi;
-        let match;
-        while ((match = personPattern.exec(text)) !== null && people.length < 10) {
-            people.push({
-                name: match[1],
-                title: match[2]
-            });
-        }
-    }
-
-    return people.slice(0, 10);
-}
-
-// Extract company information
-function extractCompanyInfo(html: string, url: string): { name?: string; description?: string; address?: string } {
-    const $ = cheerio.load(html);
-
-    // Get company name from various sources
-    const name = $('meta[property="og:site_name"]').attr('content') ||
-        $('meta[name="application-name"]').attr('content') ||
-        $('title').text().split('|')[0].split('-')[0].trim();
-
-    // Get description
-    const description = $('meta[name="description"]').attr('content') ||
-        $('meta[property="og:description"]').attr('content');
-
-    // Try to find address
-    const addressPatterns = [
-        /\d+\s+[A-Za-z\s]+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Way)[,.\s]+[A-Za-z\s]+,?\s*[A-Z]{2}\s*\d{5}/gi
-    ];
-
-    let address: string | undefined;
-    const bodyText = $('body').text();
-    for (const pattern of addressPatterns) {
-        const match = bodyText.match(pattern);
-        if (match) {
-            address = match[0];
-            break;
-        }
-    }
-
-    return { name, description, address };
-}
-
-// Main scrape function
-export async function scrapeWebsite(url: string): Promise<ExtractedData> {
-    try {
-        const response = await fetch(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        // Look for mailto links
+        $('a[href^="mailto:"]').each((_, el) => {
+            const email = $(el).attr('href')?.replace('mailto:', '').split('?')[0];
+            const name = $(el).text().trim();
+            if (email && !EMAIL_BLACKLIST.some(bl => email.toLowerCase().includes(bl))) {
+                if (!contacts.some(c => c.email === email)) {
+                    contacts.push({
+                        name: name !== email ? name : undefined,
+                        email,
+                        url,
+                        source: `Scraped from ${new URL(url).hostname}`
+                    });
+                }
             }
         });
 
-        if (!response.ok) {
-            throw new Error(`Failed to fetch: ${response.status}`);
+        // Add phone numbers to first contact
+        if (phones.length > 0 && contacts.length > 0) {
+            contacts[0].phone = phones[0];
         }
 
-        const html = await response.text();
-        const text = cheerio.load(html)('body').text();
+        // Add social links to contacts
+        for (const contact of contacts) {
+            if (socialLinks.instagram.length > 0) contact.instagram = socialLinks.instagram[0];
+            if (socialLinks.twitter.length > 0) contact.twitter = socialLinks.twitter[0];
+            if (socialLinks.tiktok.length > 0) contact.tiktok = socialLinks.tiktok[0];
+            if (socialLinks.linkedin.length > 0) contact.linkedin = socialLinks.linkedin[0];
+        }
 
-        return {
-            emails: extractEmails(text + html),
-            phones: extractPhones(text),
-            socialLinks: extractSocialLinks(html),
-            companyInfo: extractCompanyInfo(html, url),
-            people: extractPeople(html)
-        };
-    } catch (error) {
-        console.error(`Error scraping ${url}:`, error);
-        return {
-            emails: [],
-            phones: [],
-            socialLinks: {},
-            companyInfo: {},
-            people: []
-        };
+        console.log(`[Scraper] Found: ${emails.length} emails, ${contacts.length} contacts, ${Object.values(socialLinks).flat().length} social links`);
+
+        return { contacts, emails, socialLinks, rawText: bodyText.slice(0, 2000), success: true };
+
+    } catch (error: any) {
+        console.error('[Scraper] Failed:', error.message);
+        return { contacts: [], emails: [], socialLinks: emptySocialLinks(), rawText: '', success: false, error: error.message };
     }
 }
 
-// Scrape multiple URLs in parallel
-export async function scrapeMultipleUrls(urls: string[]): Promise<Map<string, ExtractedData>> {
-    const results = new Map<string, ExtractedData>();
+/**
+ * Scrape multiple URLs in parallel and merge results.
+ */
+export async function scrapeMultipleUrls(urls: string[], maxConcurrent: number = 3): Promise<ScrapeResult> {
+    const chunks: string[][] = [];
+    for (let i = 0; i < urls.length; i += maxConcurrent) {
+        chunks.push(urls.slice(i, i + maxConcurrent));
+    }
 
-    const promises = urls.slice(0, 10).map(async (url) => {
-        const data = await scrapeWebsite(url);
-        results.set(url, data);
-    });
+    const allContacts: ScrapedContact[] = [];
+    const allEmails: string[] = [];
+    const allSocial: SocialLinks = emptySocialLinks();
 
-    await Promise.all(promises);
-    return results;
+    for (const chunk of chunks) {
+        const results = await Promise.allSettled(chunk.map(url => scrapeContactsFromUrl(url)));
+        for (const result of results) {
+            if (result.status === 'fulfilled' && result.value.success) {
+                allContacts.push(...result.value.contacts);
+                allEmails.push(...result.value.emails);
+                for (const [platform, links] of Object.entries(result.value.socialLinks)) {
+                    (allSocial as any)[platform].push(...links);
+                }
+            }
+        }
+    }
+
+    // Deduplicate
+    const uniqueEmails = [...new Set(allEmails)];
+    for (const platform of Object.keys(allSocial)) {
+        (allSocial as any)[platform] = [...new Set((allSocial as any)[platform])];
+    }
+
+    return { contacts: allContacts, emails: uniqueEmails, socialLinks: allSocial, rawText: '', success: true };
+}
+
+function emptySocialLinks(): SocialLinks {
+    return {
+        instagram: [], twitter: [], tiktok: [], linkedin: [],
+        youtube: [], soundcloud: [], facebook: [], spotify: []
+    };
 }

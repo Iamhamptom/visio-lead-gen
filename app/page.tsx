@@ -12,6 +12,8 @@ import { PendingPage } from './components/PendingPage';
 import { SettingsPage } from './components/SettingsPage';
 import { Billing } from './components/Billing';
 import { DashboardOverview } from './components/DashboardOverview';
+import { OnboardingTutorial } from './components/OnboardingTutorial';
+import { HowToUsePage } from './components/HowToUsePage';
 import ReasonPage from './reason/page';
 import ReachPage from './reach/page';
 import { Toast } from './components/Toast';
@@ -21,6 +23,7 @@ import { Menu, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import { BackgroundBeams } from './components/ui/background-beams';
 import { CommandMenu, COMMAND_ACTIONS, ACTION_PROMPTS } from './components/ui/command-menu';
 import { useAuth } from '@/lib/auth-context';
+import { trackEvent } from '@/lib/analytics';
 import {
   saveArtistProfile,
   loadArtistProfile,
@@ -73,6 +76,7 @@ export default function Home() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
   const [persistenceWarning, setPersistenceWarning] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -201,6 +205,7 @@ export default function Home() {
       else if (path === '/reason') targetView = 'reason';
       else if (path === '/reach') targetView = 'reach';
       else if (path === '/pending') targetView = 'pending';
+      else if (path === '/help') targetView = 'help';
       else if (path === '/landing') targetView = 'landing';
 
       // 2. Auth Guards
@@ -273,12 +278,22 @@ export default function Home() {
       setArtistProfile(profile);
     }
 
+    // Track sign-in
+    trackEvent('sign_in');
+
+    // Check if tutorial has been completed
+    const tutorialDone = userId ? localStorage.getItem(`visio:tutorial_complete:${userId}`) === 'true' : false;
+
     // Only check if profile exists
     if (profile) {
       setArtistProfile(profile);
       navigateTo('overview');
     } else {
-      // No profile found - let them go to overview but they will be gated
+      // No profile found - show tutorial for new users, then overview
+      if (!tutorialDone) {
+        setShowTutorial(true);
+        trackEvent('tutorial_started');
+      }
       console.log("No profile found, will show gate");
       navigateTo('overview');
     }
@@ -555,6 +570,7 @@ export default function Home() {
     setSessions(prev => [newSession, ...prev]); // Add to top
     setActiveSessionId(newSession.id);
     navigateTo('dashboard');
+    trackEvent('chat_started');
     if (typeof window !== 'undefined' && window.innerWidth < 768) setIsSidebarOpen(false);
   };
 
@@ -800,6 +816,7 @@ export default function Home() {
 
   const handleSaveLead = (lead: Lead) => {
     setToastMessage(`Saved ${lead.name} to Database`);
+    trackEvent('lead_saved', { source: 'chat' });
     // Ideally call backend to save
   };
 
@@ -819,6 +836,7 @@ export default function Home() {
     await updateSubscription(newDetails);
 
     setToastMessage(`Upgraded to ${tier} plan!`);
+    trackEvent('plan_upgraded', { tier });
     navigateTo('settings'); // Direct users to profile/settings
   };
 
@@ -880,9 +898,20 @@ export default function Home() {
   return (
     <div className="flex h-[100dvh] w-full bg-visio-bg overflow-hidden text-white font-outfit relative">
 
-      {/* Toast Notification */}
       {toastMessage && (
         <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
+      )}
+
+      {/* Onboarding Tutorial Overlay */}
+      {showTutorial && (
+        <OnboardingTutorial
+          userId={userId || undefined}
+          onComplete={() => setShowTutorial(false)}
+          onNavigate={(view) => {
+            setShowTutorial(false);
+            navigateTo(view as ViewMode);
+          }}
+        />
       )}
 
       {/* Persistence Debug Banner */}
@@ -1095,6 +1124,11 @@ export default function Home() {
                 onBack={() => navigateTo('overview')}
                 onNavigateHome={() => navigateTo('overview')}
                 onLogout={handleLogout}
+              />
+            ) : currentView === 'help' ? (
+              <HowToUsePage
+                onNavigate={navigateTo}
+                onRelaunchTutorial={() => setShowTutorial(true)}
               />
             ) : (
               <div className="flex-1 flex items-center justify-center text-white/30">

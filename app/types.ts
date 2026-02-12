@@ -14,6 +14,7 @@ export type ViewMode =
     | 'reason'
     | 'reach'
     | 'settings'
+    | 'help'
     | 'pending';
 
 export type SubscriptionTier = 'artist' | 'starter' | 'artiste' | 'starter_label' | 'label' | 'agency' | 'enterprise';

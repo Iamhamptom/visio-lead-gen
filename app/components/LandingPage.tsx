@@ -336,7 +336,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                 </div>
             </div>
 
-            <footer className="py-12 text-center text-white/20 text-sm border-t border-white/5">
+            <footer className="py-12 text-center text-white/20 text-sm border-t border-white/5 space-y-3">
+                <div className="flex items-center justify-center gap-4">
+                    <a href="/privacy" className="hover:text-white/50 transition-colors">Privacy Policy</a>
+                    <span className="text-white/10">·</span>
+                    <a href="/terms" className="hover:text-white/50 transition-colors">Terms of Service</a>
+                    <span className="text-white/10">·</span>
+                    <a href="mailto:admin@visiocorp.co" className="hover:text-white/50 transition-colors">Contact</a>
+                </div>
                 <p>&copy; 2026 Visio Lead Gen. Built for the Culture. <span className="text-white/10 ml-2">v2.1 (Live)</span></p>
             </footer>
         </div>

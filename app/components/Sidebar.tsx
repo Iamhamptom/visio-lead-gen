@@ -14,7 +14,8 @@ import {
     Inbox,
     CreditCard,
     Lightbulb,
-    Calculator
+    Calculator,
+    HelpCircle
 } from 'lucide-react';
 import { Campaign, ViewMode, Session, Subscription, ArtistProfile } from '../types';
 import { PLAN_LIMITS } from '../config/plans';
@@ -364,6 +365,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
             {/* Billing Link */}
             <div className="px-3 mt-auto pt-4 space-y-2">
+                <NavItem
+                    icon={<HelpCircle size={18} />}
+                    label="How to Use"
+                    active={activeView === 'help'}
+                    onClick={() => onNavigate('help')}
+                />
                 <button
                     onClick={() => onNavigate('billing')}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all border ${activeView === 'billing'
