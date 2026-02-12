@@ -15,41 +15,56 @@ function PaymentSuccessContent() {
     const tier = searchParams.get('tier') as PlanTier | null;
     const [countdown, setCountdown] = useState(5);
 
-    // Update Supabase with new subscription
+    const checkoutId = searchParams.get('checkoutId');
+
+    // Update Supabase with new subscription via secure server route
     useEffect(() => {
-        const saveSub = async () => {
-            if (tier && ['label', 'agency', 'enterprise'].includes(tier)) {
-                const subscription = {
-                    tier,
-                    status: 'active',
-                    currentPeriodEnd: Date.now() + 1000 * 60 * 60 * 24 * 30, // +30 days
-                };
-
-                // Persist subscription
-                await updateSubscription(subscription as any);
-
-                // Trigger Invoice Email
+        const verifyAndSave = async () => {
+            if (tier && checkoutId) {
                 try {
+                    const res = await fetch('/api/payments/confirm', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            // Pass auth token if available, but the route tries to handle it
+                        },
+                        body: JSON.stringify({ checkoutId })
+                    });
+
+                    const data = await res.json();
+
+                    if (!res.ok) {
+                        console.error('Payment verification failed:', data.error);
+                        // Optional: Show error to user?
+                        return;
+                    }
+
+                    // Trigger Invoice Email (only if verification succeeded)
                     await fetch('/api/email', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            to: user?.email || 'user@example.com', // Use auth email
+                            to: user?.email || 'user@example.com',
                             type: 'invoice',
                             data: {
                                 name: 'Subscriber',
                                 plan: PLAN_NAMES[tier] || tier,
-                                amount: 'Paid' // Dynamic amount based on tier would be better
+                                amount: 'Paid'
                             }
                         })
                     });
+
                 } catch (e) {
-                    console.error('Failed to send invoice email', e);
+                    console.error('Failed to verify payment or send email', e);
                 }
+            } else if (tier) {
+                // Fallback for cases where checkoutId is missing (e.g. legacy or test without Yoco ID)
+                // This logic mirrors the old insecure way but allows manual testing if needed
+                console.warn('No checkoutId found, skipping secure verification.');
             }
         };
-        saveSub();
-    }, [tier]);
+        verifyAndSave();
+    }, [tier, checkoutId, user?.email]);
 
     // Auto-redirect countdown
     useEffect(() => {
@@ -57,7 +72,7 @@ function PaymentSuccessContent() {
             setCountdown(prev => {
                 if (prev <= 1) {
                     clearInterval(timer);
-                    window.location.href = '/settings';
+                    window.location.href = '/dashboard';
                     return 0;
                 }
                 return prev - 1;

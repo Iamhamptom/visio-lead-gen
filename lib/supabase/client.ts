@@ -16,6 +16,11 @@ export function createSupabaseClient() {
                 getUser: async () => ({ data: { user: null }, error: null }),
                 getSession: async () => ({ data: { session: null }, error: null }),
                 onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => { } } } }),
+                signInWithOAuth: async () => {
+                    console.log('Mock signInWithOAuth called');
+                    alert('Social Login is mocked! Configure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to enable real authentication.');
+                    return { data: { url: 'http://localhost:3000/auth/callback' }, error: null };
+                },
             },
             from: () => ({
                 select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null }) }) }),

@@ -1,0 +1,62 @@
+import { NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase/admin';
+
+export const dynamic = 'force-dynamic';
+
+export async function POST(req: Request) {
+    try {
+        // 1. Verify Authentication
+        const authHeader = req.headers.get('Authorization');
+        const token = authHeader?.replace('Bearer ', '');
+
+        if (!token) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
+        if (authError || !user) {
+            return NextResponse.json({ error: 'Invalid Token' }, { status: 401 });
+        }
+
+        // 2. Verify Admin Email
+        const ADMIN_EMAILS = ['tonydavidhampton@gmail.com', 'hamptonmusicgroup@gmail.com'];
+        if (!user.email || !ADMIN_EMAILS.includes(user.email)) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
+        // 3. Parse Body
+        const { userId, tier, status } = await req.json();
+
+        if (!userId || !tier) {
+            return NextResponse.json({ error: 'Missing userId or tier' }, { status: 400 });
+        }
+
+        // 4. Update Profile
+        const updates: any = {
+            subscription_tier: tier,
+            subscription_status: status || 'active',
+            updated_at: new Date().toISOString()
+        };
+
+        // If activating, extend period
+        if (status === 'active' || !status) {
+            updates.subscription_period_end = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        }
+
+        const { error: updateError } = await supabaseAdmin
+            .from('profiles')
+            .update(updates)
+            .eq('id', userId);
+
+        if (updateError) {
+            console.error('Update subscription error:', updateError);
+            return NextResponse.json({ error: 'Failed to update subscription' }, { status: 500 });
+        }
+
+        return NextResponse.json({ success: true, updates });
+
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+}

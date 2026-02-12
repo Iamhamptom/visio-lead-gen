@@ -27,11 +27,10 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Unauthorized - Invalid Token' }, { status: 401 });
         }
 
-        // 2. Verify Admin Role
-        const isAdmin = user.app_metadata.role === 'admin';
-
-        if (!isAdmin) {
-            return NextResponse.json({ error: 'Forbidden - Admins Only' }, { status: 403 });
+        // 2. Verify Admin Email
+        const ADMIN_EMAILS = ['tonydavidhampton@gmail.com', 'hamptonmusicgroup@gmail.com'];
+        if (!user.email || !ADMIN_EMAILS.includes(user.email)) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
         // Fetch all users

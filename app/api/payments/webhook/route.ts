@@ -1,134 +1,77 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-    upsertSubscriberByEmail,
-    createInvoice,
-    createTransaction,
-    updateInvoice,
-    getInvoicesByEmail
-} from '@/lib/database';
-import { PLAN_NAMES, PLAN_PRICING, PlanTier } from '@/lib/yoco';
+import { supabaseAdmin } from '@/lib/supabase/admin';
+import { PLAN_NAMES, PlanTier } from '@/lib/yoco';
 
-/**
- * Yoco Webhook Handler
- * Receives payment confirmation events from Yoco
- * 
- * Webhook events:
- * - checkout.completed: Payment was successful
- * - checkout.expired: Checkout session expired
- */
-export async function POST(request: NextRequest) {
+// Yoco Webhook Handler
+export async function POST(req: NextRequest) {
     try {
-        const body = await request.json();
+        const event = await req.json();
 
-        console.log('[Yoco Webhook] Received event:', JSON.stringify(body, null, 2));
-
-        const { type, payload } = body;
-
-        switch (type) {
-            case 'checkout.completed': {
-                const { id: checkoutId, paymentId, amount, metadata } = payload;
-                const tier = metadata?.tier as PlanTier;
-                const userId = metadata?.userId;
-                const email = metadata?.email;
-
-                console.log(`[Yoco Webhook] Payment completed!`);
-                console.log(`- Checkout ID: ${checkoutId}`);
-                console.log(`- Payment ID: ${paymentId}`);
-                console.log(`- Tier: ${tier}`);
-                console.log(`- User: ${userId}`);
-                console.log(`- Email: ${email}`);
-
-                // Create transaction record
-                await createTransaction({
-                    type: 'payment_success',
-                    checkoutId,
-                    paymentId,
-                    subscriberId: userId || email,
-                    amount: amount || PLAN_PRICING[tier] || 0,
-                    currency: 'ZAR',
-                    status: 'completed',
-                    rawWebhookData: payload
-                });
-
-                if (email && tier) {
-                    // Calculate renewal date (1 month from now)
-                    const renewalDate = new Date();
-                    renewalDate.setMonth(renewalDate.getMonth() + 1);
-
-                    // Upsert subscriber record
-                    const subscriber = await upsertSubscriberByEmail(email, {
-                        email,
-                        name: userId !== 'anonymous' ? userId : undefined,
-                        tier,
-                        status: 'active',
-                        renewalDate: renewalDate.toISOString(),
-                        yocoCustomerId: paymentId
-                    });
-
-                    console.log(`[Yoco Webhook] Subscriber upserted:`, subscriber.id);
-
-                    // Create paid invoice
-                    const planName = PLAN_NAMES[tier] || tier;
-                    const invoiceAmount = amount || PLAN_PRICING[tier] || 0;
-
-                    const invoice = await createInvoice({
-                        subscriberId: subscriber.id,
-                        email,
-                        tier,
-                        status: 'paid',
-                        amount: invoiceAmount,
-                        currency: 'ZAR',
-                        lineItems: [{
-                            description: `${planName} - Monthly Subscription`,
-                            amount: invoiceAmount,
-                            quantity: 1
-                        }],
-                        paidAt: new Date().toISOString(),
-                        yocoCheckoutId: checkoutId,
-                        yocoPaymentId: paymentId
-                    });
-
-                    console.log(`[Yoco Webhook] Invoice created:`, invoice.invoiceNumber);
-                }
-
-                break;
-            }
-
-            case 'checkout.expired': {
-                const { id: checkoutId, metadata } = payload;
-                const email = metadata?.email;
-
-                console.log(`[Yoco Webhook] Checkout expired: ${checkoutId}`);
-
-                // Record failed transaction
-                await createTransaction({
-                    type: 'payment_failed',
-                    checkoutId,
-                    subscriberId: email,
-                    amount: 0,
-                    currency: 'ZAR',
-                    status: 'expired',
-                    rawWebhookData: payload
-                });
-
-                break;
-            }
-
-            default:
-                console.log(`[Yoco Webhook] Unhandled event type: ${type}`);
+        // 1. Basic Validation (In prod, verify signature if Yoco provides one)
+        if (!event.type || !event.payload) {
+            return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
         }
 
-        // Always return 200 to acknowledge receipt
-        return NextResponse.json({ received: true });
+        console.log(`Webhook received: ${event.type}`, event.id);
+
+        // 2. Handle Payment Success
+        if (event.type === 'payment.succeeded') {
+            const payment = event.payload;
+            const metadata = payment.metadata || {};
+
+            // Extract info
+            const userId = metadata.userId;
+            const tier = metadata.tier as PlanTier;
+            const email = metadata.email;
+
+            if (!tier) {
+                console.warn('Webhook: Missing tier in metadata', payment.id);
+                return NextResponse.json({ message: 'Ignored: No tier' });
+            }
+
+            // identify user
+            let targetUserId = userId;
+            if (!targetUserId || targetUserId === 'anonymous') {
+                if (email) {
+                    // Try find by email
+                    const { data: { users } } = await supabaseAdmin.auth.admin.listUsers();
+                    const found = users.find(u => u.email?.toLowerCase() === email.toLowerCase());
+                    if (found) targetUserId = found.id;
+                }
+            }
+
+            if (!targetUserId) {
+                console.error('Webhook: Could not identify user', metadata);
+                return NextResponse.json({ error: 'User not found' }, { status: 404 });
+            }
+
+            // 3. Update Subscription
+            const { error } = await supabaseAdmin
+                .from('profiles')
+                .update({
+                    subscription_tier: tier,
+                    subscription_status: 'active',
+                    subscription_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+                })
+                .eq('id', targetUserId);
+
+            if (error) {
+                console.error('Webhook: DB update failed', error);
+                return NextResponse.json({ error: 'DB update failed' }, { status: 500 });
+            }
+
+            // 4. Send Email (Optional, can be duplicate of success page but safer here)
+            // We usually let the success page handle the immediate feedback, but webhook is the source of truth.
+            // Let's send a "Receipt" email here eventually. For now, just logging.
+            console.log(`Webhook: Upgraded ${targetUserId} to ${tier}`);
+
+            return NextResponse.json({ success: true });
+        }
+
+        return NextResponse.json({ message: `Ignored event: ${event.type}` });
 
     } catch (error: any) {
-        console.error('[Yoco Webhook] Error:', error);
-        // Return 200 anyway to prevent Yoco retries for parsing errors
-        return NextResponse.json({ received: true, error: error.message });
+        console.error('Webhook Error:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
-}
-
-// Yoco may send GET requests for webhook validation
-export async function GET() {
-    return NextResponse.json({ status: 'Yoco webhook endpoint active' });
 }

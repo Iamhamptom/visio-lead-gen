@@ -115,6 +115,35 @@ export default function AdminPage() {
         }
     };
 
+    const handleUpdateSubscription = async (userId: string, tier: string) => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+
+            const res = await fetch('/api/admin/update-subscription', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ userId, tier, status: 'active' })
+            });
+
+            if (!res.ok) throw new Error('Failed to update');
+
+            // Optimistic / Reload
+            setUsers(prev => prev.map(u =>
+                u.id === userId
+                    ? { ...u, subscription: { ...u.subscription!, subscription_tier: tier, subscription_status: 'active' } }
+                    : u
+            ));
+
+        } catch (err) {
+            alert('Failed to update subscription');
+            console.error(err);
+        }
+    };
+
     const filteredUsers = users.filter(u =>
         u.email?.toLowerCase().includes(search.toLowerCase()) ||
         u.user_metadata?.full_name?.toLowerCase().includes(search.toLowerCase())
@@ -243,6 +272,7 @@ export default function AdminPage() {
                                         {filteredUsers.map(user => {
                                             const isApproved = user.app_metadata?.approved === true;
                                             const isPremium = user.subscription?.subscription_tier && user.subscription?.subscription_tier !== 'artist';
+                                            const currentTier = user.subscription?.subscription_tier || 'artist';
 
                                             return (
                                                 <tr key={user.id} className="hover:bg-white/5 transition-colors">
@@ -251,12 +281,22 @@ export default function AdminPage() {
                                                         <div className="text-white/50 text-xs">{user.email}</div>
                                                     </td>
                                                     <td className="p-4">
-                                                        {user.subscription ? (
-                                                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium capitalize ${isPremium ? 'bg-purple-500/10 text-purple-400' : 'bg-white/10 text-white/60'
-                                                                }`}>
-                                                                {user.subscription.subscription_tier}
-                                                            </span>
-                                                        ) : <span className="text-white/20">-</span>}
+                                                        <select
+                                                            value={currentTier}
+                                                            onChange={(e) => {
+                                                                if (confirm(`Change plan for ${user.email} to ${e.target.value}?`)) {
+                                                                    handleUpdateSubscription(user.id, e.target.value);
+                                                                }
+                                                            }}
+                                                            className={`bg-white/5 border border-white/10 rounded-lg text-xs px-2 py-1 focus:outline-none focus:border-visio-teal ${isPremium ? 'text-visio-teal' : 'text-white/60'}`}
+                                                        >
+                                                            <option value="artist">Artist (Free)</option>
+                                                            <option value="starter">Starter</option>
+                                                            <option value="artiste">Artiste</option>
+                                                            <option value="starter_label">Starter Label</option>
+                                                            <option value="label">Label Pro</option>
+                                                            <option value="agency">Agency</option>
+                                                        </select>
                                                     </td>
                                                     <td className="p-4 text-center">
                                                         <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${isApproved

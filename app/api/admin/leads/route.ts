@@ -19,8 +19,9 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Invalid Token' }, { status: 401 });
         }
 
-        // 2. Verify Admin Role
-        if (user.app_metadata.role !== 'admin') {
+        // 2. Verify Admin Email
+        const ADMIN_EMAILS = ['tonydavidhampton@gmail.com', 'hamptonmusicgroup@gmail.com'];
+        if (!user.email || !ADMIN_EMAILS.includes(user.email)) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
