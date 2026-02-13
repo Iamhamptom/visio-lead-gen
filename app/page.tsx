@@ -96,6 +96,7 @@ export default function Home() {
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const isChatAtBottomRef = useRef(true);
   const scrollRafRef = useRef<number | null>(null);
+  const bootstrappedProfileRef = useRef<string | null>(null);
 
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
@@ -170,6 +171,26 @@ export default function Home() {
       // ignore
     }
   }, [user, localSessionsKey]);
+
+  // Ensure `profiles` row exists for this auth user (required by FK constraints).
+  useEffect(() => {
+    const token = session?.access_token;
+    if (!user || !token) return;
+    if (bootstrappedProfileRef.current === user.id) return;
+    bootstrappedProfileRef.current = user.id;
+
+    fetch('/api/bootstrap/profile', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` }
+    }).then(async (res) => {
+      if (res.ok) return;
+      const data = await res.json().catch(() => ({}));
+      throw new Error((data as any)?.error || res.statusText || 'Bootstrap failed');
+    }).catch((err) => {
+      console.error('Profile bootstrap failed:', err);
+      setPersistenceWarning(`Supabase profile bootstrap failed: ${err?.message || 'unknown error'}`);
+    });
+  }, [user, session?.access_token]);
 
   const attemptRemoteSave = useCallback(async (nextSessions: Session[]) => {
     if (!user) return true;
