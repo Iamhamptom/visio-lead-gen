@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getInvoiceById } from '@/lib/database';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import { PLAN_NAMES, PlanTier } from '@/lib/yoco';
 import { isAdminUser, requireUser } from '@/lib/api-auth';
 
@@ -15,7 +15,13 @@ export async function GET(
         }
 
         const { id } = await params;
-        const invoice = await getInvoiceById(id);
+        const { data: invoice, error } = await supabaseAdmin
+            .from('invoices')
+            .select('*')
+            .eq('id', id)
+            .maybeSingle();
+
+        if (error) throw error;
 
         if (!invoice) {
             return NextResponse.json(
@@ -25,8 +31,7 @@ export async function GET(
         }
 
         if (!isAdminUser(auth.user)) {
-            const email = auth.user.email;
-            if (!email || invoice.email.toLowerCase() !== email.toLowerCase()) {
+            if (invoice.user_id !== auth.user.id) {
                 return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
             }
         }
@@ -38,16 +43,25 @@ export async function GET(
         })}`;
 
         return NextResponse.json({
-            ...invoice,
+            id: invoice.id,
+            invoiceNumber: invoice.invoice_number,
+            tier: invoice.tier,
+            amount: invoice.amount,
+            currency: invoice.currency,
+            status: invoice.status,
+            yocoCheckoutId: invoice.yoco_checkout_id,
+            yocoPaymentId: invoice.yoco_payment_id,
+            paidAt: invoice.paid_at,
+            createdAt: invoice.created_at,
             planName,
             amountFormatted,
-            dateFormatted: new Date(invoice.createdAt).toLocaleDateString('en-ZA', {
+            dateFormatted: new Date(invoice.created_at).toLocaleDateString('en-ZA', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric'
             }),
-            paidDateFormatted: invoice.paidAt
-                ? new Date(invoice.paidAt).toLocaleDateString('en-ZA', {
+            paidDateFormatted: invoice.paid_at
+                ? new Date(invoice.paid_at).toLocaleDateString('en-ZA', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric'
