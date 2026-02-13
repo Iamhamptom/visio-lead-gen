@@ -50,7 +50,8 @@ export function getYocoPublicKey(): string {
 
 export interface YocoCheckoutResponse {
     id: string;
-    status: 'created' | 'completed' | 'expired';
+    // Yoco may return additional success states depending on endpoint/version.
+    status: 'created' | 'completed' | 'expired' | 'succeeded' | string;
     amount: number;
     currency: string;
     redirectUrl: string;
@@ -106,6 +107,31 @@ export async function createYocoCheckout(params: CreateCheckoutParams): Promise<
                 email: params.email || ''
             }
         })
+    });
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: 'Unknown error' }));
+        throw new Error(`Yoco API error: ${error.message || response.statusText}`);
+    }
+
+    return response.json();
+}
+
+/**
+ * Fetch an existing Yoco checkout by ID.
+ */
+export async function getYocoCheckout(checkoutId: string): Promise<YocoCheckoutResponse> {
+    const secretKey = getYocoSecretKey();
+    if (!secretKey) {
+        throw new Error('Yoco secret key not configured');
+    }
+
+    const response = await fetch(`${YOCO_API_BASE}/checkouts/${checkoutId}`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${secretKey}`,
+            'Content-Type': 'application/json'
+        }
     });
 
     if (!response.ok) {

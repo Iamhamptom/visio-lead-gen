@@ -18,14 +18,6 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Invalid approved flag' }, { status: 400 });
         }
 
-        // 2. Verify Admin Email
-        const ADMIN_EMAILS = ['tonydavidhampton@gmail.com', 'hamptonmusicgroup@gmail.com'];
-        const userEmail = user.email ? user.email.toLowerCase().trim() : '';
-
-        if (!userEmail || !ADMIN_EMAILS.includes(userEmail)) {
-            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-        }
-
         // 2. Update User Metadata
         const { data, error } = await supabaseAdmin.auth.admin.updateUserById(
             userId,
