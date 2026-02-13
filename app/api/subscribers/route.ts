@@ -5,10 +5,16 @@ import {
     createSubscriber,
     upsertSubscriberByEmail
 } from '@/lib/database';
+import { requireAdmin } from '@/lib/api-auth';
 
 // GET /api/subscribers - List all subscribers
 export async function GET(request: NextRequest) {
     try {
+        const admin = await requireAdmin(request);
+        if (!admin.ok) {
+            return NextResponse.json({ error: admin.error }, { status: admin.status });
+        }
+
         const { searchParams } = new URL(request.url);
         const email = searchParams.get('email');
 
@@ -37,6 +43,11 @@ export async function GET(request: NextRequest) {
 // POST /api/subscribers - Create or update subscriber
 export async function POST(request: NextRequest) {
     try {
+        const admin = await requireAdmin(request);
+        if (!admin.ok) {
+            return NextResponse.json({ error: admin.error }, { status: admin.status });
+        }
+
         const body = await request.json();
         const { email, name, tier, status = 'pending' } = body;
 

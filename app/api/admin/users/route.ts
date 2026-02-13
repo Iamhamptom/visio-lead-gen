@@ -1,39 +1,14 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { requireAdmin } from '@/lib/api-auth';
 
 export const dynamic = 'force-dynamic'; // Prevent static generation attempts
 
-// Simple security check - in production you'd want robust role-based auth
-// For this launch, we'll check if the headers contain a secret or just rely on the fact 
-// that this is an internal route.
-// BETTER: Check if the *requesting user* is an admin via their session.
-
-// import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-// import { cookies } from 'next/headers';
-
 export async function GET(req: Request) {
     try {
-        // 1. Verify the requester is authenticated
-        const authHeader = req.headers.get('Authorization');
-        const token = authHeader?.replace('Bearer ', '');
-
-        if (!token) {
-            return NextResponse.json({ error: 'Unauthorized - No Token' }, { status: 401 });
-        }
-
-        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-
-        if (authError || !user) {
-            return NextResponse.json({ error: 'Unauthorized - Invalid Token' }, { status: 401 });
-        }
-
-        // 2. Verify Admin Email
-        const ADMIN_EMAILS = ['tonydavidhampton@gmail.com', 'hamptonmusicgroup@gmail.com'];
-        const userEmail = user.email ? user.email.toLowerCase().trim() : '';
-
-        if (!userEmail || !ADMIN_EMAILS.includes(userEmail)) {
-            console.error('Forbidden Access Attempt:', user.email);
-            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        const admin = await requireAdmin(req);
+        if (!admin.ok) {
+            return NextResponse.json({ error: admin.error }, { status: admin.status });
         }
 
         // Fetch all users

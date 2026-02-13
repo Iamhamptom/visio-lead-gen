@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { performGoogleSearch } from '@/lib/serper';
+import { requireUser } from '@/lib/api-auth';
 
 export async function POST(request: NextRequest) {
     try {
+        const auth = await requireUser(request);
+        if (!auth.ok) {
+            return NextResponse.json({ results: [] }, { status: auth.status });
+        }
+
         const body = await request.json();
         const name = typeof body?.name === 'string' ? body.name.trim() : '';
         const country = typeof body?.country === 'string' ? body.country.trim() : '';

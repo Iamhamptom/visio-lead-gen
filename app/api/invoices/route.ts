@@ -5,18 +5,28 @@ import {
     createInvoice
 } from '@/lib/database';
 import { PLAN_NAMES, PLAN_PRICING, PlanTier } from '@/lib/yoco';
+import { isAdminUser, requireAdmin, requireUser } from '@/lib/api-auth';
 
 // GET /api/invoices - List invoices (optionally filtered by email)
 export async function GET(request: NextRequest) {
     try {
+        const auth = await requireUser(request);
+        if (!auth.ok) {
+            return NextResponse.json({ error: auth.error }, { status: auth.status });
+        }
+
         const { searchParams } = new URL(request.url);
-        const email = searchParams.get('email');
+        const emailParam = searchParams.get('email');
 
         let invoices;
-        if (email) {
-            invoices = await getInvoicesByEmail(email);
+        if (isAdminUser(auth.user)) {
+            invoices = emailParam ? await getInvoicesByEmail(emailParam) : await getInvoices();
         } else {
-            invoices = await getInvoices();
+            const email = auth.user.email;
+            if (!email) {
+                return NextResponse.json({ error: 'User email missing' }, { status: 400 });
+            }
+            invoices = await getInvoicesByEmail(email);
         }
 
         // Sort by created date, newest first
@@ -40,6 +50,11 @@ export async function GET(request: NextRequest) {
 // POST /api/invoices - Create a new invoice
 export async function POST(request: NextRequest) {
     try {
+        const admin = await requireAdmin(request);
+        if (!admin.ok) {
+            return NextResponse.json({ error: admin.error }, { status: admin.status });
+        }
+
         const body = await request.json();
         const {
             subscriberId,

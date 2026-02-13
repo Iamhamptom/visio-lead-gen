@@ -1,5 +1,6 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { createClient } from '@supabase/supabase-js';
 
 /**
  * Creates a Supabase client for use in Server Components, Route Handlers, and Server Actions.
@@ -8,9 +9,15 @@ import { cookies } from 'next/headers';
 export async function createSupabaseServerClient() {
     const cookieStore = await cookies();
 
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!supabaseUrl || !anonKey) {
+        throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY');
+    }
+
     return createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        supabaseUrl,
+        anonKey,
         {
             cookies: {
                 getAll() {
@@ -36,11 +43,15 @@ export async function createSupabaseServerClient() {
  * Use only in secure server-side contexts (webhooks, admin operations).
  */
 export function createSupabaseAdminClient() {
-    const { createClient } = require('@supabase/supabase-js');
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!supabaseUrl || !serviceRoleKey) {
+        throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+    }
 
     return createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        supabaseUrl,
+        serviceRoleKey,
         {
             auth: {
                 autoRefreshToken: false,

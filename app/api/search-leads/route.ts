@@ -3,9 +3,15 @@ import { performSmartSearch } from '@/lib/search';
 import { enrichLead } from '@/lib/enrichment';
 import { Lead } from '@/app/types';
 import { logSearchQuery } from '@/lib/data-service';
+import { requireUser } from '@/lib/api-auth';
 
 export async function POST(request: NextRequest) {
     try {
+        const auth = await requireUser(request);
+        if (!auth.ok) {
+            return NextResponse.json({ error: auth.error }, { status: auth.status });
+        }
+
         const { query, country } = await request.json();
 
         if (!query) {

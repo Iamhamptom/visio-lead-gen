@@ -1,10 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateWelcomeEmail, generateInvoiceEmail } from '@/lib/email-templates';
+import { requireUser } from '@/lib/api-auth';
 
 export async function POST(request: NextRequest) {
     try {
+        const auth = await requireUser(request);
+        if (!auth.ok) {
+            return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+        }
+
         const body = await request.json();
-        const { to, type, data } = body;
+        const { type, data } = body;
+        const to = auth.user.email;
+        if (!to) {
+            return NextResponse.json({ success: false, error: 'User email missing' }, { status: 400 });
+        }
 
         const apiKey = process.env.RESEND_API_KEY;
         if (!apiKey) {

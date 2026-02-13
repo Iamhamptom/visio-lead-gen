@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Exa from 'exa-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { requireUser } from '@/lib/api-auth';
 
 // Lazily init in handler to avoid build-time errors if keys missing
 // const exa = new Exa(process.env.EXA_API_KEY || '');
@@ -8,6 +9,11 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export async function POST(request: NextRequest) {
     try {
+        const auth = await requireUser(request);
+        if (!auth.ok) {
+            return NextResponse.json({ error: auth.error }, { status: auth.status });
+        }
+
         const { artistName, genre } = await request.json();
 
         if (!artistName) {

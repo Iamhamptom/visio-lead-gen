@@ -5,12 +5,11 @@ import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { CheckCircle, ArrowRight, Sparkles } from 'lucide-react';
 import { PLAN_NAMES, PlanTier } from '@/lib/yoco';
-import { updateSubscription } from '@/lib/data-service';
 
 import { useAuth } from '@/lib/auth-context';
 
 function PaymentSuccessContent() {
-    const { user } = useAuth();
+    const { session } = useAuth();
     const searchParams = useSearchParams();
     const tier = searchParams.get('tier') as PlanTier | null;
     const [countdown, setCountdown] = useState(5);
@@ -20,51 +19,50 @@ function PaymentSuccessContent() {
     // Update Supabase with new subscription via secure server route
     useEffect(() => {
         const verifyAndSave = async () => {
-            if (tier && checkoutId) {
-                try {
-                    const res = await fetch('/api/payments/confirm', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            // Pass auth token if available, but the route tries to handle it
-                        },
-                        body: JSON.stringify({ checkoutId })
-                    });
-
-                    const data = await res.json();
-
-                    if (!res.ok) {
-                        console.error('Payment verification failed:', data.error);
-                        // Optional: Show error to user?
-                        return;
-                    }
-
-                    // Trigger Invoice Email (only if verification succeeded)
-                    await fetch('/api/email', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            to: user?.email || 'user@example.com',
-                            type: 'invoice',
-                            data: {
-                                name: 'Subscriber',
-                                plan: PLAN_NAMES[tier] || tier,
-                                amount: 'Paid'
-                            }
-                        })
-                    });
-
-                } catch (e) {
-                    console.error('Failed to verify payment or send email', e);
+            if (!tier || !checkoutId) return;
+            try {
+                const accessToken = session?.access_token;
+                if (!accessToken) {
+                    throw new Error('Missing auth session');
                 }
-            } else if (tier) {
-                // Fallback for cases where checkoutId is missing (e.g. legacy or test without Yoco ID)
-                // This logic mirrors the old insecure way but allows manual testing if needed
-                console.warn('No checkoutId found, skipping secure verification.');
+
+                const res = await fetch('/api/payments/confirm', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({ checkoutId })
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    console.error('Payment verification failed:', data?.error || data);
+                    return;
+                }
+
+                // Trigger Invoice Email (best-effort)
+                await fetch('/api/email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${accessToken}`
+                    },
+                    body: JSON.stringify({
+                        type: 'invoice',
+                        data: {
+                            name: 'Subscriber',
+                            plan: PLAN_NAMES[tier] || tier,
+                            amount: 'Paid'
+                        }
+                    })
+                });
+            } catch (e) {
+                console.error('Failed to verify payment or send email', e);
             }
         };
-        verifyAndSave();
-    }, [tier, checkoutId, user?.email]);
+        void verifyAndSave();
+    }, [tier, checkoutId, session?.access_token]);
 
     // Auto-redirect countdown
     useEffect(() => {
@@ -72,7 +70,7 @@ function PaymentSuccessContent() {
             setCountdown(prev => {
                 if (prev <= 1) {
                     clearInterval(timer);
-                    window.location.href = '/dashboard';
+                    window.location.href = '/settings';
                     return 0;
                 }
                 return prev - 1;

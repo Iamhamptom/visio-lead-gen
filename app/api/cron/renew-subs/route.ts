@@ -5,14 +5,14 @@ import { chargeYocoToken, PLAN_PRICING, PlanTier } from '@/lib/yoco';
 // Vercel Cron protection
 // https://vercel.com/docs/cron-jobs
 function verifyCronRequest(request: NextRequest) {
+    // Fail closed in production. If CRON_SECRET is not set, do not run.
+    if (process.env.NODE_ENV === 'production' && !process.env.CRON_SECRET) {
+        return false;
+    }
+
     const authHeader = request.headers.get('authorization');
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-        // Also allow local testing/God Mode manual trigger if we had a secret for that.. 
-        // But strictly for prod cron, we check header.
-        // For development, we skip if no secret set (dangerous but ok for dev).
-        if (process.env.NODE_ENV === 'production' && process.env.CRON_SECRET) {
-            return false;
-        }
+        return false;
     }
     return true;
 }

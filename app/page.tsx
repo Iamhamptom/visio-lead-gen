@@ -17,7 +17,8 @@ import { HowToUsePage } from './components/HowToUsePage';
 import ReasonPage from './reason/page';
 import ReachPage from './reach/page';
 import { Toast } from './components/Toast';
-import { Message, Role, Campaign, ViewMode, Lead, Session, ArtistProfile, Subscription, SubscriptionTier, AgentMode } from './types';
+import { ToolsPanel } from './components/ToolsPanel';
+import { Message, Role, Campaign, ViewMode, Lead, Session, ArtistProfile, Subscription, SubscriptionTier, AgentMode, ToolId } from './types';
 import { AITier } from './components/Composer';
 import { Menu, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import { BackgroundBeams } from './components/ui/background-beams';
@@ -54,7 +55,7 @@ const createInitialSession = (): Session => ({
 });
 
 export default function Home() {
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, session, loading: authLoading, signOut } = useAuth();
   const isApproved = user?.app_metadata?.approved === true;
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const userId = user?.id;
@@ -88,6 +89,7 @@ export default function Home() {
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const [webSearchEnabled, setWebSearchEnabled] = useState(true);
+  const [activeTool, setActiveTool] = useState<ToolId>('none');
   const [isChatScrollable, setIsChatScrollable] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
 
@@ -853,15 +855,21 @@ export default function Home() {
         content: m.content
       }));
 
+      const accessToken = session?.access_token;
       const res = await fetch('/api/agent', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+        },
         body: JSON.stringify({
           message: text,
           conversationHistory: historyForApi,
           artistContext: artistProfile, // Ignored by backend (source of truth is server fetch)
           tier,
-          mode
+          mode,
+          webSearchEnabled,
+          activeTool
         })
       });
 
@@ -891,6 +899,8 @@ export default function Home() {
             ...msg,
             content: data.message || "Done.",
             leads: data.leads || [],
+            webResults: data.webResults || [],
+            toolUsed: data.toolUsed || (Array.isArray(data.toolsUsed) ? data.toolsUsed[data.toolsUsed.length - 1] : undefined),
             isThinking: false
           };
         }
@@ -1183,6 +1193,15 @@ export default function Home() {
                         )}
                       </div>
                     )}
+                  </div>
+
+                  {/* Tools Panel (desktop) */}
+                  <div className="hidden lg:block absolute right-16 top-24 z-30">
+                    <ToolsPanel
+                      activeTool={activeTool}
+                      onSelect={setActiveTool}
+                      webSearchEnabled={webSearchEnabled}
+                    />
                   </div>
 
                   {/* Scroll rail + controls (right side) */}

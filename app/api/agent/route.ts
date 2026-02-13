@@ -8,6 +8,7 @@ import { getToolInstruction, TOOL_REGISTRY } from '@/lib/tools';
 import { performDeepSearch, searchApollo, searchLinkedInPipeline, getPipelineStatus, PipelineContact } from '@/lib/pipelines';
 import { scrapeContactsFromUrl, scrapeMultipleUrls } from '@/lib/scraper';
 import { searchAllSocials, flattenSocialResults } from '@/lib/social-search';
+import { requireUser } from '@/lib/api-auth';
 
 interface LeadResponse {
     id: number;
@@ -171,8 +172,25 @@ export async function POST(request: NextRequest) {
         let suggestedNextSteps: string[] = [];
         let intent: ParsedIntent;
 
+        // Require auth for all agent calls to prevent paid-key abuse.
+        const auth = await requireUser(request);
+        if (!auth.ok) {
+            return NextResponse.json(
+                {
+                    message: 'Unauthorized',
+                    leads: [],
+                    webResults: [],
+                    toolsUsed: [],
+                    suggestedNextSteps: [],
+                    logs: ['🔒 Unauthorized'],
+                    intent: { action: 'clarify', filters: {}, message: 'Please sign in.' }
+                },
+                { status: auth.status }
+            );
+        }
+
         // 1. FETCH ARTIST CONTEXT
-        const artistContext = await getContextPack();
+        const artistContext = await getContextPack({ userId: auth.user.id, accessToken: auth.accessToken });
 
         // 2. FETCH KNOWLEDGE BASE (RAG)
         let knowledgeContext = '';
@@ -648,4 +666,3 @@ Cite sources naturally. Write as Visio — warm, professional, strategic. Use ma
         }, { status: 500 });
     }
 }
-

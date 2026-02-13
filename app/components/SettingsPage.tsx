@@ -3,6 +3,7 @@ import { ArrowLeft, User, Mail, Lock, LogOut, Home, ArrowUpRight, Music, MapPin 
 import { Subscription, ArtistProfile, IdentityCheckResult } from '../types';
 import { saveArtistProfile } from '@/lib/data-service';
 import { ShinyButton } from './ui/ShinyButton';
+import { supabase } from '@/lib/supabase/client';
 
 interface SettingsPageProps {
     subscription: Subscription;
@@ -84,9 +85,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         setIdentityLoading(true);
         setIdentityResults([]);
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const accessToken = session?.access_token;
             const res = await fetch('/api/identity-lookup', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+                },
                 body: JSON.stringify({
                     name: normalizedName,
                     city,

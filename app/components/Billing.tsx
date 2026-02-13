@@ -7,11 +7,22 @@ import {
     Check,
     ArrowUpRight,
     Download,
-    Zap,
-    Briefcase,
-    Rocket
+    AlertCircle,
+    Building,
+    Loader2,
+    X,
 } from 'lucide-react';
+import { Subscription, SubscriptionTier } from '../types';
 import { TIER_DETAILS } from '../data/pricing';
+import { InvoiceReceipt } from './InvoiceReceipt';
+import { YocoCardForm } from './YocoCardForm';
+import { supabase } from '@/lib/supabase/client';
+
+interface BillingProps {
+    currentSubscription?: Subscription;
+    onUpgrade: (tier: SubscriptionTier) => void;
+    userEmail?: string;
+}
 
 export const Billing: React.FC<BillingProps> = ({
     currentSubscription = { tier: 'artist', status: 'active', currentPeriodEnd: Date.now(), interval: 'month' },
@@ -32,7 +43,13 @@ export const Billing: React.FC<BillingProps> = ({
     useEffect(() => {
         const fetchInvoices = async () => {
             try {
-                const res = await fetch('/api/invoices');
+                const { data: { session } } = await supabase.auth.getSession();
+                const accessToken = session?.access_token;
+                const res = await fetch('/api/invoices', {
+                    headers: {
+                        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+                    }
+                });
                 if (res.ok) {
                     const data = await res.json();
                     setInvoices(data.invoices || []);
@@ -51,7 +68,7 @@ export const Billing: React.FC<BillingProps> = ({
         if (tier === 'artist' || tier === 'enterprise') {
             // Free tier or enterprise (contact sales)
             if (tier === 'enterprise') {
-                window.open('mailto:admin@visiocorp.co?subject=Enterprise Plan Inquiry', '_blank');
+                window.open('mailto:sales@visio.ai?subject=Enterprise Plan Inquiry', '_blank');
             }
             return;
         }
@@ -61,9 +78,14 @@ export const Billing: React.FC<BillingProps> = ({
         setError(null);
 
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const accessToken = session?.access_token;
             const response = await fetch('/api/payments/create-checkout', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+                },
                 body: JSON.stringify({ tier, email: userEmail })
             });
 
@@ -87,9 +109,14 @@ export const Billing: React.FC<BillingProps> = ({
     const handlePaymentUpdate = async (token: string) => {
         setIsProcessing(true);
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const accessToken = session?.access_token;
             const res = await fetch('/api/payments/save-method', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+                },
                 body: JSON.stringify({ token })
             });
 

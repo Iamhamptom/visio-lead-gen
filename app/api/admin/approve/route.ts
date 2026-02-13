@@ -1,19 +1,22 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { requireAdmin } from '@/lib/api-auth';
 
 export async function POST(req: Request) {
     try {
+        const admin = await requireAdmin(req);
+        if (!admin.ok) {
+            return NextResponse.json({ error: admin.error }, { status: admin.status });
+        }
+
         const { userId, approved } = await req.json();
 
-        // 1. Verify Authentication
-        const authHeader = req.headers.get('Authorization');
-        const token = authHeader?.replace('Bearer ', '');
-
-        if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-
-        if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        if (typeof userId !== 'string' || userId.length < 10) {
+            return NextResponse.json({ error: 'Invalid userId' }, { status: 400 });
+        }
+        if (typeof approved !== 'boolean') {
+            return NextResponse.json({ error: 'Invalid approved flag' }, { status: 400 });
+        }
 
         // 2. Verify Admin Email
         const ADMIN_EMAILS = ['tonydavidhampton@gmail.com', 'hamptonmusicgroup@gmail.com'];

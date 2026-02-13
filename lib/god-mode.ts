@@ -1,4 +1,5 @@
-import { createSupabaseServerClient } from './supabase/server';
+import { createClient } from '@supabase/supabase-js';
+import { createSupabaseAdminClient, createSupabaseServerClient } from './supabase/server';
 
 // The "God Mode" Context Pack Structure
 // Mapped from the "Artist Portal" (Source of Truth) to "Visio PR Assistant" (Consumer)
@@ -36,16 +37,68 @@ export interface ContextPack {
  * Fetches the Artist Profile from Supabase and maps it to the God Mode Context Pack.
  * This ensures the PR Assistant only acts as a Consumer.
  */
-export async function getContextPack(): Promise<ContextPack | null> {
-    const supabase = await createSupabaseServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
+export async function getContextPack(opts?: { userId?: string; accessToken?: string }): Promise<ContextPack | null> {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    if (!user) return null;
+    const createAuthedAnonClient = (accessToken: string) => {
+        if (!supabaseUrl || !anonKey) return null;
+        return createClient(supabaseUrl, anonKey, {
+            global: {
+                headers: { Authorization: `Bearer ${accessToken}` }
+            },
+            auth: {
+                persistSession: false,
+                autoRefreshToken: false,
+                detectSessionInUrl: false
+            }
+        });
+    };
 
-    const { data: profile, error } = await supabase
+    let userId = opts?.userId;
+    const accessToken = opts?.accessToken;
+
+    // If we have a bearer token, prefer it over cookie auth because the app's default client session
+    // lives in localStorage (cookies are often absent in Route Handlers).
+    if (!userId && accessToken) {
+        const authed = createAuthedAnonClient(accessToken);
+        if (authed) {
+            const { data } = await authed.auth.getUser();
+            userId = data.user?.id;
+        }
+    }
+
+    // Cookie-based fallback (OAuth / SSR flows).
+    if (!userId) {
+        try {
+            const supabase = await createSupabaseServerClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return null;
+            userId = user.id;
+        } catch {
+            return null;
+        }
+    }
+
+    // Prefer service role for reliability (doesn't depend on RLS), but fall back if it's not configured.
+    let dbClient:
+        | ReturnType<typeof createClient>
+        | Awaited<ReturnType<typeof createSupabaseServerClient>>
+        | ReturnType<typeof createSupabaseAdminClient>
+        | null = null;
+
+    try {
+        dbClient = createSupabaseAdminClient();
+    } catch {
+        dbClient = accessToken ? createAuthedAnonClient(accessToken) : await createSupabaseServerClient();
+    }
+
+    if (!dbClient) return null;
+
+    const { data: profile, error } = await dbClient
         .from('artist_profiles')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .maybeSingle();
 
     if (error || !profile) return null;
