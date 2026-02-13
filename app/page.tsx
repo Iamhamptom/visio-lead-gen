@@ -749,14 +749,6 @@ export default function Home() {
       return; // BLOCK ACTION
     }
 
-    // Check 2: Explicit Mode Check (e.g. Switching to Business Mode)
-    // If user is trying to use 'business' or 'enterprise' logic but is on a lower plan
-    if ((mode === 'research' || tier === 'business' || tier === 'enterprise') && !['starter_label', 'label', 'agency', 'enterprise'].includes(userTier)) {
-      // Allow Research for Starter/Artiste but maybe limited? 
-      // For now, strict block on Business/Enterprise TIER usage.
-      // If generic 'research' mode is used with 'standard' tier, that's fine for Starter/Artiste.
-    }
-
     // -------------------------------------
 
     const activeSessionIndex = sessions.findIndex(s => s.id === activeSessionId);

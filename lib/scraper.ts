@@ -119,12 +119,15 @@ export function extractEmailsFromText(text: string): string[] {
 }
 
 // ─── Social Link Extraction ───────────────────────────
+// Excluded path segments for platforms where common non-profile URLs match
+const TWITTER_EXCLUDED_PATHS = new Set(['home', 'explore', 'search', 'notifications', 'messages', 'settings', 'i', 'intent', 'hashtag', 'share', 'login', 'signup']);
+
 const SOCIAL_PATTERNS: Record<keyof SocialLinks, RegExp> = {
     instagram: /https?:\/\/(www\.)?instagram\.com\/[a-zA-Z0-9_.]+/g,
     twitter: /https?:\/\/(www\.)?(twitter\.com|x\.com)\/[a-zA-Z0-9_]+/g,
     tiktok: /https?:\/\/(www\.)?tiktok\.com\/@[a-zA-Z0-9_.]+/g,
     linkedin: /https?:\/\/(www\.)?linkedin\.com\/(in|company)\/[a-zA-Z0-9\-]+/g,
-    youtube: /https?:\/\/(www\.)?youtube\.com\/(channel|c|@)[\/a-zA-Z0-9\-_]+/g,
+    youtube: /https?:\/\/(www\.)?youtube\.com\/(@[a-zA-Z0-9\-_]+|(channel|c)\/[a-zA-Z0-9\-_]+)/g,
     soundcloud: /https?:\/\/(www\.)?soundcloud\.com\/[a-zA-Z0-9\-]+/g,
     facebook: /https?:\/\/(www\.)?facebook\.com\/[a-zA-Z0-9.\-]+/g,
     spotify: /https?:\/\/open\.spotify\.com\/(artist|user)\/[a-zA-Z0-9]+/g,
@@ -136,9 +139,18 @@ export function extractSocialLinks(text: string): SocialLinks {
         youtube: [], soundcloud: [], facebook: [], spotify: []
     };
 
-    for (const [platform, regex] of Object.entries(SOCIAL_PATTERNS)) {
-        const matches = text.match(regex) || [];
-        (links as any)[platform] = [...new Set(matches)];
+    for (const [platform, regex] of Object.entries(SOCIAL_PATTERNS) as [keyof SocialLinks, RegExp][]) {
+        let matches = text.match(regex) || [];
+        // Filter out common non-profile Twitter/X paths
+        if (platform === 'twitter') {
+            matches = matches.filter(url => {
+                try {
+                    const path = new URL(url).pathname.split('/')[1]?.toLowerCase();
+                    return path && !TWITTER_EXCLUDED_PATHS.has(path);
+                } catch { return true; }
+            });
+        }
+        links[platform] = [...new Set(matches)];
     }
 
     return links;

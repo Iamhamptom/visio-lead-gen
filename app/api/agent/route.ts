@@ -158,16 +158,20 @@ Be warm, strategic, and concise. Use markdown formatting. End with a suggestion 
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const {
-            message,
-            conversationHistory = [],
-            lastSearchState,
-            tier = 'instant',
-            mode = 'chat',
-            webSearchEnabled = true,
-            activeTool = 'none'
-        } = body;
-        const userMessage = message || body.query;
+
+        // Input validation
+        const VALID_TIERS = ['instant', 'standard', 'business', 'enterprise'];
+        const VALID_MODES = ['chat', 'research'];
+
+        const message = typeof body.message === 'string' ? body.message : '';
+        const conversationHistory = Array.isArray(body.conversationHistory) ? body.conversationHistory : [];
+        const lastSearchState = body.lastSearchState;
+        const tier = VALID_TIERS.includes(body.tier) ? body.tier : 'instant';
+        const mode = VALID_MODES.includes(body.mode) ? body.mode : 'chat';
+        const webSearchEnabled = typeof body.webSearchEnabled === 'boolean' ? body.webSearchEnabled : true;
+        const activeTool = typeof body.activeTool === 'string' ? body.activeTool : 'none';
+
+        const userMessage = message || (typeof body.query === 'string' ? body.query : '');
 
         if (!userMessage) {
             return NextResponse.json({

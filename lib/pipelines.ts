@@ -118,7 +118,6 @@ export async function searchApollo(query: string, country: string = 'ZA'): Promi
     }
 
     // ─── Google Fallback ───────────────────────────
-    const googleQuery = `site:apollo.io "${query}" music entertainment ${country === 'ZA' ? 'South Africa' : country}`;
     const fallbackResults = await performGoogleSearch(query + ' music industry contacts email', country);
 
     const contacts: PipelineContact[] = [];
