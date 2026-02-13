@@ -44,14 +44,42 @@ export default function AdminPage() {
     const [search, setSearch] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [viewerEmail, setViewerEmail] = useState<string>('');
+    const [buildInfo, setBuildInfo] = useState<any>(null);
+    const [dbHealth, setDbHealth] = useState<any>(null);
+
+    const loadDiagnostics = async () => {
+        try {
+            const [buildRes, dbRes] = await Promise.all([
+                fetch('/api/build-info').then(r => r.ok ? r.json() : null).catch(() => null),
+                fetch('/api/health/db').then(r => r.ok ? r.json() : null).catch(() => null)
+            ]);
+            setBuildInfo(buildRes);
+            setDbHealth(dbRes);
+        } catch {
+            // ignore
+        }
+    };
 
     // Fetch Data
     const fetchData = async () => {
         setLoading(true);
         try {
             const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
+            let token = session?.access_token;
             setViewerEmail(session?.user?.email || '');
+
+            // If the browser lost the active session, attempt a refresh before giving up.
+            if (!token) {
+                try {
+                    await supabase.auth.refreshSession();
+                    const refreshed = await supabase.auth.getSession();
+                    token = refreshed.data.session?.access_token;
+                    setViewerEmail(refreshed.data.session?.user?.email || '');
+                } catch {
+                    // ignore
+                }
+            }
+
             if (!token) throw new Error("No session found");
 
             const headers = { 'Authorization': `Bearer ${token}` };
@@ -98,6 +126,7 @@ export default function AdminPage() {
     };
 
     useEffect(() => {
+        loadDiagnostics();
         fetchData();
     }, []);
 
@@ -192,6 +221,12 @@ export default function AdminPage() {
 
                     <div className="flex flex-col gap-3">
                         <button
+                            onClick={() => { setError(null); fetchData(); }}
+                            className="px-4 py-3 bg-white/5 text-white/80 font-medium rounded-xl hover:bg-white/10 hover:text-white transition-colors"
+                        >
+                            Retry
+                        </button>
+                        <button
                             onClick={() => window.location.href = '/auth'}
                             className="px-4 py-3 bg-visio-teal text-black font-bold rounded-xl hover:bg-visio-teal/90 transition-colors"
                         >
@@ -212,6 +247,15 @@ export default function AdminPage() {
                             <li><strong>Signed In As:</strong> {viewerEmail || 'unknown'}</li>
                             <li><strong>Session Status:</strong> {loading ? 'Checking...' : 'Loaded'}</li>
                             <li><strong>Environment:</strong> {process.env.NODE_ENV}</li>
+                            {buildInfo?.commit && (
+                                <li><strong>Build Commit:</strong> {String(buildInfo.commit).slice(0, 7)}</li>
+                            )}
+                            {dbHealth?.ok === true && (
+                                <li><strong>DB Health:</strong> OK</li>
+                            )}
+                            {dbHealth?.ok === false && (
+                                <li><strong>DB Health:</strong> FAIL</li>
+                            )}
                         </ul>
                     </div>
                 </div>
