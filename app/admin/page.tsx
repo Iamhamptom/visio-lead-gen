@@ -169,7 +169,7 @@ export default function AdminPage() {
         }
     };
 
-    const handleUpdateSubscription = async (userId: string, tier: string) => {
+    const handleUpdateSubscription = async (userId: string, tier: string, status: string = 'active') => {
         try {
             const { data: { session } } = await supabase.auth.getSession();
             const token = session?.access_token;
@@ -180,7 +180,7 @@ export default function AdminPage() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ userId, tier, status: 'active' })
+                body: JSON.stringify({ userId, tier, status })
             });
 
             if (!res.ok) throw new Error('Failed to update');
@@ -188,7 +188,13 @@ export default function AdminPage() {
             // Optimistic / Reload
             setUsers(prev => prev.map(u =>
                 u.id === userId
-                    ? { ...u, subscription: { ...u.subscription!, subscription_tier: tier, subscription_status: 'active' } }
+                    ? {
+                        ...u,
+                        subscription: {
+                            subscription_tier: tier,
+                            subscription_status: status
+                        }
+                    }
                     : u
             ));
 
@@ -375,7 +381,8 @@ export default function AdminPage() {
                                         <tr>
                                             <th className="p-4 pl-6">User</th>
                                             <th className="p-4">Plan</th>
-                                            <th className="p-4 text-center">Status</th>
+                                            <th className="p-4">Sub Status</th>
+                                            <th className="p-4 text-center">Approval</th>
                                             <th className="p-4 text-right pr-6">Access</th>
                                         </tr>
                                     </thead>
@@ -384,6 +391,7 @@ export default function AdminPage() {
                                             const isApproved = user.app_metadata?.approved === true;
                                             const isPremium = user.subscription?.subscription_tier && user.subscription?.subscription_tier !== 'artist';
                                             const currentTier = user.subscription?.subscription_tier || 'artist';
+                                            const currentStatus = user.subscription?.subscription_status || 'active';
 
                                             return (
                                                 <tr key={user.id} className="hover:bg-white/5 transition-colors">
@@ -396,7 +404,7 @@ export default function AdminPage() {
                                                             value={currentTier}
                                                             onChange={(e) => {
                                                                 if (confirm(`Change plan for ${user.email} to ${e.target.value}?`)) {
-                                                                    handleUpdateSubscription(user.id, e.target.value);
+                                                                    handleUpdateSubscription(user.id, e.target.value, currentStatus);
                                                                 }
                                                             }}
                                                             className={`bg-white/5 border border-white/10 rounded-lg text-xs px-2 py-1 focus:outline-none focus:border-visio-teal ${isPremium ? 'text-visio-teal' : 'text-white/60'}`}
@@ -407,6 +415,24 @@ export default function AdminPage() {
                                                             <option value="starter_label">Starter Label</option>
                                                             <option value="label">Label Pro</option>
                                                             <option value="agency">Agency</option>
+                                                        </select>
+                                                    </td>
+                                                    <td className="p-4">
+                                                        <select
+                                                            value={currentStatus}
+                                                            onChange={(e) => {
+                                                                if (confirm(`Change status for ${user.email} to ${e.target.value}?`)) {
+                                                                    handleUpdateSubscription(user.id, currentTier, e.target.value);
+                                                                }
+                                                            }}
+                                                            className={`bg-white/5 border border-white/10 rounded-lg text-xs px-2 py-1 focus:outline-none focus:border-visio-teal ${currentStatus === 'active' ? 'text-emerald-400' :
+                                                                    currentStatus === 'paused' ? 'text-yellow-400' : 'text-red-400'
+                                                                }`}
+                                                        >
+                                                            <option value="active">Active</option>
+                                                            <option value="paused">Paused</option>
+                                                            <option value="canceled">Canceled</option>
+                                                            <option value="past_due">Past Due</option>
                                                         </select>
                                                     </td>
                                                     <td className="p-4 text-center">
