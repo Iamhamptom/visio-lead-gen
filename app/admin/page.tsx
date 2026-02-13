@@ -50,14 +50,12 @@ export default function AdminPage() {
 
     const loadDiagnostics = async () => {
         try {
-            const [buildRes, dbRes, envRes] = await Promise.all([
+            const [buildRes, dbRes] = await Promise.all([
                 fetch('/api/build-info').then(r => r.ok ? r.json() : null).catch(() => null),
-                fetch('/api/health/db').then(r => r.ok ? r.json() : null).catch(() => null),
-                fetch('/api/debug-env').then(r => r.ok ? r.json() : null).catch(() => null)
+                fetch('/api/health/db').then(r => r.ok ? r.json() : null).catch(() => null)
             ]);
             setBuildInfo(buildRes);
             setDbHealth(dbRes);
-            setEnvDebug(envRes);
         } catch {
             // ignore
         }
@@ -86,6 +84,12 @@ export default function AdminPage() {
             if (!token) throw new Error("No session found");
 
             const headers = { 'Authorization': `Bearer ${token}` };
+
+            // Admin-only env diagnostics (requires Authorization header now)
+            fetch('/api/debug-env', { headers })
+                .then(r => r.ok ? r.json() : null)
+                .then(data => setEnvDebug(data))
+                .catch(() => setEnvDebug(null));
 
             // Parallel Fetch
             const [usersRes, leadsRes] = await Promise.all([
@@ -425,12 +429,17 @@ export default function AdminPage() {
                                                                     handleUpdateSubscription(user.id, currentTier, e.target.value);
                                                                 }
                                                             }}
-                                                            className={`bg-white/5 border border-white/10 rounded-lg text-xs px-2 py-1 focus:outline-none focus:border-visio-teal ${currentStatus === 'active' ? 'text-emerald-400' :
-                                                                    currentStatus === 'paused' ? 'text-yellow-400' : 'text-red-400'
+                                                            className={`bg-white/5 border border-white/10 rounded-lg text-xs px-2 py-1 focus:outline-none focus:border-visio-teal ${currentStatus === 'active'
+                                                                ? 'text-emerald-400'
+                                                                : currentStatus === 'trialing'
+                                                                    ? 'text-yellow-400'
+                                                                    : currentStatus === 'past_due'
+                                                                        ? 'text-orange-400'
+                                                                        : 'text-red-400'
                                                                 }`}
                                                         >
                                                             <option value="active">Active</option>
-                                                            <option value="paused">Paused</option>
+                                                            <option value="trialing">Trialing</option>
                                                             <option value="canceled">Canceled</option>
                                                             <option value="past_due">Past Due</option>
                                                         </select>

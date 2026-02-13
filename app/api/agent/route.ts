@@ -9,7 +9,8 @@ import { performDeepSearch, searchApollo, searchLinkedInPipeline, getPipelineSta
 import { scrapeContactsFromUrl, scrapeMultipleUrls } from '@/lib/scraper';
 import { searchAllSocials, flattenSocialResults } from '@/lib/social-search';
 import { requireUser, isAdminUser } from '@/lib/api-auth';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
 
 // Maps subscription tiers to allowed AI tiers
 const TIER_TO_AI_TIER: Record<string, string[]> = {
@@ -43,6 +44,25 @@ interface WebResult {
     snippet?: string;
     source?: string;
     date?: string;
+}
+
+function createRlsSupabaseClient(accessToken: string) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !anonKey) return null;
+
+    return createClient(url, anonKey, {
+        global: {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        },
+        auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false,
+        },
+    });
 }
 
 // ─── Normalize Country ─────────────────────────────────
@@ -208,12 +228,34 @@ export async function POST(request: NextRequest) {
         // 0. VALIDATE TIER FROM DB (don't trust client-provided tier)
         let validatedTier = 'instant';
         if (!isAdminUser(auth.user)) {
-            const { data: profile } = await supabaseAdmin
-                .from('profiles')
-                .select('subscription_tier')
-                .eq('id', auth.user.id)
-                .maybeSingle();
-            const userSubTier = profile?.subscription_tier || 'artist';
+            let userSubTier = 'artist';
+
+            // Use user-scoped RLS reads (anon key + user access token or cookie session).
+            // This avoids taking a hard dependency on SUPABASE_SERVICE_ROLE_KEY for the core chat flow.
+            try {
+                if (auth.accessToken) {
+                    const supabaseRls = createRlsSupabaseClient(auth.accessToken);
+                    if (supabaseRls) {
+                        const { data } = await supabaseRls
+                            .from('profiles')
+                            .select('subscription_tier')
+                            .eq('id', auth.user.id)
+                            .maybeSingle();
+                        if (data?.subscription_tier) userSubTier = data.subscription_tier;
+                    }
+                } else {
+                    const supabase = await createSupabaseServerClient();
+                    const { data } = await supabase
+                        .from('profiles')
+                        .select('subscription_tier')
+                        .eq('id', auth.user.id)
+                        .maybeSingle();
+                    if (data?.subscription_tier) userSubTier = data.subscription_tier as string;
+                }
+            } catch {
+                // Fall back to default tier if the profile read fails for any reason.
+            }
+
             const allowedAiTiers = TIER_TO_AI_TIER[userSubTier] || ['instant'];
             validatedTier = allowedAiTiers.includes(tier) ? tier : allowedAiTiers[allowedAiTiers.length - 1];
         } else {
