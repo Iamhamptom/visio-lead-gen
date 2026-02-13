@@ -139,6 +139,50 @@ OPENAI_API_KEY=your_openai_api_key
 | `lib/scraper.ts` | Web scraping logic |
 | `lib/db.ts` | Database operations |
 | `app/api/` | All API route handlers |
+| `scripts/approve-user.js` | **(NEW)** Admin script to manually approve users & fix permissions |
+
+---
+
+## Environment Variables Required
+
+The project requires a `.env.local` file with the following API keys:
+
+```env
+# Google/Gemini AI
+GOOGLE_API_KEY=your_google_api_key
+# or
+GEMINI_API_KEY=your_gemini_api_key
+
+# Exa Neural Search
+EXA_API_KEY=your_exa_api_key
+
+# Supabase (Core & Admin)
+NEXT_PUBLIC_SUPABASE_URL=https://nloihhezkwhwycztvfbd.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_...
+SUPABASE_SERVICE_ROLE_KEY=sb_secret_...
+
+# OpenAI (if used)
+OPENAI_API_KEY=your_openai_api_key
+```
+
+---
+
+## Common Maintenance Tasks
+
+### 1. Approve a User Manually
+If a user is stuck in the "Portal Gate" or not appearing in the dashboard:
+1. Ensure `.env.local` has the `SUPABASE_SERVICE_ROLE_KEY`.
+2. Run the approval script:
+```bash
+node scripts/approve-user.js
+```
+*(Edit the script to change the target email if needed)*
+
+### 2. Verify Admin Access
+To ensure an admin email (like `tonydavidhampton@gmail.com`) has correct permissions:
+```bash
+node scripts/verify-admin-access.js
+```
 
 ---
 

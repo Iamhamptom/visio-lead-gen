@@ -78,10 +78,14 @@ export function isAdminUser(user: { email?: string | null; app_metadata?: Record
 
 export async function requireAdmin(request: Request): Promise<AuthOk | AuthFail> {
     const auth = await requireUser(request);
-    if (!auth.ok) return auth;
+    if (!auth.ok) {
+        console.log('Admin Auth Failed: User not found or invalid token', auth);
+        return auth;
+    }
 
     if (!isAdminUser(auth.user)) {
-        return { ok: false, status: 403, error: 'Forbidden' };
+        console.log('Admin Auth Failed: User is not admin', auth.user.email);
+        return { ok: false, status: 403, error: 'Forbidden: ' + (auth.user.email || 'No Email') };
     }
 
     return auth;
