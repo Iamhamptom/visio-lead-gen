@@ -63,7 +63,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 storeSession(session);
             } else {
                 const cached = loadCachedSession();
+                // If Supabase storage lost tokens (quota eviction, etc.), try to recover using the cached refresh token.
+                if (cached?.refresh_token) {
+                    try {
+                        const refreshed = await supabase.auth.refreshSession(cached);
+                        const nextSession = refreshed.data?.session ?? null;
+                        if (nextSession) {
+                            setSession(nextSession);
+                            setUser(nextSession.user ?? null);
+                            setAuthStale(false);
+                            storeSession(nextSession);
+                            setLoading(false);
+                            return;
+                        }
+                    } catch {
+                        // fall through to stale-cache mode below
+                    }
+                }
+
                 if (cached?.user) {
+                    // Last-resort fallback so the UI can render; API calls may still fail until session is recovered.
                     setSession(cached);
                     setUser(cached.user ?? null);
                     setAuthStale(true);
@@ -97,9 +116,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setAuthStale(false);
                 storeSession(session);
             } else {
-                // Always try to refresh if no session found
+                // Always try to refresh if no session found. If Supabase storage is missing, use cached refresh token.
                 try {
-                    const refreshed = await supabase.auth.refreshSession();
+                    const cached = loadCachedSession();
+                    const refreshed = cached?.refresh_token
+                        ? await supabase.auth.refreshSession(cached)
+                        : await supabase.auth.refreshSession();
                     const nextSession = refreshed.data?.session ?? null;
                     if (nextSession) {
                         setSession(nextSession);
