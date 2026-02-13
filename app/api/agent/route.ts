@@ -8,7 +8,19 @@ import { getToolInstruction, TOOL_REGISTRY } from '@/lib/tools';
 import { performDeepSearch, searchApollo, searchLinkedInPipeline, getPipelineStatus, PipelineContact } from '@/lib/pipelines';
 import { scrapeContactsFromUrl, scrapeMultipleUrls } from '@/lib/scraper';
 import { searchAllSocials, flattenSocialResults } from '@/lib/social-search';
-import { requireUser } from '@/lib/api-auth';
+import { requireUser, isAdminUser } from '@/lib/api-auth';
+import { supabaseAdmin } from '@/lib/supabase/admin';
+
+// Maps subscription tiers to allowed AI tiers
+const TIER_TO_AI_TIER: Record<string, string[]> = {
+    'artist': ['instant'],
+    'starter': ['instant', 'standard'],
+    'artiste': ['instant', 'standard'],
+    'starter_label': ['instant', 'standard', 'business'],
+    'label': ['instant', 'standard', 'business', 'enterprise'],
+    'agency': ['instant', 'standard', 'business', 'enterprise'],
+    'enterprise': ['instant', 'standard', 'business', 'enterprise']
+};
 
 interface LeadResponse {
     id: number;
@@ -146,16 +158,20 @@ Be warm, strategic, and concise. Use markdown formatting. End with a suggestion 
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const {
-            message,
-            conversationHistory = [],
-            lastSearchState,
-            tier = 'instant',
-            mode = 'chat',
-            webSearchEnabled = true,
-            activeTool = 'none'
-        } = body;
-        const userMessage = message || body.query;
+
+        // Input validation
+        const VALID_TIERS = ['instant', 'standard', 'business', 'enterprise'];
+        const VALID_MODES = ['chat', 'research'];
+
+        const message = typeof body.message === 'string' ? body.message : '';
+        const conversationHistory = Array.isArray(body.conversationHistory) ? body.conversationHistory : [];
+        const lastSearchState = body.lastSearchState;
+        const tier = VALID_TIERS.includes(body.tier) ? body.tier : 'instant';
+        const mode = VALID_MODES.includes(body.mode) ? body.mode : 'chat';
+        const webSearchEnabled = typeof body.webSearchEnabled === 'boolean' ? body.webSearchEnabled : true;
+        const activeTool = typeof body.activeTool === 'string' ? body.activeTool : 'none';
+
+        const userMessage = message || (typeof body.query === 'string' ? body.query : '');
 
         if (!userMessage) {
             return NextResponse.json({
@@ -189,6 +205,21 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // 0. VALIDATE TIER FROM DB (don't trust client-provided tier)
+        let validatedTier = 'instant';
+        if (!isAdminUser(auth.user)) {
+            const { data: profile } = await supabaseAdmin
+                .from('profiles')
+                .select('subscription_tier')
+                .eq('id', auth.user.id)
+                .maybeSingle();
+            const userSubTier = profile?.subscription_tier || 'artist';
+            const allowedAiTiers = TIER_TO_AI_TIER[userSubTier] || ['instant'];
+            validatedTier = allowedAiTiers.includes(tier) ? tier : allowedAiTiers[allowedAiTiers.length - 1];
+        } else {
+            validatedTier = tier; // Admins can use any tier
+        }
+
         // 1. FETCH ARTIST CONTEXT
         const artistContext = await getContextPack({ userId: auth.user.id, accessToken: auth.accessToken });
 
@@ -216,7 +247,7 @@ export async function POST(request: NextRequest) {
             business: '💼 Business Mode',
             enterprise: '🚀 Enterprise Mode'
         };
-        logs.push(`${tierLabels[tier as keyof typeof tierLabels] || tierLabels.instant}`);
+        logs.push(`${tierLabels[validatedTier as keyof typeof tierLabels] || tierLabels.instant}`);
         if (!artistContext) logs.push('⚠️ No Artist Portal — running in General Mode');
         else logs.push(`👤 Context: ${artistContext.identity.name}`);
 
@@ -226,13 +257,13 @@ export async function POST(request: NextRequest) {
         if (mode === 'research') {
             logs.push('🔬 Research mode active...');
             if (hasGemini) {
-                intent = await parseIntent(userMessage, conversationHistory, artistContext || undefined, tier as any, 'research', knowledgeContext);
+                intent = await parseIntent(userMessage, conversationHistory, artistContext || undefined, validatedTier as any, 'research', knowledgeContext);
             } else {
                 intent = parseBasicIntent(userMessage, lastSearchState);
             }
             // Force search action in research mode
             if (intent.action === 'clarify') intent.action = 'search';
-            intent.limit = tier === 'enterprise' ? 100 : 30;
+            intent.limit = validatedTier === 'enterprise' ? 100 : 30;
 
             // ─── CHAT MODE ─────────────────────────────────
         } else {
@@ -254,7 +285,7 @@ export async function POST(request: NextRequest) {
                     prAssistantContext,
                     conversationHistory,
                     artistContext || undefined,
-                    tier as 'instant' | 'business' | 'enterprise',
+                    validatedTier as 'instant' | 'business' | 'enterprise',
                     'chat',
                     knowledgeContext
                 );
@@ -300,7 +331,7 @@ export async function POST(request: NextRequest) {
                         logs.push(`🌐 Found ${webLeads.length} web results`);
 
                         // AI enrichment — summarize and extract contacts
-                        const enrichedMessage = await enrichLeadsWithAI(webLeads, userMessage, tier);
+                        const enrichedMessage = await enrichLeadsWithAI(webLeads, userMessage, validatedTier);
                         if (enrichedMessage) {
                             intent.message = enrichedMessage;
                         } else {
@@ -349,7 +380,7 @@ export async function POST(request: NextRequest) {
                         }));
 
                         // AI enrichment
-                        const enrichedMessage = await enrichLeadsWithAI(leads, userMessage, tier);
+                        const enrichedMessage = await enrichLeadsWithAI(leads, userMessage, validatedTier);
                         intent.message = enrichedMessage || `Deep Search found ${deepResult.total} unique contacts across ${deepResult.apisUsed.length > 0 ? deepResult.apisUsed.join(', ') : 'Google fallback'} pipelines.`;
 
                         suggestedNextSteps = [
@@ -389,7 +420,7 @@ export async function POST(request: NextRequest) {
                         const platformCounts = Object.entries(socialResults).map(([p, r]) => `${p}: ${r.length}`).join(', ');
                         logs.push(`✅ Found profiles: ${platformCounts}`);
 
-                        const enrichedMessage = await enrichLeadsWithAI(leads, userMessage, tier);
+                        const enrichedMessage = await enrichLeadsWithAI(leads, userMessage, validatedTier);
                         intent.message = enrichedMessage || `Found ${allProfiles.length} social profiles across platforms (${platformCounts}).`;
 
                         suggestedNextSteps = [
@@ -470,7 +501,7 @@ export async function POST(request: NextRequest) {
                         source: c.source,
                     }));
 
-                    const enrichedMessage = await enrichLeadsWithAI(leads, userMessage, tier);
+                    const enrichedMessage = await enrichLeadsWithAI(leads, userMessage, validatedTier);
                     intent.message = enrichedMessage || `Found ${liResult.total} LinkedIn profiles${liResult.apiUsed ? ' via API' : ' via Google search'}.`;
                     suggestedNextSteps = ['Enrich a contact with email data', 'Draft a connection message', 'Deep search across all pipelines'];
                 }
@@ -496,7 +527,7 @@ export async function POST(request: NextRequest) {
                         source: c.source,
                     }));
 
-                    const enrichedMessage = await enrichLeadsWithAI(leads, userMessage, tier);
+                    const enrichedMessage = await enrichLeadsWithAI(leads, userMessage, validatedTier);
                     intent.message = enrichedMessage || `Found ${apolloResult.total} contacts${apolloResult.apiUsed ? ' with verified emails via Apollo API' : ' via Google fallback'}.`;
                     suggestedNextSteps = ['Draft a pitch to these contacts', 'Search LinkedIn for more', 'Create an email outreach sequence'];
                 }
@@ -538,7 +569,7 @@ ${contextBlock}
 Now answer the user's original question: "${userMessage}".
 Cite sources naturally. Write as Visio — warm, professional, strategic. Use markdown.`;
 
-                        const finalIntent = await parseIntent(toolPrompt, conversationHistory, artistContext || undefined, tier as any, 'chat', '');
+                        const finalIntent = await parseIntent(toolPrompt, conversationHistory, artistContext || undefined, validatedTier as any, 'chat', '');
                         intent = finalIntent;
                     }
                 }

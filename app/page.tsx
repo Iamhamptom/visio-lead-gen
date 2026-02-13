@@ -39,7 +39,6 @@ import {
 
 // Default Campaigns (Folders) - Users create their own
 const DEFAULT_CAMPAIGNS: Campaign[] = [];
-const ADMIN_EMAILS = ['tonydavidhampton@gmail.com', 'hamptonmusicgroup@gmail.com'];
 
 const createInitialSession = (): Session => ({
   id: crypto.randomUUID(),
@@ -58,13 +57,30 @@ const createInitialSession = (): Session => ({
 export default function Home() {
   const { user, session, loading: authLoading, signOut } = useAuth();
   const isApproved = user?.app_metadata?.approved === true;
-  const isAdmin = useMemo(() => {
-    const email = user?.email?.toLowerCase().trim();
-    return !!email && ADMIN_EMAILS.includes(email);
-  }, [user?.email]);
+  const [isAdmin, setIsAdmin] = useState(false);
   const isRestricted = !isApproved && !isAdmin;
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const userId = user?.id;
+
+  // Check admin status via server endpoint (avoids leaking admin emails in client bundle)
+  useEffect(() => {
+    if (!user || !session?.access_token) {
+      setIsAdmin(false);
+      return;
+    }
+    let cancelled = false;
+    fetch('/api/admin/check', {
+      headers: { Authorization: `Bearer ${session.access_token}` }
+    })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (!cancelled && data) setIsAdmin(!!data.isAdmin);
+      })
+      .catch(() => {
+        if (!cancelled) setIsAdmin(false);
+      });
+    return () => { cancelled = true; };
+  }, [user, session?.access_token]);
 
   // State: Views and Sessions
   const [currentView, setCurrentView] = useState<ViewMode>('landing'); // Default safe state
@@ -314,25 +330,9 @@ export default function Home() {
         }
         setCurrentView(targetView);
       } else {
-        // Logged In - Feature Gating (Soft Gate)
-        const isApproved = user?.app_metadata?.approved === true;
-
-        /* REMOVED HARD REDIRECT
-        if (!isApproved) {
-            if (targetView !== 'pending') {
-                setCurrentView('pending');
-                return;
-            }
-            setCurrentView('pending');
-            return;
-        }
-        */
-
-        // Check onboarding/profile
+        // Logged In - Check onboarding/profile
         if (!hasCompletedOnboarding && !hasProfile) {
-          if (targetView !== 'auth' && targetView !== 'landing') {
-            // We'll handle the gate inside dashboard
-          }
+          // Profile gate is handled inside the dashboard view
         } else {
           if (targetView === 'landing' || targetView === 'auth') {
             navigateTo('overview');
@@ -396,11 +396,7 @@ export default function Home() {
     }
   };
 
-
   const [artistProfile, setArtistProfile] = useState<ArtistProfile | null>(null);
-
-
-  // Artist profile loaded in main effect above
 
   // If auth is lost (sign out or expired session), clear user-scoped state so we don't leak data across accounts.
   useEffect(() => {
@@ -519,53 +515,6 @@ export default function Home() {
       // Ignore storage errors (private mode, etc.)
     }
   }, [activeSessionId, localLastSessionKey]);
-  // Load Persistence
-  useEffect(() => {
-    if (authLoading || !user) return;
-
-    const loadData = async () => {
-      setIsLoading(true); // Don't block UI completely, but show indicator
-      try {
-        // 1. Try remote load
-        const remoteSessions = await loadSessions(); // Should return [] on error, not throw
-
-        // 2. Load local
-        const localSessions = loadLocalSessions();
-
-        // 3. Merge
-        const merged = mergeSessions(localSessions, remoteSessions);
-
-        // 4. Update State
-        if (merged.length > 0) {
-          setSessions(merged);
-          // Identify most recent session to activate
-          const lastActive = window.localStorage.getItem(localLastSessionKey());
-          if (lastActive && merged.find(s => s.id === lastActive)) {
-            setActiveSessionId(lastActive);
-          } else {
-            setActiveSessionId(merged[0].id);
-          }
-        } else {
-          // Initialize First Session
-          const initial = createInitialSession();
-          setSessions([initial]);
-          setActiveSessionId(initial.id);
-          // Save immediately
-          saveLocalSessions([initial]);
-          await attemptRemoteSave([initial]);
-        }
-
-      } catch (err) {
-        console.error('Failed to load session data:', err);
-        setToastMessage('Error loading history');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-  }, [user, authLoading, localLastSessionKey, mergeSessions, loadLocalSessions, saveLocalSessions, attemptRemoteSave]);
-
   // Sync to Storage on Change (Debounced)
   useEffect(() => {
     if (!user || sessions.length === 0) return;
@@ -800,14 +749,6 @@ export default function Home() {
       return; // BLOCK ACTION
     }
 
-    // Check 2: Explicit Mode Check (e.g. Switching to Business Mode)
-    // If user is trying to use 'business' or 'enterprise' logic but is on a lower plan
-    if ((mode === 'research' || tier === 'business' || tier === 'enterprise') && !['starter_label', 'label', 'agency', 'enterprise'].includes(userTier)) {
-      // Allow Research for Starter/Artiste but maybe limited? 
-      // For now, strict block on Business/Enterprise TIER usage.
-      // If generic 'research' mode is used with 'standard' tier, that's fine for Starter/Artiste.
-    }
-
     // -------------------------------------
 
     const activeSessionIndex = sessions.findIndex(s => s.id === activeSessionId);
@@ -819,7 +760,28 @@ export default function Home() {
     if (text.startsWith('IMPORT_PORTAL_DATA:')) {
       try {
         const jsonStr = text.replace('IMPORT_PORTAL_DATA:', '').trim();
-        const profileData = JSON.parse(jsonStr);
+        const raw = JSON.parse(jsonStr);
+
+        // Validate required fields to prevent arbitrary JSON injection
+        if (typeof raw.name !== 'string' || !raw.name.trim()) {
+          setToastMessage("❌ Import Failed: Profile must have a name.");
+          return;
+        }
+
+        const profileData: ArtistProfile = {
+          name: String(raw.name).slice(0, 200),
+          genre: typeof raw.genre === 'string' ? raw.genre.slice(0, 100) : '',
+          description: typeof raw.description === 'string' ? raw.description.slice(0, 2000) : '',
+          socials: typeof raw.socials === 'object' && raw.socials ? raw.socials : {},
+          connectedAccounts: typeof raw.connectedAccounts === 'object' && raw.connectedAccounts ? raw.connectedAccounts : {},
+          similarArtists: Array.isArray(raw.similarArtists) ? raw.similarArtists.filter((s: unknown) => typeof s === 'string').slice(0, 20) : [],
+          milestones: typeof raw.milestones === 'object' && raw.milestones ? raw.milestones : { instagramFollowers: 0, monthlyListeners: 0 },
+          location: typeof raw.location === 'object' && raw.location ? { city: String(raw.location.city || ''), country: String(raw.location.country || '') } : { city: '', country: '' },
+          promotionalFocus: ['Streaming', 'Live Events', 'Brand Deals', 'Press'].includes(raw.promotionalFocus) ? raw.promotionalFocus : 'Streaming',
+          careerHighlights: Array.isArray(raw.careerHighlights) ? raw.careerHighlights.filter((s: unknown) => typeof s === 'string').slice(0, 20) : [],
+          lifeHighlights: Array.isArray(raw.lifeHighlights) ? raw.lifeHighlights.filter((s: unknown) => typeof s === 'string').slice(0, 20) : [],
+          desiredCommunities: Array.isArray(raw.desiredCommunities) ? raw.desiredCommunities.filter((s: unknown) => typeof s === 'string').slice(0, 20) : [],
+        };
 
         // Optimistically update local state
         setArtistProfile(profileData);
