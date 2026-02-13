@@ -60,22 +60,29 @@ export default function AdminPage() {
                 fetch('/api/admin/leads', { headers })
             ]);
 
-            if (usersRes.status === 401 || usersRes.status === 403) {
-                // Try to parse the error message from the response
-                let errorMsg = "Unauthorized Access";
+            const readError = async (res: Response) => {
                 try {
-                    const errorData = await usersRes.json();
-                    if (errorData.error) errorMsg = errorData.error;
-                } catch (e) {
-                    // Ignore JSON parse error, stick to default
+                    const data = await res.json();
+                    return (data?.error || data?.message || res.statusText || 'Request failed') as string;
+                } catch {
+                    return res.statusText || 'Request failed';
+                }
+            };
+
+            // Users are required for the page to make sense; bail hard on failure.
+            if (!usersRes.ok) {
+                let errorMsg = await readError(usersRes);
+                if (errorMsg.toLowerCase().includes('service role')) {
+                    errorMsg = 'Server misconfigured: missing SUPABASE_SERVICE_ROLE_KEY (required for admin user listing).';
                 }
                 setError(errorMsg);
                 setLoading(false);
                 return;
             }
 
-            const usersData = await usersRes.json();
-            const leadsData = await leadsRes.json();
+            // Leads are optional; show users even if leads fail.
+            const usersData = await usersRes.json().catch(() => ({}));
+            const leadsData = leadsRes.ok ? await leadsRes.json().catch(() => ({})) : {};
 
             setUsers(usersData.users || []);
             setLeads(leadsData.leads || []);
