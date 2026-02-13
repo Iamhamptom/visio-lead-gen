@@ -68,7 +68,7 @@ export function isAdminUser(user: { email?: string | null; app_metadata?: Record
         .map(s => s.trim().toLowerCase())
         .filter(Boolean);
 
-    const email = (user.email || '').toLowerCase();
+    const email = (user.email || '').toLowerCase().trim();
     const role = typeof user.app_metadata?.role === 'string' ? user.app_metadata.role : '';
 
     if (builtInAdmins.includes(email)) return true;

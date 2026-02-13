@@ -174,16 +174,17 @@ export default function Home() {
   const attemptRemoteSave = useCallback(async (nextSessions: Session[]) => {
     if (!user) return true;
     try {
-      const ok = await saveSessions(nextSessions);
-      if (!ok) {
-        setPersistenceWarning('Supabase sync failed. Using local storage only.');
+      const result = await saveSessions(nextSessions);
+      if (!result.ok) {
+        // Show the actual error to make production setup issues (missing tables/RLS) diagnosable.
+        setPersistenceWarning(`Supabase sync failed: ${result.error}`);
         return false;
       }
       setPersistenceWarning(null);
       return true;
     } catch (error) {
       console.error('Supabase sync failed:', error);
-      setPersistenceWarning('Supabase sync failed. Using local storage only.');
+      setPersistenceWarning('Supabase sync failed (unexpected error).');
       return false;
     }
   }, [user]);
@@ -588,21 +589,6 @@ export default function Home() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [user, sessions, saveLocalSessions, attemptRemoteSave]);
-
-  // Save Persistence
-  useEffect(() => {
-    // Debounce save or just save on change
-    // Using a simple timeout to avoid too many writes
-    if (sessions.length > 0) {
-      const timer = setTimeout(() => {
-        saveLocalSessions(sessions);
-        if (user) {
-          void attemptRemoteSave(sessions);
-        }
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [sessions, user, saveLocalSessions, attemptRemoteSave]);
 
   const updateChatScrollState = useCallback(() => {
     const el = chatScrollRef.current;

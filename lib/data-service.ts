@@ -115,12 +115,32 @@ export async function loadArtistProfile(): Promise<ArtistProfile | null> {
 
 // ============ CHAT SESSIONS ============
 
-export async function saveSessions(sessions: Session[]): Promise<boolean> {
+export type SaveSessionsResult = { ok: true } | { ok: false; error: string };
+
+function formatSupabaseError(error: any): string {
+    if (!error) return 'Unknown error';
+    const parts: string[] = [];
+    if (typeof error.message === 'string') parts.push(error.message);
+    if (typeof error.code === 'string') parts.push(`code=${error.code}`);
+    if (typeof error.details === 'string' && error.details) parts.push(error.details);
+    if (typeof error.hint === 'string' && error.hint) parts.push(error.hint);
+    return parts.join(' | ') || String(error);
+}
+
+export async function saveSessions(sessions: Session[]): Promise<SaveSessionsResult> {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return false;
+    if (!user) return { ok: false, error: 'Not authenticated (no Supabase session)' };
 
     const isUuid = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
     let hadError = false;
+    let firstError: string | null = null;
+
+    const recordError = (label: string, error: any) => {
+        hadError = true;
+        const formatted = `${label}: ${formatSupabaseError(error)}`;
+        if (!firstError) firstError = formatted;
+        console.error(formatted, error);
+    };
 
     // Save each session and its messages
     for (const session of sessions) {
@@ -136,8 +156,7 @@ export async function saveSessions(sessions: Session[]): Promise<boolean> {
             }, { onConflict: 'id' });
 
         if (sessionError) {
-            console.error('Error saving session:', sessionError);
-            hadError = true;
+            recordError('Error saving session', sessionError);
             continue;
         }
 
@@ -162,13 +181,13 @@ export async function saveSessions(sessions: Session[]): Promise<boolean> {
                 .upsert(messagesToUpsert, { onConflict: 'id', ignoreDuplicates: true });
 
             if (msgError) {
-                console.error('Error saving messages:', msgError);
-                hadError = true;
+                recordError('Error saving messages', msgError);
             }
         }
     }
 
-    return !hadError;
+    if (hadError) return { ok: false, error: firstError || 'Unknown Supabase write error' };
+    return { ok: true };
 }
 
 export async function loadSessions(): Promise<Session[]> {

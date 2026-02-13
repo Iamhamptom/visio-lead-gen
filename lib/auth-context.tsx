@@ -81,15 +81,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     }
                 }
 
-                if (cached?.user) {
-                    // Last-resort fallback so the UI can render; API calls may still fail until session is recovered.
-                    setSession(cached);
-                    setUser(cached.user ?? null);
-                    setAuthStale(true);
-                } else {
-                    setSession(null);
-                    setUser(null);
-                }
+                // If we can't recover a real session, treat as signed out. A "stale" UI session causes
+                // confusing 401s, admin lockouts, and failed Supabase sync, so we fail closed here.
+                setSession(null);
+                setUser(null);
+                setAuthStale(false);
+                storeSession(null);
             }
             setLoading(false);
         };
@@ -128,9 +125,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         setUser(nextSession.user ?? null);
                         setAuthStale(false);
                         storeSession(nextSession);
+                    } else {
+                        setSession(null);
+                        setUser(null);
+                        setAuthStale(false);
+                        storeSession(null);
                     }
                 } catch {
-                    // ignore refresh errors
+                    setSession(null);
+                    setUser(null);
+                    setAuthStale(false);
+                    storeSession(null);
                 }
             }
         };
