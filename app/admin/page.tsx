@@ -43,6 +43,7 @@ export default function AdminPage() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [error, setError] = useState<string | null>(null);
+    const [viewerEmail, setViewerEmail] = useState<string>('');
 
     // Fetch Data
     const fetchData = async () => {
@@ -50,6 +51,7 @@ export default function AdminPage() {
         try {
             const { data: { session } } = await supabase.auth.getSession();
             const token = session?.access_token;
+            setViewerEmail(session?.user?.email || '');
             if (!token) throw new Error("No session found");
 
             const headers = { 'Authorization': `Bearer ${token}` };
@@ -207,6 +209,7 @@ export default function AdminPage() {
                         <p className="font-mono mb-2">Debug Info:</p>
                         <ul className="list-disc pl-4 space-y-1">
                             <li><strong>Error Message:</strong> {error}</li>
+                            <li><strong>Signed In As:</strong> {viewerEmail || 'unknown'}</li>
                             <li><strong>Session Status:</strong> {loading ? 'Checking...' : 'Loaded'}</li>
                             <li><strong>Environment:</strong> {process.env.NODE_ENV}</li>
                         </ul>

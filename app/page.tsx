@@ -132,12 +132,28 @@ export default function Home() {
 
   const saveLocalSessions = useCallback((nextSessions: Session[]) => {
     if (typeof window === 'undefined') return;
+    // IMPORTANT: Supabase auth also uses localStorage. Storing full chat history locally for
+    // signed-in users can fill the quota and cause auth tokens to fail to persist, which
+    // looks like random logouts on refresh/background. For signed-in users we rely on Supabase.
+    if (user) return;
     try {
       window.localStorage.setItem(localSessionsKey(), JSON.stringify(nextSessions));
     } catch {
       // Ignore storage errors (private mode, etc.)
     }
-  }, [localSessionsKey]);
+  }, [localSessionsKey, user]);
+
+  // If a previous build stored large authenticated chat histories in localStorage, clear them
+  // once the user is signed in to prevent storage-quota auth issues.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!user) return;
+    try {
+      window.localStorage.removeItem(localSessionsKey());
+    } catch {
+      // ignore
+    }
+  }, [user, localSessionsKey]);
 
   const attemptRemoteSave = useCallback(async (nextSessions: Session[]) => {
     if (!user) return true;
