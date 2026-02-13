@@ -46,15 +46,18 @@ export default function AdminPage() {
     const [viewerEmail, setViewerEmail] = useState<string>('');
     const [buildInfo, setBuildInfo] = useState<any>(null);
     const [dbHealth, setDbHealth] = useState<any>(null);
+    const [envDebug, setEnvDebug] = useState<any>(null);
 
     const loadDiagnostics = async () => {
         try {
-            const [buildRes, dbRes] = await Promise.all([
+            const [buildRes, dbRes, envRes] = await Promise.all([
                 fetch('/api/build-info').then(r => r.ok ? r.json() : null).catch(() => null),
-                fetch('/api/health/db').then(r => r.ok ? r.json() : null).catch(() => null)
+                fetch('/api/health/db').then(r => r.ok ? r.json() : null).catch(() => null),
+                fetch('/api/debug-env').then(r => r.ok ? r.json() : null).catch(() => null)
             ]);
             setBuildInfo(buildRes);
             setDbHealth(dbRes);
+            setEnvDebug(envRes);
         } catch {
             // ignore
         }
@@ -102,8 +105,13 @@ export default function AdminPage() {
             // Users are required for the page to make sense; bail hard on failure.
             if (!usersRes.ok) {
                 let errorMsg = await readError(usersRes);
-                if (errorMsg.toLowerCase().includes('service role')) {
-                    errorMsg = 'Server misconfigured: missing SUPABASE_SERVICE_ROLE_KEY (required for admin user listing).';
+                const lower = errorMsg.toLowerCase();
+                if (lower.includes('missing next_public_supabase_url') || lower.includes('missing supabase url')) {
+                    errorMsg = 'Server misconfigured: missing Supabase env vars on Vercel (NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY / SUPABASE_SERVICE_ROLE_KEY).';
+                } else if (lower.includes('sb_publishable_') || lower.includes('publishable/anon')) {
+                    errorMsg = 'Server misconfigured: SUPABASE_SERVICE_ROLE_KEY is set to the publishable/anon key. In Vercel, set SUPABASE_SERVICE_ROLE_KEY to the Supabase secret/service key (starts with sb_secret_), then redeploy.';
+                } else if (lower.includes('user not allowed')) {
+                    errorMsg = 'Server misconfigured: SUPABASE_SERVICE_ROLE_KEY is wrong on Vercel (admin APIs return "User not allowed"). Set it to the Supabase secret/service key (starts with sb_secret_), then redeploy.';
                 }
                 setError(errorMsg);
                 setLoading(false);
@@ -255,6 +263,12 @@ export default function AdminPage() {
                             )}
                             {dbHealth?.ok === false && (
                                 <li><strong>DB Health:</strong> FAIL</li>
+                            )}
+                            {envDebug?.SERVICE_ROLE_KEY_KIND && (
+                                <li><strong>Service Key Kind:</strong> {String(envDebug.SERVICE_ROLE_KEY_KIND)}</li>
+                            )}
+                            {envDebug?.ANON_KEY_KIND && (
+                                <li><strong>Anon Key Kind:</strong> {String(envDebug.ANON_KEY_KIND)}</li>
                             )}
                         </ul>
                     </div>

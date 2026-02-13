@@ -1195,6 +1195,7 @@ export default function Home() {
                   >
                     {!artistProfile ? (
                       <PortalGate
+                        onOpenSettings={() => navigateTo('settings')}
                         onRefresh={async () => {
                           setIsLoading(true);
                           const profile = await loadArtistProfile();

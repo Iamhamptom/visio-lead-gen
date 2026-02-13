@@ -4,9 +4,10 @@ import { ExternalLink, RefreshCw, Lock } from 'lucide-react';
 interface PortalGateProps {
     onRefresh: () => void;
     isLoading?: boolean;
+    onOpenSettings?: () => void;
 }
 
-export const PortalGate: React.FC<PortalGateProps> = ({ onRefresh, isLoading = false }) => {
+export const PortalGate: React.FC<PortalGateProps> = ({ onRefresh, isLoading = false, onOpenSettings }) => {
     return (
         <div className="flex flex-col items-center justify-center h-full w-full p-6 text-center z-50">
             <div className="max-w-md w-full bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl relative overflow-hidden">
@@ -26,7 +27,10 @@ export const PortalGate: React.FC<PortalGateProps> = ({ onRefresh, isLoading = f
 
                     <div className="flex flex-col w-full gap-3">
                         <button
-                            onClick={() => { window.location.href = '/settings'; }}
+                            onClick={() => {
+                                if (onOpenSettings) return onOpenSettings();
+                                window.location.href = '/settings';
+                            }}
                             className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-visio-teal to-visio-sage text-black font-bold py-3.5 rounded-xl hover:shadow-[0_0_20px_rgba(45,212,191,0.3)] transition-all transform hover:-translate-y-0.5"
                         >
                             Open Profile Settings
