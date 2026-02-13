@@ -103,6 +103,22 @@ export default function Home() {
   const [activeTool, setActiveTool] = useState<ToolId>('none');
   const [isChatScrollable, setIsChatScrollable] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [buildInfo, setBuildInfo] = useState<{ commit?: string | null; branch?: string | null } | null>(null);
+
+  // Lightweight build marker so we can confirm the live site is running the latest deployment.
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/build-info')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (cancelled) return;
+        if (data && typeof data === 'object') setBuildInfo(data);
+      })
+      .catch(() => {
+        // ignore
+      });
+    return () => { cancelled = true; };
+  }, []);
 
   // Helper to update view and URL
   const navigateTo = (view: ViewMode) => {
@@ -1138,6 +1154,11 @@ export default function Home() {
               </div>
               <div className="flex items-center gap-4 text-xs text-white/30">
                 <span>v1.2.0</span>
+                {buildInfo?.commit ? (
+                  <span className="font-mono text-white/20">
+                    {String(buildInfo.commit).slice(0, 7)}
+                  </span>
+                ) : null}
                 <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]"></div>
               </div>
             </header>
