@@ -1,16 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import {
     CreditCard,
     Check,
     ArrowUpRight,
     Download,
     AlertCircle,
-    Building,
     Loader2,
-    X,
+    X
 } from 'lucide-react';
 import { Subscription, SubscriptionTier } from '../types';
 import { TIER_DETAILS } from '../data/pricing';
@@ -372,35 +370,6 @@ export const Billing: React.FC<BillingProps> = ({
                             <p className="text-white/20 text-xs mt-1">Your payment history will appear here</p>
                         </div>
                     )}
-                </div>
-            </div>
-
-            {/* Stitch Payout Settings (Placeholder) */}
-            <div className="mt-12 pt-8 border-t border-white/5">
-                <div className="flex items-center justify-between mb-6">
-                    <div>
-                        <h3 className="text-xl font-bold text-white mb-1">Payout Settings</h3>
-                        <p className="text-white/50 text-sm">Configure how you receive payments (for Agency/Label tiers).</p>
-                    </div>
-                    <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-lg border border-white/10">
-                        <Building size={14} className="text-white/60" />
-                        <span className="text-xs text-white/60">Powered by Stitch</span>
-                    </div>
-                </div>
-
-                <div className="bg-black/20 border border-white/10 rounded-2xl p-6 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center">
-                            <Building size={24} className="text-white/40" />
-                        </div>
-                        <div>
-                            <p className="text-white font-medium">Bank Account</p>
-                            <p className="text-white/40 text-sm">First National Bank •••• 5599</p>
-                        </div>
-                    </div>
-                    <button className="text-sm font-medium text-white/60 hover:text-white transition-colors">
-                        Edit Actions
-                    </button>
                 </div>
             </div>
 

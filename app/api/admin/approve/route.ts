@@ -1,14 +1,12 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/api-auth';
-
 export async function POST(req: Request) {
     try {
         const admin = await requireAdmin(req);
         if (!admin.ok) {
             return NextResponse.json({ error: admin.error }, { status: admin.status });
         }
-
         const { userId, approved } = await req.json();
 
         if (typeof userId !== 'string' || userId.length < 10) {

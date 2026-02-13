@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
     const expected = process.env.SETUP_ADMIN_SECRET;
     if (!expected) {
+        // Hide the endpoint unless explicitly enabled.
         return NextResponse.json({ error: 'Not enabled' }, { status: 404 });
     }
 
@@ -43,3 +44,4 @@ export async function POST(req: Request) {
 export async function GET() {
     return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
 }
+

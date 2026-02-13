@@ -60,6 +60,9 @@ export async function requireUser(request: Request): Promise<AuthOk | AuthFail> 
 }
 
 export function isAdminUser(user: { email?: string | null; app_metadata?: Record<string, unknown> }) {
+    // Hard fallback for launch/admin access (also supports env-based allowlist below).
+    const builtInAdmins = ['tonydavidhampton@gmail.com', 'hamptonmusicgroup@gmail.com'];
+
     const allowlist = (process.env.ADMIN_EMAILS || '')
         .split(',')
         .map(s => s.trim().toLowerCase())
@@ -68,6 +71,7 @@ export function isAdminUser(user: { email?: string | null; app_metadata?: Record
     const email = (user.email || '').toLowerCase();
     const role = typeof user.app_metadata?.role === 'string' ? user.app_metadata.role : '';
 
+    if (builtInAdmins.includes(email)) return true;
     if (allowlist.length > 0 && allowlist.includes(email)) return true;
     return role === 'admin';
 }

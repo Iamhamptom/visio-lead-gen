@@ -39,6 +39,7 @@ import {
 
 // Default Campaigns (Folders) - Users create their own
 const DEFAULT_CAMPAIGNS: Campaign[] = [];
+const ADMIN_EMAILS = ['tonydavidhampton@gmail.com', 'hamptonmusicgroup@gmail.com'];
 
 const createInitialSession = (): Session => ({
   id: crypto.randomUUID(),
@@ -57,6 +58,11 @@ const createInitialSession = (): Session => ({
 export default function Home() {
   const { user, session, loading: authLoading, signOut } = useAuth();
   const isApproved = user?.app_metadata?.approved === true;
+  const isAdmin = useMemo(() => {
+    const email = user?.email?.toLowerCase().trim();
+    return !!email && ADMIN_EMAILS.includes(email);
+  }, [user?.email]);
+  const isRestricted = !isApproved && !isAdmin;
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const userId = user?.id;
 
@@ -72,6 +78,11 @@ export default function Home() {
     currentPeriodEnd: 0, // Will be set client-side
     interval: 'month'
   });
+  const effectiveSubscription = useMemo<Subscription>(() => {
+    if (!isAdmin) return subscription;
+    // Admin accounts should not be feature-gated by plan.
+    return { ...subscription, tier: 'enterprise', status: 'active' };
+  }, [isAdmin, subscription]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -726,7 +737,7 @@ export default function Home() {
 
   const handleSendMessage = async (text: string, tier: AITier = 'instant', mode: AgentMode = 'chat') => {
     // --- Access Control / Mode Locking ---
-    const userTier = subscription.tier;
+    const userTier = effectiveSubscription.tier;
 
     // Defines which tiers can access which AI modes
     // Artist (Free) -> Instant Only
@@ -745,7 +756,7 @@ export default function Home() {
     const allowedTiers = RESTRICTIONS[userTier] || ['instant']; // Fallback to instant
 
     // Check 1: Is the requested AI Tier allowed?
-    if (!allowedTiers.includes(tier)) {
+    if (!isAdmin && !allowedTiers.includes(tier)) {
       setToastMessage(`Upgrade to ${userTier === 'artist' ? 'Starter' : 'Label'} to use ${tier.toUpperCase()} mode.`);
       return; // BLOCK ACTION
     }
@@ -1071,9 +1082,10 @@ export default function Home() {
             onMoveSession={handleMoveSession}
             onDeleteSession={handleDeleteSession}
             onShareSession={handleShareSession}
-            subscription={subscription}
+            subscription={effectiveSubscription}
             artistProfile={artistProfile}
-            isRestricted={!isApproved}
+            isRestricted={isRestricted}
+            isAdmin={isAdmin}
           />
 
           {/* Mobile Sidebar Overlay Backdrop - Fixed z-index */}
@@ -1247,7 +1259,7 @@ export default function Home() {
                     onPromptUsed={() => setPendingPrompt(null)}
                     webSearchEnabled={webSearchEnabled}
                     onToggleWebSearch={() => setWebSearchEnabled(prev => !prev)}
-                    isRestricted={!isApproved}
+                    isRestricted={isRestricted}
                   />
                 </div>
               </>
@@ -1255,7 +1267,7 @@ export default function Home() {
               <LeadsGallery
                 leads={allLeads}
                 onSaveLead={handleSaveLead}
-                isRestricted={!isApproved}
+                isRestricted={isRestricted}
               />
             ) : currentView === 'billing' ? (
               <Billing
@@ -1269,7 +1281,7 @@ export default function Home() {
               <ReachPage onBack={() => navigateTo('overview')} />
             ) : currentView === 'settings' ? (
               <SettingsPage
-                subscription={subscription}
+                subscription={effectiveSubscription}
                 artistProfile={artistProfile}
                 onBack={() => navigateTo('overview')}
                 onNavigateHome={() => navigateTo('overview')}

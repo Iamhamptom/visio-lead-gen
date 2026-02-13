@@ -9,7 +9,6 @@ export async function POST(request: NextRequest) {
         if (!auth.ok) {
             return NextResponse.json({ error: auth.error }, { status: auth.status });
         }
-
         const { checkoutId } = await request.json();
 
         if (!checkoutId) {
