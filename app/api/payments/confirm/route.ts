@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getYocoCheckout, PLAN_NAMES, PlanTier } from '@/lib/yoco';
+import { getYocoCheckout, PlanTier } from '@/lib/yoco';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { requireUser } from '@/lib/api-auth';
 
 export async function POST(request: NextRequest) {
     try {
+        const auth = await requireUser(request);
+        if (!auth.ok) {
+            return NextResponse.json({ error: auth.error }, { status: auth.status });
+        }
+
         const { checkoutId } = await request.json();
 
         if (!checkoutId) {
@@ -19,44 +25,28 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Payment verification failed' }, { status: 400 });
         }
 
-        if (checkout.status !== 'succeeded' && checkout.status !== 'completed') {
-            // Yoco status might be 'succeeded', 'completed', 'successful'? Docs say 'succeeded' usually for charges, but checkouts might be different.
-            // Inspecting the payload from a real test would be ideal, but let's assume standard success states.
-            // If status is 'created', it's not paid.
-            if (checkout.status !== 'succeeded' && checkout.status !== 'completed') { // Cover bases
-                return NextResponse.json({ error: `Payment status: ${checkout.status}` }, { status: 400 });
-            }
+        const status = String(checkout.status);
+        if (status !== 'succeeded' && status !== 'completed') {
+            return NextResponse.json({ error: `Payment status: ${status}` }, { status: 400 });
         }
 
         // 2. Extract Metadata
-        const tier = checkout.metadata?.tier as PlanTier;
-        const userId = checkout.metadata?.userId; // We might need to rely on the current user session instead if this is 'anonymous' or not trusted?
-        // Actually, we should use the user from the session to ensure we are updating the *current* user, 
-        // OR use the one from metadata if we trust the checkout flow initiation.
-        // Let's use the current authenticated user to be safe.
-
-        const authHeader = request.headers.get('Authorization');
-        const token = authHeader?.replace('Bearer ', '');
-        let targetUserId = userId;
-
-        if (token) {
-            const { data: { user } } = await supabaseAdmin.auth.getUser(token);
-            if (user) targetUserId = user.id;
+        const tier = checkout.metadata?.tier as PlanTier | undefined;
+        if (!tier) {
+            return NextResponse.json({ error: 'Missing tier metadata' }, { status: 400 });
         }
 
-        if (!targetUserId || targetUserId === 'anonymous') {
-            // If we can't identify the user, we can't update them.
-            // But if the checkout has their email, maybe we find them by email?
-            const email = checkout.metadata?.email;
-            if (email) {
-                const { data: { users } } = await supabaseAdmin.auth.admin.listUsers();
-                const user = users.find(u => u.email?.toLowerCase() === email.toLowerCase());
-                if (user) targetUserId = user.id;
+        // Ensure the checkout belongs to the caller before updating anything.
+        const metaUserId = typeof checkout.metadata?.userId === 'string' ? checkout.metadata.userId : '';
+        const metaEmail = typeof checkout.metadata?.email === 'string' ? checkout.metadata.email : '';
+        if (metaUserId && metaUserId !== 'anonymous' && metaUserId !== auth.user.id) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+        if ((!metaUserId || metaUserId === 'anonymous') && metaEmail) {
+            const userEmail = auth.user.email || '';
+            if (!userEmail || metaEmail.toLowerCase() !== userEmail.toLowerCase()) {
+                return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
             }
-        }
-
-        if (!targetUserId) {
-            return NextResponse.json({ error: 'Could not identify user to update' }, { status: 400 });
         }
 
         // 3. Update Profile (Bypassing RLS)
@@ -67,7 +57,7 @@ export async function POST(request: NextRequest) {
                 subscription_status: 'active',
                 subscription_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
             })
-            .eq('id', targetUserId);
+            .eq('id', auth.user.id);
 
         if (updateError) throw updateError;
 

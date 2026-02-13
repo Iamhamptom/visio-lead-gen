@@ -1,31 +1,14 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { requireAdmin } from '@/lib/api-auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
     try {
-        // 1. Verify Authentication
-        const authHeader = req.headers.get('Authorization');
-        const token = authHeader?.replace('Bearer ', '');
-
-        if (!token) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-
-        if (authError || !user) {
-            return NextResponse.json({ error: 'Invalid Token' }, { status: 401 });
-        }
-
-        // 2. Verify Admin Email
-        const ADMIN_EMAILS = ['tonydavidhampton@gmail.com', 'hamptonmusicgroup@gmail.com'];
-        const userEmail = user.email ? user.email.toLowerCase().trim() : '';
-
-        if (!userEmail || !ADMIN_EMAILS.includes(userEmail)) {
-            console.error('Forbidden Access Attempt:', user.email);
-            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        const admin = await requireAdmin(req);
+        if (!admin.ok) {
+            return NextResponse.json({ error: admin.error }, { status: admin.status });
         }
 
         // 3. Fetch Lead Gen Intents
@@ -37,20 +20,6 @@ export async function GET(req: Request) {
         // Let's try a broader search first: 
         // Get sessions where messages contain the specific agent response.
 
-        const { data: sessions, error } = await supabaseAdmin
-            .from('sessions')
-            .select('*')
-            .order('last_updated', { ascending: false })
-            .limit(50);
-
-        if (error) throw error;
-
-        // Filter and process in memory for now (easier than complex SQL joins on JSONB if messages are JSONB, 
-        // but wait, messages are in a separate table? data-service said:
-        // "messages: (messagesData || []).map..."
-        // So messages ARE in a separate table.
-
-        // Let's fetch messages directly then.
         const { data: messages, error: msgError } = await supabaseAdmin
             .from('messages')
             .select('*, session:sessions(user_id)')
