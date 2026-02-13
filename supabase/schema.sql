@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     email TEXT NOT NULL,
     name TEXT,
     avatar_url TEXT,
-    subscription_tier TEXT DEFAULT 'artist' CHECK (subscription_tier IN ('artist', 'artiste', 'starter_label', 'label', 'agency', 'enterprise')),
+    subscription_tier TEXT DEFAULT 'artist' CHECK (subscription_tier IN ('artist', 'starter', 'artiste', 'starter_label', 'label', 'agency', 'enterprise')),
     subscription_status TEXT DEFAULT 'active' CHECK (subscription_status IN ('active', 'trialing', 'past_due', 'canceled')),
     subscription_period_end TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW(),

@@ -142,43 +142,48 @@ export async function saveSessions(sessions: Session[]): Promise<SaveSessionsRes
         console.error(formatted, error);
     };
 
-    // Save each session and its messages
-    for (const session of sessions) {
-        // Upsert session
+    // Batch upsert all sessions in one call
+    const sessionPayloads = sessions.map(session => ({
+        id: session.id,
+        user_id: user.id,
+        title: session.title,
+        folder_id: session.folderId,
+        updated_at: new Date(session.lastUpdated).toISOString()
+    }));
+
+    if (sessionPayloads.length > 0) {
         const { error: sessionError } = await supabase
             .from('sessions')
-            .upsert({
-                id: session.id,
-                user_id: user.id,
-                title: session.title,
-                folder_id: session.folderId,
-                updated_at: new Date(session.lastUpdated).toISOString()
-            }, { onConflict: 'id' });
+            .upsert(sessionPayloads, { onConflict: 'id' });
 
         if (sessionError) {
-            recordError('Error saving session', sessionError);
-            continue;
+            recordError('Error saving sessions', sessionError);
         }
+    }
 
-        // Save messages for this session
-        const messagesToUpsert = session.messages
-            // Don't persist transient "thinking" placeholders (DB schema has no isThinking flag).
+    // Batch upsert all messages across all sessions in one call
+    const allMessages = sessions.flatMap(session =>
+        session.messages
             .filter(msg => !msg.isThinking)
-            // Defensive: Supabase schema uses UUID ids; skip invalid ids so one bad message doesn't block persistence.
             .filter(msg => isUuid(msg.id))
             .map(msg => ({
                 id: msg.id,
                 session_id: session.id,
-                role: msg.role, // 'user' | 'model'
+                role: msg.role,
                 content: msg.content,
-                leads: msg.leads || [], // Add leads support
+                leads: msg.leads || [],
                 created_at: new Date(msg.timestamp).toISOString()
-            }));
+            }))
+    );
 
-        if (messagesToUpsert.length > 0) {
+    if (allMessages.length > 0) {
+        // Supabase has a payload size limit; batch in chunks of 500
+        const BATCH_SIZE = 500;
+        for (let i = 0; i < allMessages.length; i += BATCH_SIZE) {
+            const batch = allMessages.slice(i, i + BATCH_SIZE);
             const { error: msgError } = await supabase
                 .from('messages')
-                .upsert(messagesToUpsert, { onConflict: 'id', ignoreDuplicates: true });
+                .upsert(batch, { onConflict: 'id', ignoreDuplicates: true });
 
             if (msgError) {
                 recordError('Error saving messages', msgError);
@@ -201,33 +206,37 @@ export async function loadSessions(): Promise<Session[]> {
         .eq('user_id', user.id)
         .order('updated_at', { ascending: false });
 
-    if (sessionsError || !sessionsData) return [];
+    if (sessionsError || !sessionsData || sessionsData.length === 0) return [];
 
-    // Load messages for each session
-    const sessions: Session[] = [];
-    for (const sessionData of sessionsData) {
-        const { data: messagesData } = await supabase
-            .from('messages')
-            .select('*')
-            .eq('session_id', sessionData.id)
-            .order('created_at', { ascending: true });
+    // Load ALL messages for this user's sessions in a single query
+    const sessionIds = sessionsData.map(s => s.id);
+    const { data: allMessagesData } = await supabase
+        .from('messages')
+        .select('*')
+        .in('session_id', sessionIds)
+        .order('created_at', { ascending: true });
 
-        sessions.push({
-            id: sessionData.id,
-            title: sessionData.title,
-            folderId: sessionData.folder_id,
-            lastUpdated: new Date(sessionData.updated_at).getTime(),
-            messages: (messagesData || []).map(msg => ({
-                id: msg.id,
-                role: msg.role as Role,
-                content: msg.content,
-                leads: msg.leads,
-                timestamp: new Date(msg.created_at).getTime()
-            }))
-        });
+    // Group messages by session_id
+    const messagesBySession = new Map<string, typeof allMessagesData>();
+    for (const msg of (allMessagesData || [])) {
+        const existing = messagesBySession.get(msg.session_id) || [];
+        existing.push(msg);
+        messagesBySession.set(msg.session_id, existing);
     }
 
-    return sessions;
+    return sessionsData.map(sessionData => ({
+        id: sessionData.id,
+        title: sessionData.title,
+        folderId: sessionData.folder_id,
+        lastUpdated: new Date(sessionData.updated_at).getTime(),
+        messages: (messagesBySession.get(sessionData.id) || []).map(msg => ({
+            id: msg.id,
+            role: msg.role as Role,
+            content: msg.content,
+            leads: msg.leads,
+            timestamp: new Date(msg.created_at).getTime()
+        }))
+    }));
 }
 
 export async function deleteSession(sessionId: string): Promise<boolean> {
@@ -245,16 +254,17 @@ export async function saveOnboardingComplete(): Promise<boolean> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return false;
 
+    // Use updated_at as a non-destructive marker. The real signal is artist_profiles existence.
     const { error } = await supabase
         .from('profiles')
-        .update({ subscription_status: 'active' }) // Hack: using a field we can write to, ideally add 'onboarding_complete' column
+        .update({ updated_at: new Date().toISOString() })
         .eq('id', user.id);
 
     return !error;
 }
 
 export async function checkOnboardingComplete(): Promise<boolean> {
-    // Check if they have an artist profile, that's a good proxy
+    // Check if they have an artist profile — this is the canonical signal
     const profile = await loadArtistProfile();
     return !!profile;
 }

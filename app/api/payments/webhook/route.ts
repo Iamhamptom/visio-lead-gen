@@ -91,21 +91,15 @@ export async function POST(req: NextRequest) {
                 .maybeSingle();
             targetUserId = profile?.id ?? null;
 
-            // Fallback: if emails were stored with mixed case, try the raw email.
+            // Fallback: case-insensitive search (handles mixed-case stored emails).
             if (!targetUserId) {
                 const { data: profile2 } = await supabaseAdmin
                     .from('profiles')
-                    .select('id, email')
-                    .eq('email', email)
+                    .select('id')
+                    .ilike('email', normalizedEmail)
+                    .limit(1)
                     .maybeSingle();
                 targetUserId = profile2?.id ?? null;
-            }
-
-            // Final fallback: search Auth users (small user bases only).
-            if (!targetUserId) {
-                const { data: { users } } = await supabaseAdmin.auth.admin.listUsers();
-                const found = users.find(u => (u.email || '').toLowerCase() === normalizedEmail);
-                targetUserId = found?.id ?? null;
             }
         }
 

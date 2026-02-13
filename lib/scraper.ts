@@ -8,6 +8,61 @@
 
 import * as cheerio from 'cheerio';
 
+// ─── SSRF Protection ─────────────────────────────────────
+/**
+ * Validates a URL to prevent SSRF attacks. Blocks internal/private IPs,
+ * cloud metadata endpoints, and non-HTTP(S) schemes.
+ */
+function isUrlSafeForSsrf(urlStr: string): boolean {
+    try {
+        const url = new URL(urlStr);
+
+        // Only allow http and https schemes
+        if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+            return false;
+        }
+
+        const hostname = url.hostname.toLowerCase();
+
+        // Block localhost variants
+        if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1' || hostname === '[::1]' || hostname === '0.0.0.0') {
+            return false;
+        }
+
+        // Block private IP ranges and cloud metadata
+        const blockedPatterns = [
+            /^10\./,                          // 10.0.0.0/8
+            /^172\.(1[6-9]|2[0-9]|3[01])\./,  // 172.16.0.0/12
+            /^192\.168\./,                     // 192.168.0.0/16
+            /^169\.254\./,                     // Link-local / AWS metadata
+            /^100\.(6[4-9]|[7-9][0-9]|1[0-2][0-7])\./,  // Carrier-grade NAT
+            /^fc00:/i,                         // IPv6 unique local
+            /^fe80:/i,                         // IPv6 link-local
+            /^fd/i,                            // IPv6 private
+        ];
+
+        for (const pattern of blockedPatterns) {
+            if (pattern.test(hostname)) {
+                return false;
+            }
+        }
+
+        // Block cloud metadata hostnames
+        const blockedHosts = [
+            'metadata.google.internal',
+            'metadata.google',
+            'metadata',
+        ];
+        if (blockedHosts.includes(hostname)) {
+            return false;
+        }
+
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 // ─── Types ─────────────────────────────────────────────
 export interface ScrapedContact {
     name?: string;
@@ -104,6 +159,10 @@ export function extractPhoneNumbers(text: string): string[] {
  */
 export async function scrapeContactsFromUrl(url: string): Promise<ScrapeResult> {
     try {
+        if (!isUrlSafeForSsrf(url)) {
+            return { contacts: [], emails: [], socialLinks: emptySocialLinks(), rawText: '', success: false, error: 'URL blocked: private/internal addresses are not allowed' };
+        }
+
         console.log(`[Scraper] Scraping ${url}...`);
 
         const response = await fetch(url, {
