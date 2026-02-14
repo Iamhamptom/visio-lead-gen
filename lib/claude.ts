@@ -88,6 +88,7 @@ export type IntentCategory =
     | 'web_search'
     | 'lead_generation'
     | 'deep_search'
+    | 'smart_scrape'
     | 'content_creation'
     | 'strategy'
     | 'clarify';
@@ -115,6 +116,7 @@ Categories:
 - "lead_generation": user EXPLICITLY asks to find contacts, leads, curators, journalists, bloggers, DJs, A&R, influencers, content creators
 - "deep_search": user asks for comprehensive/deep/multi-source/thorough search, or wants 50+ contacts
 - "web_search": user EXPLICITLY asks to search the web, or needs verifiably CURRENT data (e.g. "what happened at the Grammys last night?")
+- "smart_scrape": user wants to research what's working on social media — e.g. "what's trending on TikTok for amapiano?", "show me viral music marketing videos", "research what pitches are working on YouTube", "find me the best PR advice on social media", "what are people saying about album rollouts on Twitter?"
 - "content_creation": requests to draft/write a pitch email, press release, social media pack, email sequence, EPK copy, bio
 - "strategy": campaign plan, budget breakdown, market analysis, release strategy, rollout plan, growth strategy
 - "clarify": user's request is too vague to classify — need more information
@@ -130,6 +132,7 @@ CRITICAL RULES:
 8. "How do I grow my streams?" → "knowledge" (answer strategically from expertise)
 9. "Draft a pitch to..." → "content_creation"
 10. "Plan my album rollout" → "strategy"
+11. "What's working on TikTok?" / "Research viral music content" / "Find best PR advice videos" → "smart_scrape"
 
 Also extract:
 - "searchQuery": optimized search query IF lead_generation/deep_search/web_search (include genre+country+type for leads)
@@ -242,6 +245,8 @@ Visio Lead Gen is an AI-powered music PR and lead generation platform built for 
 4. **Analyze Markets** — competitor mapping, market trends, genre-specific platform priorities, audience analysis
 5. **Industry Knowledge** — DSP algorithms, editorial playlist submission windows, PR lead times, pitch timing best practices, follow-up cadence
 6. **Step-by-Step Guidance** — help users build checklists, action plans, and prioritized to-do lists for their PR journey
+7. **Smart Scrape (Research)** — research what's working on social media (YouTube, TikTok, Twitter). Find top-performing content about any topic, pull transcripts and comments from viral videos, identify patterns in what works. Costs 3 credits. Offer this when users want to understand trends or learn from successful campaigns.
+8. **Deep Thinking (Enterprise)** — extended reasoning mode for complex strategy. Uses advanced AI reasoning to deeply analyze problems, consider trade-offs, and deliver comprehensive strategic plans. Available to Enterprise/Agency tiers. Costs 5 credits.
 
 ### WHAT YOU CANNOT DO (Be Honest About These)
 - You CANNOT guarantee placements on playlists or in press — you find the right contacts and craft the best pitch

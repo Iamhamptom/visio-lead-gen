@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Paperclip, Sparkles, Mic, Zap, Briefcase, Rocket, ChevronDown, Lock, Search, User } from 'lucide-react';
+import { Send, Paperclip, Sparkles, Mic, Zap, Briefcase, Rocket, ChevronDown, Lock, Search, User, Brain, Coins } from 'lucide-react';
 
 import { AgentMode } from '@/app/types';
 
@@ -17,6 +17,8 @@ interface ComposerProps {
     artistContextEnabled?: boolean;
     onToggleArtistContext?: () => void;
     isRestricted?: boolean;
+    subscriptionTier?: string;
+    creditsBalance?: number | null;
 }
 
 const TIER_CONFIG = {
@@ -57,8 +59,11 @@ export const Composer: React.FC<ComposerProps> = ({
     onToggleWebSearch,
     artistContextEnabled = true,
     onToggleArtistContext,
-    isRestricted = false
+    isRestricted = false,
+    subscriptionTier = 'artist',
+    creditsBalance = null
 }) => {
+    const isDeepThinkingAllowed = ['enterprise', 'agency'].includes(subscriptionTier);
     const [input, setInput] = useState('');
     const [tier, setTier] = useState<AITier>('business');
     const [mode, setMode] = useState<AgentMode>('chat');
@@ -211,6 +216,13 @@ export const Composer: React.FC<ComposerProps> = ({
                                 <Search size={12} />
                                 Web Search
                             </button>
+                            {/* Credits Display */}
+                            {creditsBalance !== null && (
+                                <div className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium text-white/50 border border-white/10 bg-white/5 rounded-md">
+                                    <Coins size={12} className="text-visio-teal" />
+                                    <span>{creditsBalance === Infinity ? 'Unlimited' : creditsBalance}</span>
+                                </div>
+                            )}
                             <div className="flex bg-white/5 rounded-lg p-1 border border-white/5">
                                 <button
                                     onClick={() => setMode('chat')}
@@ -233,9 +245,32 @@ export const Composer: React.FC<ComposerProps> = ({
                                     {isResearchLocked && <Lock size={12} className="text-white/50" />}
                                     Research
                                 </button>
+                                <button
+                                    onClick={() => {
+                                        if (!isDeepThinkingAllowed) return;
+                                        setMode('deep_thinking');
+                                    }}
+                                    disabled={!isDeepThinkingAllowed}
+                                    className={`px-3 py-1 text-xs font-medium rounded-md transition-all flex items-center gap-1 ${mode === 'deep_thinking' ? 'bg-purple-500/20 text-purple-400 shadow-sm' : 'text-white/40 hover:text-white/60'} ${!isDeepThinkingAllowed ? 'opacity-40 cursor-not-allowed' : ''}`}
+                                    title={isDeepThinkingAllowed ? 'Deep Thinking — extended reasoning (5 credits)' : 'Deep Thinking requires Enterprise or Agency tier'}
+                                >
+                                    {!isDeepThinkingAllowed && <Lock size={10} className="text-white/40" />}
+                                    <Brain size={12} />
+                                    Deep Think
+                                </button>
                             </div>
                         </div>
                     </div>
+
+                    {/* Deep Thinking Indicator */}
+                    {mode === 'deep_thinking' && (
+                        <div className="mx-4 mt-2 py-1.5 px-3 bg-purple-500/10 border border-purple-500/20 rounded-lg flex items-center gap-2 text-[10px]">
+                            <Brain size={12} className="text-purple-400" />
+                            <span className="text-purple-400 font-medium">Deep Thinking Mode</span>
+                            <span className="text-purple-400/50 mx-1">|</span>
+                            <span className="text-purple-400/60">Extended reasoning enabled (5 credits per query)</span>
+                        </div>
+                    )}
 
                     {/* Input Area */}
                     <div className="flex items-end p-2">

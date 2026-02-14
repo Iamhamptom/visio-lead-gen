@@ -9,6 +9,7 @@ import { getToolInstruction, TOOL_REGISTRY } from '@/lib/tools';
 import { performDeepSearch, searchApollo, searchLinkedInPipeline, getPipelineStatus, PipelineContact } from '@/lib/pipelines';
 import { scrapeContactsFromUrl, scrapeMultipleUrls } from '@/lib/scraper';
 import { searchAllSocials, flattenSocialResults } from '@/lib/social-search';
+import { performSmartScrape, formatScrapeForContext } from '@/lib/smart-scrape';
 import { requireUser, isAdminUser } from '@/lib/api-auth';
 import { getUserCredits, deductCredits, getCreditCost } from '@/lib/credits';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
@@ -462,6 +463,52 @@ export async function POST(request: NextRequest) {
                         break;
                     }
 
+                    case 'smart_scrape': {
+                        toolsUsed.push('smart_scrape');
+                        const scrapeQuery = intentResult.searchQuery || userMessage;
+                        logs.push(`🔬 Smart Scrape: "${scrapeQuery}"`);
+
+                        if (!webSearchEnabled) {
+                            intent = { action: 'clarify', filters: {}, message: 'Smart Scrape needs web access. Toggle Web Search on to research social media content!' };
+                            break;
+                        }
+
+                        // Scrape YouTube, TikTok, Twitter in parallel
+                        const scrapeResults = await performSmartScrape({
+                            query: scrapeQuery,
+                            platforms: ['youtube', 'tiktok', 'twitter'],
+                            maxResults: 10,
+                            sortBy: 'engagement',
+                        });
+
+                        const totalScraped = scrapeResults.reduce((s, r) => s + r.totalFound, 0);
+                        logs.push(`✅ Scraped ${totalScraped} results across ${scrapeResults.length} platform(s)`);
+
+                        // Synthesize with Claude
+                        const scrapeContext = formatScrapeForContext(scrapeResults);
+                        const scrapeResponse = await generateChatResponse(
+                            userMessage,
+                            conversationHistory,
+                            artistContext,
+                            validatedTier as 'instant' | 'business' | 'enterprise',
+                            scrapeContext,
+                            `You just performed a Smart Scrape research across YouTube, TikTok, and Twitter for "${scrapeQuery}". The research data is provided above.
+
+Your job:
+1. Summarize the key insights from top-performing content
+2. Identify patterns in what works (hooks, formats, topics, hashtags)
+3. Extract actionable advice the user can apply
+4. Note audience sentiment from comments
+5. Recommend specific next steps
+
+Format with markdown tables for top content, bullet points for insights. End with yes/no action suggestions.`
+                        );
+
+                        intent = { action: 'search', filters: {}, message: scrapeResponse };
+                        suggestedNextSteps = ['Research another topic', 'Draft content based on these insights', 'Find contacts mentioned in the research'];
+                        break;
+                    }
+
                     case 'clarify':
                     default: {
                         const clarifyResponse = await generateChatResponse(
@@ -512,6 +559,7 @@ export async function POST(request: NextRequest) {
             'find_leads': 'lead_search',
             'search': 'web_search',
             'deep_search': 'deep_search',
+            'smart_scrape': 'smart_scrape',
         };
         const creditCategory = creditCategoryMap[intent.action] || 'chat_message';
         const creditCost = getCreditCost(creditCategory);
