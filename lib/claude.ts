@@ -20,7 +20,8 @@ function isUsingGateway(): boolean {
     return !!process.env.AI_GATEWAY_API_KEY;
 }
 
-function getClient(): Anthropic {
+/** Creates a configured Anthropic client (AI Gateway or direct) */
+export function getClient(): Anthropic {
     // Priority 1: Vercel AI Gateway (proxy through Vercel)
     const gatewayKey = process.env.AI_GATEWAY_API_KEY;
     if (gatewayKey) {
@@ -36,7 +37,8 @@ function getClient(): Anthropic {
     return new Anthropic({ apiKey });
 }
 
-function getModel(tier: 'instant' | 'business' | 'enterprise'): string {
+/** Returns the model ID for a tier, with gateway prefix when applicable */
+export function getModel(tier: 'instant' | 'business' | 'enterprise'): string {
     const model = MODEL_MAP[tier] || MODEL_MAP.instant;
     // Vercel AI Gateway requires "anthropic/" prefix on model names
     return isUsingGateway() ? `anthropic/${model}` : model;

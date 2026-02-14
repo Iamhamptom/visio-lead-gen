@@ -327,10 +327,8 @@ export async function POST(request: NextRequest) {
 
             if (hasClaude) {
                 // ═══ CLAUDE-POWERED TWO-STAGE ARCHITECTURE ═══
-                // Diagnostic: log key source for debugging (never log full key)
                 const keySource = process.env.AI_GATEWAY_API_KEY ? 'AI Gateway' : 'Direct Anthropic';
-                const keyPrefix = (process.env.AI_GATEWAY_API_KEY || process.env.ANTHROPIC_API_KEY)?.slice(0, 12) || 'NOT_SET';
-                console.log(`[V-Prai] Claude via ${keySource}: ${keyPrefix}..., tier: ${validatedTier}, user: ${auth.user.email || auth.user.id}`);
+                console.log(`[V-Prai] Claude via ${keySource}, tier: ${validatedTier}, user: ${auth.user.id}`);
 
                 // Stage 1: Classify intent (fast, cheap, deterministic)
                 logs.push('🧠 V-Prai is thinking...');
@@ -344,29 +342,28 @@ export async function POST(request: NextRequest) {
                 logs.push(`📋 Intent: ${intentResult.category} (${Math.round((intentResult.confidence || 0) * 100)}%)`);
 
                 // ═══ AUTOMATION BANK CHECK ═══
-                // Before dispatching to normal intent handlers, check if this triggers a pre-built automation
-                const automationResult = await detectAndExecuteAutomation(userMessage, {
-                    userMessage,
-                    query: intentResult.searchQuery,
-                    country: normalizeCountry(intentResult.filters?.country || artistContext?.location?.country),
-                    genre: artistContext?.identity?.genre,
-                    artistContext,
-                    conversationHistory
-                });
+                // Check if this message matches an automation trigger pattern.
+                // Credit check FIRST, then execute — avoids burning API calls when user can't pay.
+                const automationMatch = (() => {
+                    const lower = userMessage.toLowerCase();
+                    for (const skill of Object.values(
+                        require('@/lib/automation-bank').AUTOMATION_REGISTRY
+                    ) as { id: string; triggerPatterns: string[]; creditCost: number; name: string }[]) {
+                        if (skill.triggerPatterns.some((p: string) => lower.includes(p.toLowerCase()))) {
+                            return skill;
+                        }
+                    }
+                    return null;
+                })();
 
-                // If automation was triggered, check credits and use its result
-                if (automationResult) {
-                    const automationCost = automationResult.data?.automationUsed
-                        ? getCreditCost(automationResult.data.automationUsed)
-                        : 3; // Default automation cost
+                if (automationMatch) {
+                    const automationCost = getCreditCost(automationMatch.id) || automationMatch.creditCost || 3;
 
-                    logs.push(`🤖 Automation triggered: ${automationResult.data?.automationName || 'Unknown'}`);
-
-                    // Credit check for automation
+                    // Credit check BEFORE execution
                     if (automationCost > 0 && !isAdminUser(auth.user)) {
                         const balance = await getUserCredits(auth.user.id);
                         if (balance < automationCost) {
-                            logs.push(`💳 Insufficient credits (need ${automationCost}, have ${balance})`);
+                            logs.push(`💳 Insufficient credits for ${automationMatch.name} (need ${automationCost}, have ${balance})`);
                             return NextResponse.json({
                                 message: `This automation requires ${automationCost} credit${automationCost > 1 ? 's' : ''}, but you have ${balance}. Upgrade your plan for more credits!`,
                                 leads: [],
@@ -374,31 +371,42 @@ export async function POST(request: NextRequest) {
                                 toolsUsed: [],
                                 suggestedNextSteps: ['Upgrade your plan for more credits'],
                                 logs,
-                                intent: { action: 'clarify', filters: {}, message: automationResult.summary }
+                                intent: { action: 'clarify', filters: {}, message: `Insufficient credits for ${automationMatch.name}` }
                             });
                         }
-                        // Deduct credits
-                        await deductCredits(auth.user.id, automationCost, `automation: ${automationResult.data.automationName}`);
+                        // Deduct credits before executing the automation
+                        await deductCredits(auth.user.id, automationCost, `automation: ${automationMatch.name}`);
                         logs.push(`💳 ${automationCost} credit${automationCost > 1 ? 's' : ''} used (${balance - automationCost} remaining)`);
                     }
 
-                    // Add automation logs
-                    logs.push(...automationResult.logs);
-
-                    // Return automation result
-                    return NextResponse.json({
-                        message: automationResult.summary,
-                        leads: [],
-                        webResults: [],
-                        toolsUsed: [automationResult.data.automationUsed || 'automation'],
-                        suggestedNextSteps: automationResult.suggestedNextSteps || [],
-                        logs,
-                        intent: { action: 'automation_executed', filters: {}, message: automationResult.summary },
-                        meta: {
-                            automation: automationResult.data.automationName,
-                            automationData: automationResult.data
-                        }
+                    // Now execute the automation (credits already secured)
+                    const automationResult = await detectAndExecuteAutomation(userMessage, {
+                        userMessage,
+                        query: intentResult.searchQuery,
+                        country: normalizeCountry(intentResult.filters?.country || artistContext?.location?.country),
+                        genre: artistContext?.identity?.genre,
+                        artistContext,
+                        conversationHistory
                     });
+
+                    if (automationResult) {
+                        logs.push(`🤖 Automation executed: ${automationMatch.name}`);
+                        logs.push(...automationResult.logs);
+
+                        return NextResponse.json({
+                            message: automationResult.summary,
+                            leads: [],
+                            webResults: [],
+                            toolsUsed: [automationResult.data?.automationUsed || 'automation'],
+                            suggestedNextSteps: automationResult.suggestedNextSteps || [],
+                            logs,
+                            intent: { action: 'automation_executed', filters: {}, message: automationResult.summary },
+                            meta: {
+                                automation: automationResult.data?.automationName,
+                                automationData: automationResult.data
+                            }
+                        });
+                    }
                 }
 
                 // Stage 2: Dispatch based on structured category

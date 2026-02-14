@@ -4,26 +4,12 @@ import { getUserCredits, deductCredits } from '@/lib/credits';
 import { getContextPack } from '@/lib/god-mode';
 import { searchKnowledgeBase } from '@/lib/rag';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { getClient, getModel } from '@/lib/claude';
 import Anthropic from '@anthropic-ai/sdk';
 
 const DEEP_THINKING_BUDGET = 10000; // tokens for reasoning
 const DEEP_THINKING_COST = 5;
 const MAX_TOKENS = 8192;
-
-function getClient(): Anthropic {
-    if (process.env.AI_GATEWAY_API_KEY) {
-        return new Anthropic({
-            apiKey: process.env.AI_GATEWAY_API_KEY,
-            baseURL: 'https://ai-gateway.vercel.sh/v1',
-        });
-    }
-    return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
-}
-
-function getModelId(): string {
-    const base = 'claude-opus-4-6';
-    return process.env.AI_GATEWAY_API_KEY ? `anthropic/${base}` : base;
-}
 
 function buildDeepThinkingPrompt(artistContext: string, knowledgeContext: string): string {
     return `# V-PRAI DEEP THINKING MODE
@@ -65,6 +51,15 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        // Parse and validate body BEFORE deducting credits to avoid charging
+        // users for invalid requests (empty message, malformed JSON, etc.)
+        const body = await request.json();
+        const { message, conversationHistory = [] } = body;
+
+        if (!message || typeof message !== 'string' || message.trim().length === 0) {
+            return NextResponse.json({ error: 'Message required' }, { status: 400 });
+        }
+
         // Tier gate: Enterprise/Agency only
         if (!isAdminUser(auth.user)) {
             const supabase = await createSupabaseServerClient();
@@ -83,28 +78,22 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // Credit check
-        const credits = await getUserCredits(auth.user.id);
-        if (credits < DEEP_THINKING_COST) {
-            return NextResponse.json({
-                error: 'insufficient_credits',
-                message: `Deep Thinking requires ${DEEP_THINKING_COST} credits. You have ${credits}.`,
-                required: DEEP_THINKING_COST,
-                available: credits
-            }, { status: 402 });
-        }
+        // Credit check and deduction (after validation so credits aren't lost on bad input)
+        if (!isAdminUser(auth.user)) {
+            const credits = await getUserCredits(auth.user.id);
+            if (credits < DEEP_THINKING_COST) {
+                return NextResponse.json({
+                    error: 'insufficient_credits',
+                    message: `Deep Thinking requires ${DEEP_THINKING_COST} credits. You have ${credits}.`,
+                    required: DEEP_THINKING_COST,
+                    available: credits
+                }, { status: 402 });
+            }
 
-        // Deduct credits
-        const deducted = await deductCredits(auth.user.id, DEEP_THINKING_COST, 'deep_thinking');
-        if (!deducted) {
-            return NextResponse.json({ error: 'Credit deduction failed' }, { status: 500 });
-        }
-
-        const body = await request.json();
-        const { message, conversationHistory = [] } = body;
-
-        if (!message) {
-            return NextResponse.json({ error: 'Message required' }, { status: 400 });
+            const deducted = await deductCredits(auth.user.id, DEEP_THINKING_COST, 'deep_thinking');
+            if (!deducted) {
+                return NextResponse.json({ error: 'Credit deduction failed' }, { status: 500 });
+            }
         }
 
         // Fetch artist context
@@ -147,10 +136,10 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // Claude with extended thinking
+        // Claude with extended thinking — reuses shared client from lib/claude.ts
         const client = getClient();
         const stream = client.messages.stream({
-            model: getModelId(),
+            model: getModel('enterprise'),
             max_tokens: MAX_TOKENS,
             thinking: {
                 type: 'enabled',
