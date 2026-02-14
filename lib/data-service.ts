@@ -444,3 +444,38 @@ export async function loadStrategyBriefs(): Promise<Map<string, StrategyBrief>> 
 
     return briefs;
 }
+
+// ============ CAMPAIGN FOLDERS ============
+
+export async function createFolder(name: string): Promise<{ id: string; name: string } | null> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+    const { data, error } = await supabase
+        .from('campaign_folders')
+        .insert({ user_id: user.id, name })
+        .select('id, name')
+        .single();
+    if (error) { console.error('Create folder error:', error); return null; }
+    return data;
+}
+
+export async function loadFolders(): Promise<{ id: string; name: string; status: string }[]> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+    const { data, error } = await supabase
+        .from('campaign_folders')
+        .select('id, name, status')
+        .order('created_at', { ascending: false });
+    if (error) { console.error('Load folders error:', error); return []; }
+    return data || [];
+}
+
+export async function renameFolder(id: string, name: string): Promise<boolean> {
+    const { error } = await supabase.from('campaign_folders').update({ name }).eq('id', id);
+    return !error;
+}
+
+export async function deleteFolder(id: string): Promise<boolean> {
+    const { error } = await supabase.from('campaign_folders').delete().eq('id', id);
+    return !error;
+}

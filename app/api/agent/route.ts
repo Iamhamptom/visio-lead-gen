@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { parseIntent, ParsedIntent, createGeminiClient } from '@/lib/gemini';
+import { classifyIntent, generateChatResponse, generateWithSearchResults, IntentResult } from '@/lib/claude';
 import { getLeadsByCountry, filterLeads, getDatabaseSummary, DBLead, FilterOptions } from '@/lib/db';
 import { performSmartSearch, performLeadSearch } from '@/lib/search';
 import { getContextPack } from '@/lib/god-mode';
@@ -9,6 +10,7 @@ import { performDeepSearch, searchApollo, searchLinkedInPipeline, getPipelineSta
 import { scrapeContactsFromUrl, scrapeMultipleUrls } from '@/lib/scraper';
 import { searchAllSocials, flattenSocialResults } from '@/lib/social-search';
 import { requireUser, isAdminUser } from '@/lib/api-auth';
+import { getUserCredits, deductCredits, getCreditCost } from '@/lib/credits';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 
@@ -192,6 +194,7 @@ export async function POST(request: NextRequest) {
         const tier = VALID_TIERS.includes(body.tier) ? body.tier : 'instant';
         const mode = VALID_MODES.includes(body.mode) ? body.mode : 'chat';
         const webSearchEnabled = typeof body.webSearchEnabled === 'boolean' ? body.webSearchEnabled : true;
+        const artistContextEnabled = typeof body.artistContextEnabled === 'boolean' ? body.artistContextEnabled : true;
         const activeTool = typeof body.activeTool === 'string' ? body.activeTool : 'none';
 
         const userMessage = message || (typeof body.query === 'string' ? body.query : '');
@@ -265,8 +268,10 @@ export async function POST(request: NextRequest) {
             validatedTier = tier; // Admins can use any tier
         }
 
-        // 1. FETCH ARTIST CONTEXT
-        const artistContext = await getContextPack({ userId: auth.user.id, accessToken: auth.accessToken });
+        // 1. FETCH ARTIST CONTEXT (skip when user toggles it off)
+        const artistContext = artistContextEnabled
+            ? await getContextPack({ userId: auth.user.id, accessToken: auth.accessToken })
+            : null;
 
         // 2. FETCH KNOWLEDGE BASE (RAG)
         let knowledgeContext = '';
@@ -312,52 +317,57 @@ export async function POST(request: NextRequest) {
 
             // ─── CHAT MODE ─────────────────────────────────
         } else {
-            if (hasGemini) {
-                // Build tool instruction if a specific tool is active
-                const toolInstruction = getToolInstruction(activeTool);
+            const hasClaude = !!process.env.ANTHROPIC_API_KEY;
+            const toolInstruction = getToolInstruction(activeTool);
+            if (toolInstruction && activeTool !== 'web_search') {
+                toolsUsed.push(activeTool);
+            }
 
-                // Build the full message with persona + tool context
-                const prAssistantContext = toolInstruction
-                    ? `${toolInstruction}\n\nUser request: ${userMessage}`
-                    : userMessage;
-
-                if (toolInstruction && activeTool !== 'web_search') {
-                    toolsUsed.push(activeTool);
-                }
-
+            if (hasClaude) {
+                // ═══ CLAUDE-POWERED TWO-STAGE ARCHITECTURE ═══
+                // Stage 1: Classify intent (fast, cheap, deterministic)
                 logs.push('🧠 Visio is thinking...');
-                intent = await parseIntent(
-                    prAssistantContext,
+                const intentResult: IntentResult = await classifyIntent(
+                    userMessage,
                     conversationHistory,
-                    artistContext || undefined,
-                    validatedTier as 'instant' | 'business' | 'enterprise',
-                    'chat',
-                    knowledgeContext
+                    artistContext,
+                    validatedTier as 'instant' | 'business' | 'enterprise'
                 );
 
-                // ─── LEAD_SEARCH TRIGGER ───────────────
-                if (intent.message && intent.message.startsWith('LEAD_SEARCH:')) {
-                    const leadQuery = intent.message.replace('LEAD_SEARCH:', '').trim();
-                    logs.push(`🎯 Lead Finder activated: "${leadQuery}"`);
-                    toolsUsed.push('find_leads');
+                logs.push(`📋 Intent: ${intentResult.category} (${Math.round((intentResult.confidence || 0) * 100)}%)`);
 
-                    if (!webSearchEnabled) {
-                        logs.push('🛑 Web search disabled.');
-                        intent = {
-                            ...intent,
-                            action: 'clarify',
-                            message: `I'd love to find those contacts for you, but web search is currently off. Toggle it on and I'll start searching!`
-                        };
-                    } else {
-                        const country = normalizeCountry(intent.filters?.country || artistContext?.location?.country);
+                // Stage 2: Dispatch based on structured category
+                switch (intentResult.category) {
+                    case 'conversation':
+                    case 'knowledge': {
+                        // Pure conversational response — NO search triggered
+                        const chatResponse = await generateChatResponse(
+                            userMessage,
+                            conversationHistory,
+                            artistContext,
+                            validatedTier as 'instant' | 'business' | 'enterprise',
+                            knowledgeContext,
+                            toolInstruction || undefined
+                        );
+                        intent = { action: 'clarify', filters: {}, message: chatResponse };
+                        break;
+                    }
+
+                    case 'lead_generation': {
+                        toolsUsed.push('find_leads');
+                        const leadQuery = intentResult.searchQuery || userMessage;
+                        const country = normalizeCountry(intentResult.filters?.country || artistContext?.location?.country);
+                        logs.push(`🎯 Lead Finder activated: "${leadQuery}"`);
+
+                        if (!webSearchEnabled) {
+                            intent = { action: 'clarify', filters: {}, message: `I'd love to find those contacts for you, but web search is currently off. Toggle it on and I'll start searching!` };
+                            break;
+                        }
 
                         // Search local DB first
                         if (country === 'ZA') {
                             const dbLeads = getLeadsByCountry('ZA');
-                            const filtered = filterLeads(dbLeads, {
-                                searchTerm: leadQuery,
-                                category: intent.filters?.category || undefined
-                            });
+                            const filtered = filterLeads(dbLeads, { searchTerm: leadQuery, category: intentResult.filters?.category || undefined });
                             if (filtered.results.length > 0) {
                                 leads = mapLeadsToResponse(filtered.results.slice(0, 20), 'South Africa');
                                 logs.push(`📂 Found ${leads.length} in local database`);
@@ -366,264 +376,110 @@ export async function POST(request: NextRequest) {
 
                         // Web lead search
                         const webLeads = await performLeadSearch(leadQuery, country);
-                        webResults = webLeads.map(r => ({
-                            title: r.name,
-                            url: r.url,
-                            snippet: r.snippet,
-                            source: r.source,
-                            date: r.date
-                        }));
+                        webResults = webLeads.map(r => ({ title: r.name, url: r.url, snippet: r.snippet, source: r.source, date: r.date }));
                         logs.push(`🌐 Found ${webLeads.length} web results`);
 
-                        // AI enrichment — summarize and extract contacts
-                        const enrichedMessage = await enrichLeadsWithAI(webLeads, userMessage, validatedTier);
-                        if (enrichedMessage) {
-                            intent.message = enrichedMessage;
-                        } else {
-                            intent.message = `Found ${leads.length + webLeads.length} potential contacts. Check the results below!`;
+                        // Claude synthesizes results
+                        const enrichedMsg = await generateWithSearchResults(userMessage, webLeads, validatedTier as any, artistContext);
+                        intent = { action: 'find_leads', filters: { country }, message: enrichedMsg || `Found ${leads.length + webLeads.length} potential contacts.` };
+                        suggestedNextSteps = ['Draft a pitch to these contacts', 'Search for more in a different market', 'Create an email outreach sequence'];
+                        break;
+                    }
+
+                    case 'deep_search': {
+                        toolsUsed.push('deep_search');
+                        const deepQuery = intentResult.searchQuery || userMessage;
+                        const country = normalizeCountry(intentResult.filters?.country || artistContext?.location?.country);
+                        logs.push(`🚀 Deep Search activated: "${deepQuery}"`);
+
+                        if (!webSearchEnabled) {
+                            intent = { action: 'clarify', filters: {}, message: 'Deep Search needs web access. Toggle Web Search on to use all pipelines!' };
+                            break;
                         }
 
-                        suggestedNextSteps = [
-                            'Draft a pitch to these contacts',
-                            'Search for more contacts in a different market',
-                            'Create an email outreach sequence'
-                        ];
-                    }
-                }
-
-                // ─── DEEP_SEARCH TRIGGER ──────────────
-                else if (intent.message && intent.message.startsWith('DEEP_SEARCH:')) {
-                    const deepQuery = intent.message.replace('DEEP_SEARCH:', '').trim();
-                    logs.push(`🚀 Deep Search activated: "${deepQuery}"`);
-                    toolsUsed.push('deep_search');
-
-                    if (!webSearchEnabled) {
-                        logs.push('🛑 Web search disabled.');
-                        intent = { ...intent, action: 'clarify', message: 'Deep Search needs web access. Toggle Web Search on to use all pipelines!' };
-                    } else {
-                        const country = normalizeCountry(intent.filters?.country || artistContext?.location?.country);
                         const pipelineStatus = getPipelineStatus();
                         logs.push(`📡 Pipelines: Apify=${pipelineStatus.apify ? '🟢' : '⚪'} Apollo=${pipelineStatus.apollo ? '🟢' : '⚪'} LinkedIn=${pipelineStatus.linkedin ? '🟢' : '⚪'} ZoomInfo=${pipelineStatus.zoominfo ? '🟢' : '⚪'} PhantomBuster=${pipelineStatus.phantombuster ? '🟢' : '⚪'}`);
 
                         const deepResult = await performDeepSearch(deepQuery, country);
                         logs.push(...deepResult.logs);
 
-                        // Map pipeline contacts to lead responses
                         leads = deepResult.contacts.slice(0, 30).map((c, i) => ({
-                            id: -(i + 1),
-                            name: c.name,
-                            company: c.company,
-                            title: c.title,
-                            email: c.email,
-                            url: c.url || '',
-                            snippet: `${c.source} • Confidence: ${c.confidence}`,
-                            source: c.source,
-                            instagram: c.instagram,
-                            tiktok: c.tiktok,
-                            twitter: c.twitter,
-                            followers: c.followers,
-                            country
+                            id: -(i + 1), name: c.name, company: c.company, title: c.title, email: c.email,
+                            url: c.url || '', snippet: `${c.source} • Confidence: ${c.confidence}`, source: c.source,
+                            instagram: c.instagram, tiktok: c.tiktok, twitter: c.twitter, followers: c.followers, country
                         }));
 
-                        // AI enrichment
-                        const enrichedMessage = await enrichLeadsWithAI(leads, userMessage, validatedTier);
-                        intent.message = enrichedMessage || `Deep Search found ${deepResult.total} unique contacts across ${deepResult.apisUsed.length > 0 ? deepResult.apisUsed.join(', ') : 'Google fallback'} pipelines.`;
-
-                        suggestedNextSteps = [
-                            'Draft a pitch to the top contacts',
-                            'Scrape a specific result for more details',
-                            'Search social media profiles',
-                            'Create an email outreach sequence'
-                        ];
+                        const deepMsg = await generateWithSearchResults(userMessage, leads, validatedTier as any, artistContext);
+                        intent = { action: 'find_leads', filters: { country }, message: deepMsg || `Deep Search found ${deepResult.total} unique contacts.` };
+                        suggestedNextSteps = ['Draft a pitch to the top contacts', 'Scrape a specific result', 'Search social media profiles'];
+                        break;
                     }
-                }
 
-                // ─── SOCIAL_SEARCH TRIGGER ─────────────
-                else if (intent.message && intent.message.startsWith('SOCIAL_SEARCH:')) {
-                    const socialQuery = intent.message.replace('SOCIAL_SEARCH:', '').trim();
-                    logs.push(`📱 Social Search activated: "${socialQuery}"`);
-                    toolsUsed.push('social_search');
-
-                    if (!webSearchEnabled) {
-                        intent = { ...intent, action: 'clarify', message: 'Social Search needs web access. Toggle Web Search on!' };
-                    } else {
-                        const country = normalizeCountry(intent.filters?.country || artistContext?.location?.country);
-                        const socialResults = await searchAllSocials(socialQuery, country);
-                        const allProfiles = flattenSocialResults(socialResults);
-
-                        leads = allProfiles.slice(0, 25).map((p, i) => ({
-                            id: -(i + 1),
-                            name: p.name,
-                            url: p.url,
-                            snippet: p.bio || '',
-                            source: `${p.platform} (via Google)`,
-                            instagram: p.platform === 'instagram' ? p.url : undefined,
-                            tiktok: p.platform === 'tiktok' ? p.url : undefined,
-                            twitter: p.platform === 'twitter' ? p.url : undefined,
-                            country
-                        }));
-
-                        // Summarize by platform
-                        const platformCounts = Object.entries(socialResults).map(([p, r]) => `${p}: ${r.length}`).join(', ');
-                        logs.push(`✅ Found profiles: ${platformCounts}`);
-
-                        const enrichedMessage = await enrichLeadsWithAI(leads, userMessage, validatedTier);
-                        intent.message = enrichedMessage || `Found ${allProfiles.length} social profiles across platforms (${platformCounts}).`;
-
-                        suggestedNextSteps = [
-                            'Enrich a specific profile with more details',
-                            'Draft a DM or pitch to these contacts',
-                            'Deep search for email addresses'
-                        ];
-                    }
-                }
-
-                // ─── SCRAPE_URL TRIGGER ────────────────
-                else if (intent.message && intent.message.startsWith('SCRAPE_URL:')) {
-                    const scrapeUrl = intent.message.replace('SCRAPE_URL:', '').trim();
-                    logs.push(`🕷️ Scraping: ${scrapeUrl}`);
-                    toolsUsed.push('scrape_contacts');
-
-                    const scrapeResult = await scrapeContactsFromUrl(scrapeUrl);
-
-                    if (scrapeResult.success) {
-                        logs.push(`✅ Scraped: ${scrapeResult.emails.length} emails, ${scrapeResult.contacts.length} contacts, ${Object.values(scrapeResult.socialLinks).flat().length} social links`);
-
-                        leads = scrapeResult.contacts.map((c, i) => ({
-                            id: -(i + 1),
-                            name: c.name || 'Unknown',
-                            email: c.email,
-                            title: c.title,
-                            url: c.url || scrapeUrl,
-                            snippet: c.source,
-                            source: 'Web Scraper',
-                            instagram: c.instagram,
-                            twitter: c.twitter,
-                            tiktok: c.tiktok,
-                            country: normalizeCountry(intent.filters?.country || artistContext?.location?.country)
-                        }));
-
-                        // Build rich response
-                        let scrapeMsg = `**Scraped ${new URL(scrapeUrl).hostname}:**\n\n`;
-                        if (scrapeResult.emails.length > 0) scrapeMsg += `📧 **Emails:** ${scrapeResult.emails.join(', ')}\n\n`;
-                        const allSocial = Object.entries(scrapeResult.socialLinks).filter(([_, v]) => v.length > 0);
-                        if (allSocial.length > 0) {
-                            scrapeMsg += `🔗 **Social Links:**\n`;
-                            for (const [platform, links] of allSocial) {
-                                scrapeMsg += `- **${platform}:** ${links.join(', ')}\n`;
-                            }
+                    case 'web_search': {
+                        if (!webSearchEnabled) {
+                            const offlineResponse = await generateChatResponse(
+                                userMessage, conversationHistory, artistContext,
+                                validatedTier as any, knowledgeContext
+                            );
+                            intent = { action: 'clarify', filters: {}, message: offlineResponse + `\n\n> *Toggle Web Search on for fresh sources from the web.*` };
+                            break;
                         }
-                        if (scrapeResult.contacts.length > 0) {
-                            scrapeMsg += `\n👥 **Contacts Found:** ${scrapeResult.contacts.length}`;
-                        }
-                        intent.message = scrapeMsg;
 
-                        suggestedNextSteps = [
-                            'Draft a pitch to these contacts',
-                            'Search for more pages to scrape',
-                            'Enrich these contacts with LinkedIn data'
-                        ];
-                    } else {
-                        logs.push(`❌ Scrape failed: ${scrapeResult.error}`);
-                        intent.message = `I couldn't scrape that page (${scrapeResult.error}). The site might block automated requests. Try a Google search for their contact info instead.`;
-                    }
-                }
-
-                // ─── LINKEDIN_SEARCH TRIGGER ───────────
-                else if (intent.message && intent.message.startsWith('LINKEDIN_SEARCH:')) {
-                    const liQuery = intent.message.replace('LINKEDIN_SEARCH:', '').trim();
-                    logs.push(`💼 LinkedIn Search: "${liQuery}"`);
-                    toolsUsed.push('linkedin_search');
-
-                    const country = normalizeCountry(intent.filters?.country || artistContext?.location?.country);
-                    const liResult = await searchLinkedInPipeline(liQuery, country);
-                    logs.push(...liResult.logs);
-
-                    leads = liResult.contacts.slice(0, 20).map((c, i) => ({
-                        id: -(i + 1),
-                        name: c.name,
-                        title: c.title,
-                        company: c.company,
-                        url: c.url || '',
-                        snippet: `${c.source} • Confidence: ${c.confidence}`,
-                        source: c.source,
-                        country
-                    }));
-
-                    const enrichedMessage = await enrichLeadsWithAI(leads, userMessage, validatedTier);
-                    intent.message = enrichedMessage || `Found ${liResult.total} LinkedIn profiles${liResult.apiUsed ? ' via API' : ' via Google search'}.`;
-                    suggestedNextSteps = ['Enrich a contact with email data', 'Draft a connection message', 'Deep search across all pipelines'];
-                }
-
-                // ─── APOLLO_SEARCH TRIGGER ─────────────
-                else if (intent.message && intent.message.startsWith('APOLLO_SEARCH:')) {
-                    const apolloQuery = intent.message.replace('APOLLO_SEARCH:', '').trim();
-                    logs.push(`🔎 Apollo Search: "${apolloQuery}"`);
-                    toolsUsed.push('apollo_search');
-
-                    const country = normalizeCountry(intent.filters?.country || artistContext?.location?.country);
-                    const apolloResult = await searchApollo(apolloQuery, country);
-                    logs.push(...apolloResult.logs);
-
-                    leads = apolloResult.contacts.slice(0, 20).map((c, i) => ({
-                        id: -(i + 1),
-                        name: c.name,
-                        email: c.email,
-                        title: c.title,
-                        company: c.company,
-                        url: c.url || '',
-                        snippet: `${c.source} • Confidence: ${c.confidence}`,
-                        source: c.source,
-                        country
-                    }));
-
-                    const enrichedMessage = await enrichLeadsWithAI(leads, userMessage, validatedTier);
-                    intent.message = enrichedMessage || `Found ${apolloResult.total} contacts${apolloResult.apiUsed ? ' with verified emails via Apollo API' : ' via Google fallback'}.`;
-                    suggestedNextSteps = ['Draft a pitch to these contacts', 'Search LinkedIn for more', 'Create an email outreach sequence'];
-                }
-
-                // ─── SEARCH_REQUEST TRIGGER ────────────
-                else if (intent.message && intent.message.startsWith('SEARCH_REQUEST:')) {
-                    const query = intent.message.replace('SEARCH_REQUEST:', '').trim();
-
-                    if (!webSearchEnabled) {
-                        logs.push('🛑 Web search disabled.');
-                        intent = {
-                            ...intent,
-                            action: 'clarify',
-                            message: `Web search is off. I can answer with my knowledge, or toggle Web Search on for fresh sources.`
-                        };
-                    } else {
-                        logs.push(`🔍 Searching: "${query}"...`);
                         toolsUsed.push('web_search');
+                        const searchQuery = intentResult.searchQuery || userMessage;
+                        const country = normalizeCountry(intentResult.filters?.country || artistContext?.location?.country);
+                        logs.push(`🔍 Searching: "${searchQuery}"...`);
 
-                        const searchResults = await performSmartSearch(query, normalizeCountry(intent.filters?.country));
-                        webResults = searchResults.map(r => ({
-                            title: r.name,
-                            url: r.url,
-                            snippet: r.snippet,
-                            source: r.source,
-                            date: r.date
-                        }));
-
-                        // Re-prompt AI with results
-                        const contextBlock = searchResults.map(r =>
-                            `Title: ${r.name}\nSnippet: ${r.snippet}\nSource: ${r.source}`
-                        ).join('\n\n');
-
+                        const searchResults = await performSmartSearch(searchQuery, country);
+                        webResults = searchResults.map(r => ({ title: r.name, url: r.url, snippet: r.snippet, source: r.source, date: r.date }));
                         logs.push(`✅ Found ${searchResults.length} results. Analyzing...`);
-                        const toolPrompt = `SYSTEM: You searched for "${query}".
-Results:
-${contextBlock}
 
-Now answer the user's original question: "${userMessage}".
-Cite sources naturally. Write as Visio — warm, professional, strategic. Use markdown.`;
+                        const searchMsg = await generateWithSearchResults(userMessage, searchResults, validatedTier as any, artistContext);
+                        intent = { action: 'search', filters: { country }, message: searchMsg || `Here's what I found for "${searchQuery}".` };
+                        break;
+                    }
 
-                        const finalIntent = await parseIntent(toolPrompt, conversationHistory, artistContext || undefined, validatedTier as any, 'chat', '');
-                        intent = finalIntent;
+                    case 'content_creation':
+                    case 'strategy': {
+                        toolsUsed.push(intentResult.category === 'content_creation' ? 'draft_pitch' : 'campaign_plan');
+                        const contentToolPrompt = toolInstruction || getToolInstruction(
+                            intentResult.category === 'content_creation' ? 'draft_pitch' : 'campaign_plan'
+                        );
+                        const contentResponse = await generateChatResponse(
+                            userMessage, conversationHistory, artistContext,
+                            validatedTier as 'instant' | 'business' | 'enterprise',
+                            knowledgeContext, contentToolPrompt || undefined
+                        );
+                        intent = { action: 'clarify', filters: {}, message: contentResponse };
+                        suggestedNextSteps = intentResult.category === 'content_creation'
+                            ? ['Refine this draft', 'Create a follow-up email', 'Find contacts to pitch']
+                            : ['Find contacts for this campaign', 'Create content for this strategy', 'Adjust the budget breakdown'];
+                        break;
+                    }
+
+                    case 'clarify':
+                    default: {
+                        const clarifyResponse = await generateChatResponse(
+                            userMessage, conversationHistory, artistContext,
+                            validatedTier as 'instant' | 'business' | 'enterprise',
+                            knowledgeContext
+                        );
+                        intent = { action: 'clarify', filters: {}, message: clarifyResponse };
+                        break;
                     }
                 }
 
+            } else if (hasGemini) {
+                // Fallback to Gemini with fixed error handling
+                logs.push('🧠 Visio is thinking (Gemini)...');
+                intent = await parseIntent(
+                    toolInstruction ? `${toolInstruction}\n\nUser request: ${userMessage}` : userMessage,
+                    conversationHistory,
+                    artistContext || undefined,
+                    validatedTier as 'instant' | 'business' | 'enterprise',
+                    'chat',
+                    knowledgeContext
+                );
             } else {
                 logs.push('⚠️ AI offline — basic mode');
                 intent = parseBasicIntent(userMessage, lastSearchState);
@@ -643,6 +499,36 @@ Cite sources naturally. Write as Visio — warm, professional, strategic. Use ma
                 suggestedNextSteps: ['Go to Settings and connect your Artist Portal'],
                 meta: { total: 0, source: 'Portal Required' }
             }, { status: 403 });
+        }
+
+        // ─── CREDIT CHECK ─────────────────────────────
+        // Map intent action to credit cost category
+        const creditCategoryMap: Record<string, string> = {
+            'find_leads': 'lead_search',
+            'search': 'web_search',
+            'deep_search': 'deep_search',
+        };
+        const creditCategory = creditCategoryMap[intent.action] || 'chat_message';
+        const creditCost = getCreditCost(creditCategory);
+
+        if (creditCost > 0 && !isAdminUser(auth.user)) {
+            const balance = await getUserCredits(auth.user.id);
+            if (balance < creditCost) {
+                logs.push(`💳 Insufficient credits (need ${creditCost}, have ${balance})`);
+                return NextResponse.json({
+                    message: `You need ${creditCost} credit${creditCost > 1 ? 's' : ''} for this action, but you have ${balance}. Upgrade your plan for more credits!`,
+                    leads: [],
+                    webResults: [],
+                    toolsUsed,
+                    suggestedNextSteps: ['Upgrade your plan for more credits'],
+                    logs,
+                    intent: { ...intent, action: 'clarify' },
+                    meta: { total: 0, source: 'Credits' }
+                });
+            }
+            // Deduct credits
+            await deductCredits(auth.user.id, creditCost, `${intent.action}: ${userMessage.slice(0, 100)}`);
+            logs.push(`💳 ${creditCost} credit${creditCost > 1 ? 's' : ''} used (${balance - creditCost} remaining)`);
         }
 
         // ─── ACTION HANDLERS ───────────────────────────

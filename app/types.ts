@@ -120,11 +120,13 @@ export interface WebResult {
 
 export type ToolId =
     | 'none'
+    | 'generate_leads'
     | 'web_search'
     | 'summarize_chat'
     | 'draft_pitch'
     | 'press_release'
     | 'social_pack'
+    | 'campaign_plan'
     | 'market_research';
 
 export type AgentMode = 'chat' | 'research';

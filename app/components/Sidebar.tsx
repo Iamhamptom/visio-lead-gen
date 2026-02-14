@@ -175,6 +175,7 @@ interface SidebarProps {
     onMoveSession: (sessionId: string, folderId: string | null) => void;
     onDeleteSession: (sessionId: string) => void;
     onShareSession: (sessionId: string) => void;
+    onCreateFolder?: (name: string) => void;
     subscription?: Subscription;
     artistProfile: ArtistProfile | null;
     isRestricted?: boolean;
@@ -194,6 +195,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     onDeleteSession,
 
     onShareSession,
+    onCreateFolder,
     subscription = { tier: 'artist', status: 'active', currentPeriodEnd: 0, interval: 'month' },
     artistProfile,
     isRestricted = false,
@@ -308,7 +310,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <div className="flex items-center justify-between px-4 mb-2">
                         <h4 className="text-[10px] uppercase tracking-widest text-white/30 font-semibold">Campaign Folders</h4>
                         <button
-                            onClick={() => alert("Folder creation coming soon!")} // Placeholder
+                            onClick={() => {
+                                const name = prompt('Folder name:');
+                                if (name?.trim() && onCreateFolder) {
+                                    onCreateFolder(name.trim());
+                                }
+                            }}
                             className="text-white/30 hover:text-visio-teal transition-colors"
                         >
                             <Plus size={14} />

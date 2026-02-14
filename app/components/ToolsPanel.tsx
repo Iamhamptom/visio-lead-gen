@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, FileText, Mail, Megaphone, Sparkles, Compass } from 'lucide-react';
+import { Search, FileText, Mail, Megaphone, Sparkles, Calendar, Target, ClipboardList } from 'lucide-react';
 import { ToolId } from '@/app/types';
 
 const TOOL_DEFS: {
@@ -8,12 +8,13 @@ const TOOL_DEFS: {
     description: string;
     icon: React.ComponentType<{ size?: number; className?: string }>;
 }[] = [
-    { id: 'web_search', label: 'Web Search', description: 'Use Google sources', icon: Search },
-    { id: 'summarize_chat', label: 'Summarize Chat', description: 'Key points + next steps', icon: FileText },
+    { id: 'generate_leads', label: 'Generate Leads', description: 'Smart lead finder', icon: Target },
     { id: 'draft_pitch', label: 'Draft Pitch', description: 'PR pitch email', icon: Mail },
-    { id: 'press_release', label: 'Press Release', description: 'Short release draft', icon: Megaphone },
-    { id: 'social_pack', label: 'Social Pack', description: 'Post ideas + captions', icon: Sparkles },
-    { id: 'market_research', label: 'Market Research', description: 'Quick market snapshot', icon: Compass }
+    { id: 'press_release', label: 'Press Release', description: 'AP-style release', icon: Megaphone },
+    { id: 'social_pack', label: 'Social Pack', description: 'Content + captions', icon: Sparkles },
+    { id: 'campaign_plan', label: 'Campaign Plan', description: 'Full strategy timeline', icon: Calendar },
+    { id: 'web_search', label: 'Web Search', description: 'Current info from web', icon: Search },
+    { id: 'summarize_chat', label: 'Summarize', description: 'Key decisions + next steps', icon: ClipboardList },
 ];
 
 interface ToolsPanelProps {
@@ -32,6 +33,7 @@ export const ToolsPanel: React.FC<ToolsPanelProps> = ({ activeTool, onSelect, we
                     const isActive = activeTool === tool.id;
                     const isSearch = tool.id === 'web_search';
                     const isDisabled = isSearch && !webSearchEnabled;
+                    const isLeadGen = tool.id === 'generate_leads';
                     return (
                         <button
                             key={tool.id}
@@ -40,9 +42,19 @@ export const ToolsPanel: React.FC<ToolsPanelProps> = ({ activeTool, onSelect, we
                                 if (isDisabled) return;
                                 onSelect(tool.id);
                             }}
-                            className={`w-full flex items-center gap-2 rounded-xl px-2.5 py-2 text-left transition-all border ${isActive ? 'border-visio-teal/40 bg-visio-teal/10 text-visio-teal' : 'border-white/5 bg-white/[0.02] text-white/70 hover:text-white'} ${isDisabled ? 'opacity-50' : ''}`}
+                            className={`w-full flex items-center gap-2 rounded-xl px-2.5 py-2 text-left transition-all border ${
+                                isActive
+                                    ? isLeadGen
+                                        ? 'border-visio-accent/40 bg-visio-accent/10 text-visio-accent'
+                                        : 'border-visio-teal/40 bg-visio-teal/10 text-visio-teal'
+                                    : 'border-white/5 bg-white/[0.02] text-white/70 hover:text-white'
+                            } ${isDisabled ? 'opacity-50' : ''}`}
                         >
-                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${isActive ? 'bg-visio-teal/20' : 'bg-white/5'}`}>
+                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
+                                isActive
+                                    ? isLeadGen ? 'bg-visio-accent/20' : 'bg-visio-teal/20'
+                                    : 'bg-white/5'
+                            }`}>
                                 <Icon size={14} />
                             </div>
                             <div className="flex-1">

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Paperclip, Sparkles, Mic, Zap, Briefcase, Rocket, ChevronDown, Lock, Search } from 'lucide-react';
+import { Send, Paperclip, Sparkles, Mic, Zap, Briefcase, Rocket, ChevronDown, Lock, Search, User } from 'lucide-react';
 
 import { AgentMode } from '@/app/types';
 
@@ -14,6 +14,8 @@ interface ComposerProps {
     onRequirePortal?: () => void;
     webSearchEnabled: boolean;
     onToggleWebSearch: () => void;
+    artistContextEnabled?: boolean;
+    onToggleArtistContext?: () => void;
     isRestricted?: boolean;
 }
 
@@ -53,6 +55,8 @@ export const Composer: React.FC<ComposerProps> = ({
     onRequirePortal,
     webSearchEnabled,
     onToggleWebSearch,
+    artistContextEnabled = true,
+    onToggleArtistContext,
     isRestricted = false
 }) => {
     const [input, setInput] = useState('');
@@ -180,6 +184,21 @@ export const Composer: React.FC<ComposerProps> = ({
 
                         {/* Mode + Web Search */}
                         <div className="flex items-center gap-2">
+                            {onToggleArtistContext && (
+                                <button
+                                    type="button"
+                                    onClick={onToggleArtistContext}
+                                    className={`flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium rounded-md border transition-all ${artistContextEnabled
+                                        ? 'border-visio-accent/40 bg-visio-accent/15 text-visio-accent'
+                                        : 'border-white/10 bg-white/5 text-white/50 hover:text-white/70'
+                                        }`}
+                                    aria-pressed={artistContextEnabled}
+                                    title={artistContextEnabled ? 'Artist context is ON — responses use your profile data' : 'Artist context is OFF — general mode'}
+                                >
+                                    <User size={12} />
+                                    Artist Portal
+                                </button>
+                            )}
                             <button
                                 type="button"
                                 onClick={onToggleWebSearch}
