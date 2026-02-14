@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Play } from 'lucide-react';
+import { Play, Volume2, VolumeX } from 'lucide-react';
 
 interface VideoCardProps {
     src: string;
@@ -20,6 +20,7 @@ const VideoCard = ({ src, title, thumbnail, index, isPlaying, onPlay, className 
     const [isVisible, setIsVisible] = useState(false);
     const [videoLoaded, setVideoLoaded] = useState(false);
     const [hasInteracted, setHasInteracted] = useState(false);
+    const [isMuted, setIsMuted] = useState(true);
 
     // Intersection Observer — only load the video when it's near the viewport
     useEffect(() => {
@@ -44,17 +45,29 @@ const VideoCard = ({ src, title, thumbnail, index, isPlaying, onPlay, className 
         const video = videoRef.current;
         if (!video) return;
         if (isPlaying) {
+            video.muted = isMuted;
             video.play().catch(() => { }); // Catch autoplay errors
         } else {
             video.pause();
         }
-    }, [isPlaying, videoLoaded]);
+    }, [isPlaying, videoLoaded, isMuted]);
 
     const handleClick = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!hasInteracted) setHasInteracted(true);
+        if (!hasInteracted) {
+            setHasInteracted(true);
+            setIsMuted(false); // Unmute on first user interaction
+        }
         onPlay();
     }, [hasInteracted, onPlay]);
+
+    const toggleMute = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
+        setIsMuted(prev => !prev);
+        if (videoRef.current) {
+            videoRef.current.muted = !isMuted;
+        }
+    }, [isMuted]);
 
     const handleVideoLoaded = useCallback(() => {
         setVideoLoaded(true);
@@ -97,7 +110,7 @@ const VideoCard = ({ src, title, thumbnail, index, isPlaying, onPlay, className 
                     playsInline
                     preload="auto"
                     loop
-                    muted
+                    muted={isMuted}
                     onLoadedData={handleVideoLoaded}
                     poster={thumbnail}
                 />
@@ -119,6 +132,17 @@ const VideoCard = ({ src, title, thumbnail, index, isPlaying, onPlay, className 
                     )}
                 </div>
             </div>
+
+            {/* Volume Toggle (visible when playing) */}
+            {isPlaying && videoLoaded && (
+                <button
+                    onClick={toggleMute}
+                    className="absolute top-3 right-3 z-30 p-2 bg-black/50 backdrop-blur-md rounded-full border border-white/20 text-white/80 hover:text-white hover:bg-black/70 transition-all hover:scale-110"
+                    aria-label={isMuted ? 'Unmute' : 'Mute'}
+                >
+                    {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                </button>
+            )}
 
             {/* Title Overlay on Hover */}
             <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20">
