@@ -244,11 +244,13 @@ export async function parseIntent(
 
     } catch (error: any) {
         console.error('Gemini parse error:', error);
+        // CRITICAL: Error fallback is CONVERSATION, not search.
+        // The old fallback triggered Google searches for every failed parse.
         return {
-            action: 'search',
-            filters: { country: 'ZA', searchTerm: userMessage },
-            limit: 50,
-            message: `Let me dig into that — searching for "${userMessage}"...`
+            action: 'clarify',
+            filters: {},
+            limit: 0,
+            message: "I hit a brief snag processing that. Could you rephrase? I'm here to help with PR strategy, finding contacts, drafting pitches, and campaign planning."
         };
     }
 }

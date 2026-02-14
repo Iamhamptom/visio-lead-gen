@@ -18,6 +18,8 @@ import ReasonPage from './reason/page';
 import ReachPage from './reach/page';
 import { Toast } from './components/Toast';
 import { ToolsPanel } from './components/ToolsPanel';
+import { LeadGenWizard, LeadGenConfig } from './components/LeadGenWizard';
+import { LeadGenProgress } from './components/LeadGenProgress';
 import { Message, Role, Campaign, ViewMode, Lead, Session, ArtistProfile, Subscription, SubscriptionTier, AgentMode, ToolId, LeadList, StrategyBrief } from './types';
 import { AITier } from './components/Composer';
 import { Menu, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
@@ -37,7 +39,9 @@ import {
   updateSubscription,
   saveLeads,
   loadStrategyBriefs,
-  saveStrategyBrief
+  saveStrategyBrief,
+  createFolder,
+  loadFolders
 } from '@/lib/data-service';
 import { generateLeadListCSV, downloadCSV } from '@/lib/csv-export';
 
@@ -53,7 +57,7 @@ const createInitialSession = (): Session => ({
     // Must be a UUID because we persist messages to Supabase (messages.id is UUID).
     id: crypto.randomUUID(),
     role: Role.AGENT,
-    content: `Hello! I am the **Visio PR Assistant**.\n\nI can help you build media lists, draft pitches, and plan campaigns.\n\nTo get the best results, please **Import your Profile** using the button below so I know your genre and goals.`,
+    content: `## Let's transform your career.\n\nI'm **Visio** — your elite PR strategist. Think Columbia Records publicist meets AI-powered music industry advisor.\n\n**What I do best:**\n- **Find your people** — playlist curators, journalists, bloggers, DJs, A&R, across any market\n- **Craft your story** — pitch emails, press releases, social content packs\n- **Plan your rise** — campaign timelines, budget breakdowns, release strategies\n\n**Try saying:**\n- *"Find me 50 Amapiano playlist curators in South Africa"*\n- *"Draft a pitch email for my new single"*\n- *"How should I plan my album rollout?"*\n\nOr just chat — I know this industry inside out. What are we working on?`,
     timestamp: Date.now()
   }]
 });
@@ -122,7 +126,12 @@ export default function Home() {
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const [webSearchEnabled, setWebSearchEnabled] = useState(true);
+  const [artistContextEnabled, setArtistContextEnabled] = useState(true);
   const [activeTool, setActiveTool] = useState<ToolId>('none');
+  const [showLeadGenWizard, setShowLeadGenWizard] = useState(false);
+  const [leadGenProgress, setLeadGenProgress] = useState<{ tier: string; status: string; found: number; target: number; currentSource: string; logs: string[] } | null>(null);
+  const [isGeneratingLeads, setIsGeneratingLeads] = useState(false);
+  const [campaignFolders, setCampaignFolders] = useState<Campaign[]>([]);
   const [isChatScrollable, setIsChatScrollable] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [buildInfo, setBuildInfo] = useState<{ commit?: string | null; branch?: string | null } | null>(null);
@@ -450,6 +459,16 @@ export default function Home() {
     if (user && !authLoading) {
       initSubscription();
     }
+  }, [user, authLoading]);
+
+  // Load campaign folders from Supabase on auth
+  useEffect(() => {
+    if (!user || authLoading) return;
+    loadFolders().then(folders => {
+      if (folders.length > 0) {
+        setCampaignFolders(folders.map(f => ({ id: f.id, name: f.name, client: '', status: f.status as Campaign['status'] || 'active' })));
+      }
+    }).catch(() => {});
   }, [user, authLoading]);
 
   // Listen for profile updates from Settings/ArtistPortal saves
@@ -887,6 +906,7 @@ export default function Home() {
           tier,
           mode,
           webSearchEnabled,
+          artistContextEnabled,
           activeTool
         })
       });
@@ -986,6 +1006,126 @@ export default function Home() {
     }
   };
 
+  // Handle tool selection — open wizard for generate_leads
+  const handleToolSelect = (tool: ToolId) => {
+    if (tool === 'generate_leads') {
+      setShowLeadGenWizard(true);
+      return;
+    }
+    setActiveTool(tool);
+  };
+
+  // Handle lead gen wizard submission via SSE
+  const handleLeadGenSubmit = async (config: LeadGenConfig) => {
+    setShowLeadGenWizard(false);
+    setIsGeneratingLeads(true);
+    setLeadGenProgress({ tier: 'Tier 1', status: 'searching', found: 0, target: 50, currentSource: 'Initializing...', logs: [] });
+
+    // Navigate to dashboard if not there
+    if (currentView !== 'dashboard') navigateTo('dashboard');
+
+    const params = new URLSearchParams({
+      contactTypes: config.contactTypes.join(','),
+      markets: config.markets.join(','),
+      genre: config.genre,
+      searchDepth: config.searchDepth,
+      targetCount: '50',
+    });
+
+    try {
+      const accessToken = session?.access_token;
+      const res = await fetch(`/api/agent/lead-stream?${params.toString()}`, {
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+      });
+
+      if (!res.ok) {
+        setToastMessage('Lead generation failed. Please try again.');
+        setIsGeneratingLeads(false);
+        setLeadGenProgress(null);
+        return;
+      }
+
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        setIsGeneratingLeads(false);
+        return;
+      }
+
+      let buffer = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          try {
+            const event = JSON.parse(line.slice(6));
+            if (event.type === 'progress') {
+              setLeadGenProgress({
+                tier: event.tier || 'Searching',
+                status: event.status || 'searching',
+                found: event.found || 0,
+                target: event.target || 50,
+                currentSource: event.currentSource || '',
+                logs: event.logs || [],
+              });
+            } else if (event.type === 'complete') {
+              // Play notification sound
+              try { new Audio('/sounds/ting.mp3').play().catch(() => {}); } catch {}
+
+              setToastMessage(`Found ${event.total || event.contacts?.length || 0} leads!`);
+
+              // Inject leads into the active session as an agent message
+              const activeIdx = sessions.findIndex(s => s.id === activeSessionId);
+              if (activeIdx !== -1 && event.contacts?.length > 0) {
+                const leadMsg: Message = {
+                  id: crypto.randomUUID(),
+                  role: Role.AGENT,
+                  content: `## Lead Generation Complete\n\nFound **${event.contacts.length}** contacts matching your criteria.\n\n**Search:** ${config.contactTypes.join(', ')} in ${config.markets.join(', ')} (${config.genre})\n**Depth:** ${config.searchDepth}`,
+                  leads: event.contacts.map((c: any, i: number) => ({
+                    id: c.email || `lead-${i}`,
+                    name: c.name || 'Unknown',
+                    title: c.title || '',
+                    company: c.company || '',
+                    email: c.email || '',
+                    matchScore: 0,
+                    socials: { instagram: c.instagram, tiktok: c.tiktok, twitter: c.twitter, linkedin: c.linkedin },
+                    source: c.source || 'Pipeline',
+                    followers: c.followers || '',
+                    country: c.country || '',
+                    snippet: c.url || '',
+                  })),
+                  timestamp: Date.now(),
+                  toolUsed: 'generate_leads',
+                };
+
+                const currentSession = sessions[activeIdx];
+                const updatedSession = { ...currentSession, messages: [...currentSession.messages, leadMsg], lastUpdated: Date.now() };
+                const next = [...sessions];
+                next[activeIdx] = updatedSession;
+                setSessions(next);
+              }
+            }
+          } catch {
+            // Skip malformed SSE lines
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Lead gen stream error:', error);
+      setToastMessage('Lead generation encountered an error.');
+    } finally {
+      setIsGeneratingLeads(false);
+      setLeadGenProgress(null);
+    }
+  };
+
   const handleUpgrade = (tier: SubscriptionTier) => {
     // In real app, redirect to Stripe
     updateSubscription({ tier });
@@ -1066,6 +1206,15 @@ export default function Home() {
         <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
       )}
 
+      {/* Lead Gen Wizard */}
+      <LeadGenWizard
+        isOpen={showLeadGenWizard}
+        onClose={() => setShowLeadGenWizard(false)}
+        onSubmit={handleLeadGenSubmit}
+        defaultGenre={artistProfile?.genre || ''}
+        defaultMarket={artistProfile?.location?.country || undefined}
+      />
+
       {/* Onboarding Tutorial Overlay */}
       {showTutorial && (
         <OnboardingTutorial
@@ -1115,8 +1264,17 @@ export default function Home() {
             isOpen={isSidebarOpen}
             activeView={currentView}
             activeSessionId={activeSessionId}
-            campaigns={DEFAULT_CAMPAIGNS}
+            campaigns={campaignFolders}
             sessions={sessions}
+            onCreateFolder={async (name: string) => {
+              const folder = await createFolder(name);
+              if (folder) {
+                setCampaignFolders(prev => [{ id: folder.id, name: folder.name, client: '', status: 'active' as const }, ...prev]);
+                setToastMessage(`Folder "${name}" created`);
+              } else {
+                setToastMessage('Failed to create folder');
+              }
+            }}
             onNavigate={(view) => {
               navigateTo(view);
               setIsSidebarOpen(false); // Close sidebar on navigation (mobile)
@@ -1238,6 +1396,9 @@ export default function Home() {
                             {activeMessages.map((msg) => (
                               <ChatMessage key={msg.id} message={msg} onSaveLead={handleSaveLead} />
                             ))}
+                            {isGeneratingLeads && (
+                              <LeadGenProgress isActive={isGeneratingLeads} progress={leadGenProgress} />
+                            )}
                             <div ref={messagesEndRef} className="h-4" />
                           </>
                         ) : (
@@ -1278,7 +1439,7 @@ export default function Home() {
                   <div className="hidden lg:block absolute right-16 top-24 z-30">
                     <ToolsPanel
                       activeTool={activeTool}
-                      onSelect={setActiveTool}
+                      onSelect={handleToolSelect}
                       webSearchEnabled={webSearchEnabled}
                     />
                   </div>
@@ -1326,6 +1487,8 @@ export default function Home() {
                     onPromptUsed={() => setPendingPrompt(null)}
                     webSearchEnabled={webSearchEnabled}
                     onToggleWebSearch={() => setWebSearchEnabled(prev => !prev)}
+                    artistContextEnabled={artistContextEnabled}
+                    onToggleArtistContext={() => setArtistContextEnabled(prev => !prev)}
                     isRestricted={isRestricted}
                   />
                 </div>
