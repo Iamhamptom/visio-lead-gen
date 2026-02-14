@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { createSupabaseAdminClient, createSupabaseServerClient } from './supabase/server';
 
 // The "God Mode" Context Pack Structure
-// Mapped from the "Artist Portal" (Source of Truth) to "Visio PR Assistant" (Consumer)
+// Mapped from the "Artist Portal" (Source of Truth) to "V-Prai" (Consumer)
 export interface ContextPack {
     identity: {
         name: string;

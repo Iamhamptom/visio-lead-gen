@@ -22,7 +22,7 @@ export const PortalGate: React.FC<PortalGateProps> = ({ onRefresh, isLoading = f
                     <h2 className="text-2xl font-bold text-white mb-3 font-outfit">Unlock Your PR Assistant</h2>
 
                     <p className="text-white/60 mb-8 leading-relaxed">
-                        To generate media leads and strategy, Visio needs to know your <span className="text-white font-medium">Sonic DNA</span> and <span className="text-white font-medium">Brand Identity</span>. Complete your profile in Settings to unlock results.
+                        To generate media leads and strategy, V-Prai needs to know your <span className="text-white font-medium">Sonic DNA</span> and <span className="text-white font-medium">Brand Identity</span>. Complete your profile in Settings to unlock results.
                     </p>
 
                     <div className="flex flex-col w-full gap-3">

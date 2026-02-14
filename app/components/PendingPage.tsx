@@ -23,7 +23,7 @@ export const PendingPage = () => {
                 <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">Account Pending Approval</h1>
 
                 <p className="text-lg text-white/60 mb-8 leading-relaxed">
-                    Thank you for subscribing to Visio. To maintain exclusivity and ensure high-quality service, we manually review all new accounts.
+                    Thank you for subscribing to V-Prai. To maintain exclusivity and ensure high-quality service, we manually review all new accounts.
                 </p>
 
                 <div className="bg-white/5 rounded-xl p-6 border border-white/5 mb-8 text-left">

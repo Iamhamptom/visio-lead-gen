@@ -155,7 +155,7 @@ async function enrichLeadsWithAI(searchResults: any[], userMessage: string, tier
             `Title: ${r.name || r.title}\nURL: ${r.url}\nSnippet: ${r.snippet}`
         ).join('\n\n');
 
-        const prompt = `You are Visio, an elite PR strategist. The user asked: "${userMessage}"
+        const prompt = `You are V-Prai, the AI brain behind Visio Lead Gen. The user asked: "${userMessage}"
 
 I searched and found these results:
 ${resultsContext}
@@ -276,7 +276,7 @@ export async function POST(request: NextRequest) {
         // 2. FETCH KNOWLEDGE BASE (RAG)
         let knowledgeContext = '';
         try {
-            logs.push('🧠 Scanning Visio Brain...');
+            logs.push('🧠 Scanning V-Prai Brain...');
             const relevantChunks = await searchKnowledgeBase(userMessage, 3);
             if (relevantChunks && relevantChunks.length > 0) {
                 knowledgeContext = relevantChunks.map(c =>
@@ -328,10 +328,10 @@ export async function POST(request: NextRequest) {
                 // Diagnostic: log key source for debugging (never log full key)
                 const keySource = process.env.AI_GATEWAY_API_KEY ? 'AI Gateway' : 'Direct Anthropic';
                 const keyPrefix = (process.env.AI_GATEWAY_API_KEY || process.env.ANTHROPIC_API_KEY)?.slice(0, 12) || 'NOT_SET';
-                console.log(`[Visio Agent] Claude via ${keySource}: ${keyPrefix}..., tier: ${validatedTier}, user: ${auth.user.email || auth.user.id}`);
+                console.log(`[V-Prai] Claude via ${keySource}: ${keyPrefix}..., tier: ${validatedTier}, user: ${auth.user.email || auth.user.id}`);
 
                 // Stage 1: Classify intent (fast, cheap, deterministic)
-                logs.push('🧠 Visio is thinking...');
+                logs.push('🧠 V-Prai is thinking...');
                 const intentResult: IntentResult = await classifyIntent(
                     userMessage,
                     conversationHistory,
@@ -476,7 +476,7 @@ export async function POST(request: NextRequest) {
 
             } else if (hasGemini) {
                 // Fallback to Gemini with fixed error handling
-                logs.push('🧠 Visio is thinking (Gemini)...');
+                logs.push('🧠 V-Prai is thinking (Gemini)...');
                 intent = await parseIntent(
                     toolInstruction ? `${toolInstruction}\n\nUser request: ${userMessage}` : userMessage,
                     conversationHistory,

@@ -18,8 +18,8 @@ export const generateWelcomeEmail = (name: string) => `
       <a href="https://visio-lead-gen.vercel.app" class="logo">Visio AI</a>
     </div>
     <div class="content">
-      <h1>Welcome to Visio, ${name}!</h1>
-      <p>We're thrilled to have you on board. Visio is your new AI-powered partner for music industry success.</p>
+      <h1>Welcome to V-Prai, ${name}!</h1>
+      <p>We're thrilled to have you on board. V-Prai is your AI-powered PR strategist for music industry success.</p>
       <p>Here's what you can do right now:</p>
       <ul>
         <li><strong>Find Leads:</strong> Search for managers, labels, and playlists.</li>

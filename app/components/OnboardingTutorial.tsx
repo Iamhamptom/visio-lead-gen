@@ -31,9 +31,9 @@ interface OnboardingTutorialProps {
 const STEPS = [
     {
         icon: Sparkles,
-        title: 'Welcome to Visio AI',
-        subtitle: 'Your AI-Powered PR Assistant',
-        description: 'Visio helps you find the right contacts, draft pitches, and manage your PR campaigns — all powered by AI.',
+        title: 'Welcome to V-Prai',
+        subtitle: 'Your AI-Powered PR Strategist',
+        description: 'V-Prai helps you find the right contacts, draft pitches, plan campaigns, and build your PR game step by step — all powered by AI.',
         tip: 'Let\'s get your account set up.',
         color: 'from-visio-teal to-visio-sage',
         iconBg: 'bg-visio-teal/20',

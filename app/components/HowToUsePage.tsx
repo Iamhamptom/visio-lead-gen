@@ -82,12 +82,12 @@ const GUIDE_STEPS: Array<{
 
 const FAQ = [
     {
-        q: 'What kind of contacts can Visio find?',
-        a: 'Visio specializes in the music and entertainment industry — playlist curators, music journalists, radio DJs, PR agencies, booking agents, A&R reps, and more.'
+        q: 'What kind of contacts can V-Prai find?',
+        a: 'V-Prai specializes in the music and entertainment industry — playlist curators, music journalists, radio DJs, PR agencies, booking agents, A&R reps, and more.'
     },
     {
         q: 'How accurate are the search results?',
-        a: 'Visio uses live web data enriched by AI. Results are verified in real-time, but we always recommend double-checking contact details before outreach.'
+        a: 'V-Prai uses live web data enriched by AI. Results are verified in real-time, but we always recommend double-checking contact details before outreach.'
     },
     {
         q: 'Can I export my leads?',
@@ -113,7 +113,7 @@ export const HowToUsePage: React.FC<HowToUsePageProps> = ({ onNavigate, onRelaun
                         <div className="p-2.5 rounded-xl bg-visio-teal/10">
                             <HelpCircle size={22} className="text-visio-teal" />
                         </div>
-                        <h1 className="text-3xl font-bold text-white tracking-tight">How to Use Visio</h1>
+                        <h1 className="text-3xl font-bold text-white tracking-tight">How to Use V-Prai</h1>
                     </div>
                     <p className="text-white/50 text-lg leading-relaxed">
                         A step-by-step guide to getting the most out of your AI PR assistant. From setting up your profile to managing leads.

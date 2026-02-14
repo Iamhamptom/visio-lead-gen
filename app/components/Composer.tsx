@@ -252,7 +252,7 @@ export const Composer: React.FC<ComposerProps> = ({
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={handleKeyDown}
-                            placeholder="Ask Visio to find leads, brainstorm campaigns..."
+                            placeholder="Ask V-Prai to find leads, brainstorm campaigns..."
                             className="flex-1 bg-transparent text-white border-0 focus:ring-0 resize-none py-3 px-2 max-h-40 placeholder:text-white/20 outline-none"
                             disabled={isLoading}
                         />
@@ -279,7 +279,7 @@ export const Composer: React.FC<ComposerProps> = ({
                 </div>
 
                 <p className="text-center text-[10px] text-white/20 mt-3 font-medium flex items-center justify-center gap-4">
-                    <span>Visio AI can make mistakes. Please verify important contact information.</span>
+                    <span>V-Prai can make mistakes. Please verify important contact information.</span>
                     <button
                         onClick={() => {
                             const data = prompt("Paste your Artist Portal JSON/Text here:");
