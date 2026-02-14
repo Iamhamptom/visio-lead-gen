@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { parseIntent, ParsedIntent, createGeminiClient } from '@/lib/gemini';
-import { classifyIntent, generateChatResponse, generateWithSearchResults, IntentResult } from '@/lib/claude';
+import { classifyIntent, generateChatResponse, generateWithSearchResults, IntentResult, hasClaudeKey } from '@/lib/claude';
 import { getLeadsByCountry, filterLeads, getDatabaseSummary, DBLead, FilterOptions } from '@/lib/db';
 import { performSmartSearch, performLeadSearch } from '@/lib/search';
 import { getContextPack } from '@/lib/god-mode';
@@ -317,7 +317,7 @@ export async function POST(request: NextRequest) {
 
             // ─── CHAT MODE ─────────────────────────────────
         } else {
-            const hasClaude = !!process.env.ANTHROPIC_API_KEY;
+            const hasClaude = hasClaudeKey();
             const toolInstruction = getToolInstruction(activeTool);
             if (toolInstruction && activeTool !== 'web_search') {
                 toolsUsed.push(activeTool);
@@ -325,6 +325,11 @@ export async function POST(request: NextRequest) {
 
             if (hasClaude) {
                 // ═══ CLAUDE-POWERED TWO-STAGE ARCHITECTURE ═══
+                // Diagnostic: log key source for debugging (never log full key)
+                const keySource = process.env.AI_GATEWAY_API_KEY ? 'AI Gateway' : 'Direct Anthropic';
+                const keyPrefix = (process.env.AI_GATEWAY_API_KEY || process.env.ANTHROPIC_API_KEY)?.slice(0, 12) || 'NOT_SET';
+                console.log(`[Visio Agent] Claude via ${keySource}: ${keyPrefix}..., tier: ${validatedTier}, user: ${auth.user.email || auth.user.id}`);
+
                 // Stage 1: Classify intent (fast, cheap, deterministic)
                 logs.push('🧠 Visio is thinking...');
                 const intentResult: IntentResult = await classifyIntent(

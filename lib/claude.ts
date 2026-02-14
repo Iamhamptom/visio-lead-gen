@@ -15,14 +15,69 @@ const MODEL_MAP = {
     enterprise: 'claude-opus-4-6',
 } as const;
 
+// Detect whether we're using Vercel AI Gateway or direct Anthropic API
+function isUsingGateway(): boolean {
+    return !!process.env.AI_GATEWAY_API_KEY;
+}
+
 function getClient(): Anthropic {
+    // Priority 1: Vercel AI Gateway (proxy through Vercel)
+    const gatewayKey = process.env.AI_GATEWAY_API_KEY;
+    if (gatewayKey) {
+        return new Anthropic({
+            apiKey: gatewayKey,
+            baseURL: 'https://ai-gateway.vercel.sh',
+        });
+    }
+
+    // Priority 2: Direct Anthropic API
     const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) throw new Error('ANTHROPIC_API_KEY is not set');
+    if (!apiKey) throw new Error('No AI API key configured. Set AI_GATEWAY_API_KEY (Vercel AI Gateway) or ANTHROPIC_API_KEY (direct Anthropic).');
     return new Anthropic({ apiKey });
 }
 
 function getModel(tier: 'instant' | 'business' | 'enterprise'): string {
-    return MODEL_MAP[tier] || MODEL_MAP.instant;
+    const model = MODEL_MAP[tier] || MODEL_MAP.instant;
+    // Vercel AI Gateway requires "anthropic/" prefix on model names
+    return isUsingGateway() ? `anthropic/${model}` : model;
+}
+
+/** Check if any Claude API key is configured */
+export function hasClaudeKey(): boolean {
+    return !!(process.env.AI_GATEWAY_API_KEY || process.env.ANTHROPIC_API_KEY);
+}
+
+// ─── Error Categorization ─────────────────────────────
+
+function categorizeApiError(error: any): { type: string; userMessage: string } {
+    const msg = error?.message || String(error);
+    const status = error?.status || error?.statusCode;
+
+    if (!process.env.ANTHROPIC_API_KEY && !process.env.AI_GATEWAY_API_KEY) {
+        return { type: 'missing_key', userMessage: "Visio's AI engine isn't connected yet. Set AI_GATEWAY_API_KEY or ANTHROPIC_API_KEY in your deployment environment." };
+    }
+
+    if (msg.includes('API key') || msg.includes('api_key') || msg.includes('authentication') || status === 401) {
+        return { type: 'auth', userMessage: "Visio's AI engine has an authentication issue. The API key may be expired or invalid — please check your deployment settings." };
+    }
+
+    if (status === 429 || msg.includes('rate_limit') || msg.includes('rate limit')) {
+        return { type: 'rate_limit', userMessage: "I'm getting a lot of traffic right now. Give me a moment and try again." };
+    }
+
+    if (status === 529 || msg.includes('overloaded')) {
+        return { type: 'overloaded', userMessage: "Our AI engine is temporarily overloaded. Please try again in a minute." };
+    }
+
+    if (msg.includes('fetch') || msg.includes('ECONNREFUSED') || msg.includes('network') || msg.includes('timeout') || msg.includes('ETIMEDOUT')) {
+        return { type: 'network', userMessage: "I had a brief connection issue. Please try again." };
+    }
+
+    if (msg.includes('model') || msg.includes('not_found') || status === 404) {
+        return { type: 'model', userMessage: "There's an AI model configuration issue. Please contact support." };
+    }
+
+    return { type: 'unknown', userMessage: "I hit a brief snag processing that. Could you rephrase? I'm here to help with PR strategy, finding contacts, drafting pitches, and campaign planning." };
 }
 
 // ─── Intent Types ──────────────────────────────────────
@@ -111,8 +166,15 @@ export async function classifyIntent(
             messages: [{ role: 'user', content: userPrompt }],
         });
 
-        const text = response.content[0].type === 'text' ? response.content[0].text : '';
+        const firstBlock = response.content?.[0];
+        const text = firstBlock && firstBlock.type === 'text' ? firstBlock.text : '';
         const cleaned = text.replace(/```json?\s*/g, '').replace(/```\s*/g, '').trim();
+
+        if (!cleaned) {
+            console.warn('Intent classification returned empty response');
+            return { category: 'conversation', confidence: 0.3 };
+        }
+
         const parsed = JSON.parse(cleaned);
 
         return {
@@ -123,7 +185,8 @@ export async function classifyIntent(
             filters: parsed.filters || {},
         };
     } catch (error: any) {
-        console.error('Intent classification error:', error?.message || error);
+        const { type } = categorizeApiError(error);
+        console.error(`Intent classification error [${type}]:`, error?.message || error);
         // CRITICAL: Error fallback is CONVERSATION, not search
         return {
             category: 'conversation',
@@ -264,12 +327,26 @@ export async function generateChatResponse(
             messages: sanitized,
         });
 
-        const text = response.content[0].type === 'text' ? response.content[0].text : '';
+        const firstBlock = response.content?.[0];
+        const text = firstBlock && firstBlock.type === 'text' ? firstBlock.text : '';
         return text.trim() || "I'm here to help with your PR strategy. What are you working on?";
 
     } catch (error: any) {
-        console.error('Chat response error:', error?.message || error);
-        return "I hit a brief snag processing that. Could you rephrase? I'm here to help with PR strategy, finding contacts, drafting pitches, and campaign planning.";
+        const { type, userMessage } = categorizeApiError(error);
+        console.error(`Chat response error [${type}]:`, error?.message || error);
+
+        // For auth/config/network errors, provide local fallback for basic messages
+        if (type === 'missing_key' || type === 'auth' || type === 'network') {
+            const lower = message.toLowerCase().trim();
+            if (/^(hi|hello|hey|sup|yo|howdy|greetings|good morning|good evening|good afternoon)\b/.test(lower)) {
+                return "Hey! I'm **Visio**, your elite PR strategist. I'm having a temporary connection issue with my AI engine, but I'll be back at full power shortly.\n\nIn the meantime, here's what I can do when I'm fully online:\n- **Find contacts** — playlist curators, journalists, bloggers, DJs across any market\n- **Draft pitches** — emails that actually get opened and replied to\n- **Plan campaigns** — timelines, budgets, release strategies\n\nTry again in a moment!";
+            }
+            if (lower.includes('what can you do') || lower.includes('help') || lower.includes('what do you do') || lower.includes('your capabilities')) {
+                return "I'm **Visio** — an elite PR strategist powered by AI. I find playlist curators, draft pitch emails, plan campaigns, and help artists break through.\n\nI'm experiencing a temporary connection issue right now, but here's a taste of what I do:\n\n1. **Lead Generation** — Find 50+ curators, journalists, bloggers in any market\n2. **Content Creation** — Pitch emails, press releases, social media packs\n3. **Strategy** — Campaign timelines, budget breakdowns, release plans\n4. **Industry Knowledge** — DSP algorithms, editorial playlists, PR best practices\n\nPlease try again in a moment — I should be back online shortly!";
+            }
+        }
+
+        return userMessage;
     }
 }
 
@@ -309,11 +386,13 @@ Be warm, sharp, and strategic. Use "we" language.`;
             }],
         });
 
-        const text = response.content[0].type === 'text' ? response.content[0].text : '';
+        const firstBlock = response.content?.[0];
+        const text = firstBlock && firstBlock.type === 'text' ? firstBlock.text : '';
         return text.trim() || `Found ${searchResults.length} results. Check the contacts below!`;
 
     } catch (error: any) {
-        console.error('Search synthesis error:', error?.message || error);
+        const { type } = categorizeApiError(error);
+        console.error(`Search synthesis error [${type}]:`, error?.message || error);
         return `Found ${searchResults.length} potential contacts. Check the results below — want me to draft a pitch to any of them?`;
     }
 }
