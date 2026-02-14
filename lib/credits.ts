@@ -69,6 +69,8 @@ export async function getUserCredits(userId: string): Promise<number> {
 
 /**
  * Deducts credits from a user's balance and logs the transaction.
+ * Uses a conditional update (gte guard) to prevent race conditions where
+ * two concurrent requests could both read the same balance and both succeed.
  * Returns true if the deduction succeeded, false if insufficient credits or error.
  */
 export async function deductCredits(
@@ -80,7 +82,7 @@ export async function deductCredits(
 
     const supabase = createSupabaseAdminClient();
 
-    // Fetch current balance
+    // Read current balance to compute new values
     const { data: profile, error: fetchError } = await supabase
         .from('profiles')
         .select('credits_balance, credits_used')
@@ -98,17 +100,27 @@ export async function deductCredits(
         return false;
     }
 
-    // Decrement balance and increment used
-    const { error: updateError } = await supabase
+    // Atomic conditional update: gte guard ensures the row is only updated
+    // when credits_balance is still >= amount, preventing double-spend from
+    // concurrent requests that read the same balance.
+    const { data: updated, error: updateError } = await supabase
         .from('profiles')
         .update({
             credits_balance: currentBalance - amount,
             credits_used: (profile.credits_used ?? 0) + amount,
         })
-        .eq('id', userId);
+        .eq('id', userId)
+        .gte('credits_balance', amount)
+        .select('id');
 
     if (updateError) {
         console.error('deductCredits update error:', updateError);
+        return false;
+    }
+
+    // If no rows matched the gte guard, a concurrent request already spent the credits
+    if (!updated || updated.length === 0) {
+        console.warn(`deductCredits: concurrent deduction detected for user ${userId}, retrying balance check`);
         return false;
     }
 

@@ -170,14 +170,21 @@ export function extractPhoneNumbers(text: string): string[] {
  * Fetch and scrape a URL for contact information.
  * Uses cheerio (no headless browser) — works on Vercel.
  */
-export async function scrapeContactsFromUrl(url: string): Promise<ScrapeResult> {
+export async function scrapeContactsFromUrl(url: string, _redirectDepth: number = 0): Promise<ScrapeResult> {
     try {
+        if (_redirectDepth > 3) {
+            return { contacts: [], emails: [], socialLinks: emptySocialLinks(), rawText: '', success: false, error: 'Too many redirects' };
+        }
+
         if (!isUrlSafeForSsrf(url)) {
             return { contacts: [], emails: [], socialLinks: emptySocialLinks(), rawText: '', success: false, error: 'URL blocked: private/internal addresses are not allowed' };
         }
 
         console.log(`[Scraper] Scraping ${url}...`);
 
+        // Use manual redirect handling to validate each redirect target against SSRF rules.
+        // Without this, an attacker could provide a public URL that 302-redirects to an
+        // internal IP (e.g. cloud metadata endpoint), bypassing the initial URL check.
         const response = await fetch(url, {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -185,7 +192,22 @@ export async function scrapeContactsFromUrl(url: string): Promise<ScrapeResult> 
                 'Accept-Language': 'en-US,en;q=0.5',
             },
             signal: AbortSignal.timeout(10000),
+            redirect: 'manual',
         });
+
+        // Follow redirects manually with SSRF validation (max 3 hops)
+        if (response.status >= 300 && response.status < 400) {
+            const redirectUrl = response.headers.get('location');
+            if (!redirectUrl) {
+                return { contacts: [], emails: [], socialLinks: emptySocialLinks(), rawText: '', success: false, error: 'Redirect without Location header' };
+            }
+            const absoluteRedirect = new URL(redirectUrl, url).toString();
+            if (!isUrlSafeForSsrf(absoluteRedirect)) {
+                return { contacts: [], emails: [], socialLinks: emptySocialLinks(), rawText: '', success: false, error: 'Redirect blocked: target is a private/internal address' };
+            }
+            // Recurse with the validated redirect URL (scrapeContactsFromUrl checks SSRF again)
+            return scrapeContactsFromUrl(absoluteRedirect, _redirectDepth + 1);
+        }
 
         if (!response.ok) {
             return { contacts: [], emails: [], socialLinks: emptySocialLinks(), rawText: '', success: false, error: `HTTP ${response.status}` };

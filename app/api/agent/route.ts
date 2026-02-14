@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { parseIntent, ParsedIntent, createGeminiClient } from '@/lib/gemini';
-import { classifyIntent, generateChatResponse, generateWithSearchResults, IntentResult, hasClaudeKey } from '@/lib/claude';
+import { classifyIntent, generateChatResponse, generateWithSearchResults, extractPortalData, IntentResult, hasClaudeKey } from '@/lib/claude';
 import { getLeadsByCountry, filterLeads, getDatabaseSummary, DBLead, FilterOptions } from '@/lib/db';
 import { performSmartSearch, performLeadSearch } from '@/lib/search';
 import { getContextPack } from '@/lib/god-mode';
@@ -327,10 +327,8 @@ export async function POST(request: NextRequest) {
 
             if (hasClaude) {
                 // ═══ CLAUDE-POWERED TWO-STAGE ARCHITECTURE ═══
-                // Diagnostic: log key source for debugging (never log full key)
                 const keySource = process.env.AI_GATEWAY_API_KEY ? 'AI Gateway' : 'Direct Anthropic';
-                const keyPrefix = (process.env.AI_GATEWAY_API_KEY || process.env.ANTHROPIC_API_KEY)?.slice(0, 12) || 'NOT_SET';
-                console.log(`[V-Prai] Claude via ${keySource}: ${keyPrefix}..., tier: ${validatedTier}, user: ${auth.user.email || auth.user.id}`);
+                console.log(`[V-Prai] Claude via ${keySource}, tier: ${validatedTier}, user: ${auth.user.id}`);
 
                 // Stage 1: Classify intent (fast, cheap, deterministic)
                 logs.push('🧠 V-Prai is thinking...');
@@ -344,29 +342,28 @@ export async function POST(request: NextRequest) {
                 logs.push(`📋 Intent: ${intentResult.category} (${Math.round((intentResult.confidence || 0) * 100)}%)`);
 
                 // ═══ AUTOMATION BANK CHECK ═══
-                // Before dispatching to normal intent handlers, check if this triggers a pre-built automation
-                const automationResult = await detectAndExecuteAutomation(userMessage, {
-                    userMessage,
-                    query: intentResult.searchQuery,
-                    country: normalizeCountry(intentResult.filters?.country || artistContext?.location?.country),
-                    genre: artistContext?.identity?.genre,
-                    artistContext,
-                    conversationHistory
-                });
+                // Check if this message matches an automation trigger pattern.
+                // Credit check FIRST, then execute — avoids burning API calls when user can't pay.
+                const automationMatch = (() => {
+                    const lower = userMessage.toLowerCase();
+                    for (const skill of Object.values(
+                        require('@/lib/automation-bank').AUTOMATION_REGISTRY
+                    ) as { id: string; triggerPatterns: string[]; creditCost: number; name: string }[]) {
+                        if (skill.triggerPatterns.some((p: string) => lower.includes(p.toLowerCase()))) {
+                            return skill;
+                        }
+                    }
+                    return null;
+                })();
 
-                // If automation was triggered, check credits and use its result
-                if (automationResult) {
-                    const automationCost = automationResult.data?.automationUsed
-                        ? getCreditCost(automationResult.data.automationUsed)
-                        : 3; // Default automation cost
+                if (automationMatch) {
+                    const automationCost = getCreditCost(automationMatch.id) || automationMatch.creditCost || 3;
 
-                    logs.push(`🤖 Automation triggered: ${automationResult.data?.automationName || 'Unknown'}`);
-
-                    // Credit check for automation
+                    // Credit check BEFORE execution
                     if (automationCost > 0 && !isAdminUser(auth.user)) {
                         const balance = await getUserCredits(auth.user.id);
                         if (balance < automationCost) {
-                            logs.push(`💳 Insufficient credits (need ${automationCost}, have ${balance})`);
+                            logs.push(`💳 Insufficient credits for ${automationMatch.name} (need ${automationCost}, have ${balance})`);
                             return NextResponse.json({
                                 message: `This automation requires ${automationCost} credit${automationCost > 1 ? 's' : ''}, but you have ${balance}. Upgrade your plan for more credits!`,
                                 leads: [],
@@ -374,31 +371,42 @@ export async function POST(request: NextRequest) {
                                 toolsUsed: [],
                                 suggestedNextSteps: ['Upgrade your plan for more credits'],
                                 logs,
-                                intent: { action: 'clarify', filters: {}, message: automationResult.summary }
+                                intent: { action: 'clarify', filters: {}, message: `Insufficient credits for ${automationMatch.name}` }
                             });
                         }
-                        // Deduct credits
-                        await deductCredits(auth.user.id, automationCost, `automation: ${automationResult.data.automationName}`);
+                        // Deduct credits before executing the automation
+                        await deductCredits(auth.user.id, automationCost, `automation: ${automationMatch.name}`);
                         logs.push(`💳 ${automationCost} credit${automationCost > 1 ? 's' : ''} used (${balance - automationCost} remaining)`);
                     }
 
-                    // Add automation logs
-                    logs.push(...automationResult.logs);
-
-                    // Return automation result
-                    return NextResponse.json({
-                        message: automationResult.summary,
-                        leads: [],
-                        webResults: [],
-                        toolsUsed: [automationResult.data.automationUsed || 'automation'],
-                        suggestedNextSteps: automationResult.suggestedNextSteps || [],
-                        logs,
-                        intent: { action: 'automation_executed', filters: {}, message: automationResult.summary },
-                        meta: {
-                            automation: automationResult.data.automationName,
-                            automationData: automationResult.data
-                        }
+                    // Now execute the automation (credits already secured)
+                    const automationResult = await detectAndExecuteAutomation(userMessage, {
+                        userMessage,
+                        query: intentResult.searchQuery,
+                        country: normalizeCountry(intentResult.filters?.country || artistContext?.location?.country),
+                        genre: artistContext?.identity?.genre,
+                        artistContext,
+                        conversationHistory
                     });
+
+                    if (automationResult) {
+                        logs.push(`🤖 Automation executed: ${automationMatch.name}`);
+                        logs.push(...automationResult.logs);
+
+                        return NextResponse.json({
+                            message: automationResult.summary,
+                            leads: [],
+                            webResults: [],
+                            toolsUsed: [automationResult.data?.automationUsed || 'automation'],
+                            suggestedNextSteps: automationResult.suggestedNextSteps || [],
+                            logs,
+                            intent: { action: 'automation_executed', filters: {}, message: automationResult.summary },
+                            meta: {
+                                automation: automationResult.data?.automationName,
+                                automationData: automationResult.data
+                            }
+                        });
+                    }
                 }
 
                 // Stage 2: Dispatch based on structured category
@@ -565,6 +573,93 @@ Format with markdown tables for top content, bullet points for insights. End wit
 
                         intent = { action: 'search', filters: {}, message: scrapeResponse };
                         suggestedNextSteps = ['Research another topic', 'Draft content based on these insights', 'Find contacts mentioned in the research'];
+                        break;
+                    }
+
+                    case 'portal_collection': {
+                        // BETA: V-Prai collects artist profile data from conversation
+                        logs.push('📝 [BETA] Collecting artist portal data...');
+                        toolsUsed.push('portal_collection');
+
+                        const extractionResult = await extractPortalData(
+                            userMessage,
+                            conversationHistory,
+                            artistContext,
+                        );
+
+                        if (extractionResult && extractionResult.profileUpdates) {
+                            // Save profile updates to Supabase
+                            const updates = extractionResult.profileUpdates;
+                            const nonNullUpdates = Object.fromEntries(
+                                Object.entries(updates).filter(([, v]) => v !== null && v !== undefined)
+                            );
+
+                            if (Object.keys(nonNullUpdates).length > 0) {
+                                try {
+                                    const supabaseRls = auth.accessToken ? createRlsSupabaseClient(auth.accessToken) : null;
+                                    if (supabaseRls) {
+                                        // Build the profile update object
+                                        const profilePatch: Record<string, any> = {};
+                                        if (nonNullUpdates.name) profilePatch.artist_name = nonNullUpdates.name;
+                                        if (nonNullUpdates.genre) profilePatch.genre = nonNullUpdates.genre;
+                                        if (nonNullUpdates.description) profilePatch.description = nonNullUpdates.description;
+                                        if (nonNullUpdates.city || nonNullUpdates.country) {
+                                            profilePatch.location = JSON.stringify({
+                                                city: nonNullUpdates.city || artistContext?.location?.city || '',
+                                                country: nonNullUpdates.country || artistContext?.location?.country || '',
+                                            });
+                                        }
+                                        if (nonNullUpdates.promotionalFocus) profilePatch.promotional_focus = nonNullUpdates.promotionalFocus;
+
+                                        // Build socials object
+                                        const socialsUpdate: Record<string, string> = {};
+                                        if (nonNullUpdates.instagram) socialsUpdate.instagram = nonNullUpdates.instagram;
+                                        if (nonNullUpdates.tiktok) socialsUpdate.tiktok = nonNullUpdates.tiktok;
+                                        if (nonNullUpdates.twitter) socialsUpdate.twitter = nonNullUpdates.twitter;
+                                        if (nonNullUpdates.youtube) socialsUpdate.youtube = nonNullUpdates.youtube;
+                                        if (nonNullUpdates.spotify) socialsUpdate.website = nonNullUpdates.spotify;
+                                        if (nonNullUpdates.website) socialsUpdate.website = nonNullUpdates.website;
+                                        if (Object.keys(socialsUpdate).length > 0) {
+                                            profilePatch.socials = JSON.stringify(socialsUpdate);
+                                        }
+
+                                        // Build metadata for extended fields
+                                        const metadata: Record<string, any> = {};
+                                        if (nonNullUpdates.instagramFollowers) metadata.instagramFollowers = nonNullUpdates.instagramFollowers;
+                                        if (nonNullUpdates.monthlyListeners) metadata.monthlyListeners = nonNullUpdates.monthlyListeners;
+                                        if (nonNullUpdates.similarArtists) metadata.similarArtists = nonNullUpdates.similarArtists;
+                                        if (nonNullUpdates.careerHighlights) metadata.careerHighlights = nonNullUpdates.careerHighlights;
+                                        if (nonNullUpdates.desiredCommunities) metadata.desiredCommunities = nonNullUpdates.desiredCommunities;
+                                        if (nonNullUpdates.primaryGoal) metadata.primaryGoal = nonNullUpdates.primaryGoal;
+                                        if (Object.keys(metadata).length > 0) {
+                                            profilePatch.metadata = JSON.stringify(metadata);
+                                        }
+
+                                        if (Object.keys(profilePatch).length > 0) {
+                                            await supabaseRls
+                                                .from('profiles')
+                                                .update(profilePatch)
+                                                .eq('id', auth.user.id);
+                                            logs.push(`✅ Updated ${Object.keys(nonNullUpdates).length} profile fields`);
+                                        }
+                                    }
+                                } catch (e) {
+                                    console.error('Portal collection save error:', e);
+                                    logs.push('⚠️ Could not save profile data');
+                                }
+                            }
+
+                            intent = { action: 'clarify', filters: {}, message: extractionResult.response };
+                        } else {
+                            // Fallback to regular conversation
+                            const fallbackResponse = await generateChatResponse(
+                                userMessage, conversationHistory, artistContext,
+                                validatedTier as 'instant' | 'business' | 'enterprise',
+                                knowledgeContext
+                            );
+                            intent = { action: 'clarify', filters: {}, message: fallbackResponse };
+                        }
+                        suggestedNextSteps = ['Tell me more about your music', 'Share your social media links', 'Start searching for contacts'];
                         break;
                     }
 

@@ -14,7 +14,33 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Credit check
+        // Parse and validate body BEFORE credit deduction to avoid charging for invalid requests
+        const body = await request.json();
+        const {
+            query,
+            platforms: rawPlatforms = ['youtube', 'tiktok', 'twitter'],
+            maxResults: rawMaxResults = 10,
+            sortBy = 'engagement',
+            userMessage = '',
+            conversationHistory = [],
+        } = body;
+
+        if (!query || typeof query !== 'string' || query.trim().length === 0) {
+            return NextResponse.json({ error: 'Query required' }, { status: 400 });
+        }
+
+        // Validate and sanitize platforms
+        const VALID_PLATFORMS = ['youtube', 'tiktok', 'twitter', 'instagram'] as const;
+        const platforms = (Array.isArray(rawPlatforms) ? rawPlatforms : ['youtube', 'tiktok', 'twitter'])
+            .filter((p: string) => VALID_PLATFORMS.includes(p as any));
+        if (platforms.length === 0) {
+            return NextResponse.json({ error: 'At least one valid platform required (youtube, tiktok, twitter)' }, { status: 400 });
+        }
+
+        // Clamp maxResults to a safe range
+        const maxResults = Math.min(Math.max(1, Number(rawMaxResults) || 10), 50);
+
+        // Credit check (after validation so credits aren't lost on bad input)
         if (!isAdminUser(auth.user)) {
             const credits = await getUserCredits(auth.user.id);
             if (credits < SMART_SCRAPE_COST) {
@@ -32,27 +58,13 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        const body = await request.json();
-        const {
-            query,
-            platforms = ['youtube', 'tiktok', 'twitter'],
-            maxResults = 10,
-            sortBy = 'engagement',
-            userMessage = '',
-            conversationHistory = [],
-        } = body;
-
-        if (!query) {
-            return NextResponse.json({ error: 'Query required' }, { status: 400 });
-        }
-
         // Perform the scrape
         const scrapeResults = await performSmartScrape({
-            query,
+            query: query.trim(),
             platforms,
             maxResults,
             sortBy,
-        } as SmartScrapeRequest);
+        });
 
         const totalResults = scrapeResults.reduce((sum, r) => sum + r.totalFound, 0);
 
