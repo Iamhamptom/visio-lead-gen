@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/api-auth';
+import { PLAN_CREDITS } from '@/lib/credits';
+import { SubscriptionTier } from '@/app/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,10 +33,16 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: `Invalid status: ${String(status)}` }, { status: 400 });
         }
 
-        // 4. Update Profile
+        // 4. Update Profile with credits allocation for the new tier
+        const allocation = PLAN_CREDITS[tier as SubscriptionTier];
+        const newCredits = allocation === Infinity ? 99999 : allocation;
+
         const updates: any = {
             subscription_tier: tier,
             subscription_status: status || 'active',
+            credits_balance: newCredits,
+            credits_used: 0,
+            credits_reset_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
             updated_at: new Date().toISOString()
         };
 

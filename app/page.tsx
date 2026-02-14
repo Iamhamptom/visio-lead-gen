@@ -68,6 +68,8 @@ export default function Home() {
   const [isAdmin, setIsAdmin] = useState(false);
   const isRestricted = !isApproved && !isAdmin;
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [creditsBalance, setCreditsBalance] = useState<number | null>(null);
+  const [creditsAllocation, setCreditsAllocation] = useState<number | string | null>(null);
   const userId = user?.id;
 
   // Check admin status via server endpoint (avoids leaking admin emails in client bundle)
@@ -460,6 +462,23 @@ export default function Home() {
       initSubscription();
     }
   }, [user, authLoading]);
+
+  // Fetch credits from API
+  useEffect(() => {
+    if (!user || authLoading || !session?.access_token) return;
+    let cancelled = false;
+    fetch('/api/user/credits', {
+      headers: { Authorization: `Bearer ${session.access_token}` }
+    })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (cancelled || !data) return;
+        setCreditsBalance(data.balance ?? 0);
+        setCreditsAllocation(data.monthlyAllocation ?? 0);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [user, authLoading, session?.access_token, subscription.tier]);
 
   // Load campaign folders from Supabase on auth
   useEffect(() => {
@@ -1294,6 +1313,8 @@ export default function Home() {
             artistProfile={artistProfile}
             isRestricted={isRestricted}
             isAdmin={isAdmin}
+            creditsBalance={creditsBalance}
+            creditsAllocation={creditsAllocation}
           />
 
           {/* Mobile Sidebar Overlay Backdrop - Fixed z-index */}
@@ -1362,6 +1383,9 @@ export default function Home() {
                     setActiveSessionId(sessionId);
                     navigateTo('dashboard');
                   }}
+                  subscription={effectiveSubscription}
+                  creditsBalance={creditsBalance}
+                  creditsAllocation={creditsAllocation}
                 />
               </div>
             ) : currentView === 'dashboard' ? (
@@ -1490,6 +1514,8 @@ export default function Home() {
                     artistContextEnabled={artistContextEnabled}
                     onToggleArtistContext={() => setArtistContextEnabled(prev => !prev)}
                     isRestricted={isRestricted}
+                    subscriptionTier={effectiveSubscription.tier}
+                    creditsBalance={creditsBalance}
                   />
                 </div>
               </>
