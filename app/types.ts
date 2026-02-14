@@ -73,6 +73,29 @@ export interface Lead {
     snippet?: string;
     source?: string;
     followers?: string;
+    country?: string;
+}
+
+// ─── Strategy Brief (auto-generated from conversation context) ───
+export interface StrategyBrief {
+    sessionId: string;
+    summary: string;
+    targetAudience: string;
+    objective: string;
+    pitchAngle: string;
+    country?: string;
+    generatedAt: number;
+}
+
+// ─── Lead List (leads grouped by session with strategy context) ───
+export interface LeadList {
+    id: string;
+    sessionId: string;
+    title: string;
+    brief: StrategyBrief | null;
+    leads: Lead[];
+    country?: string;
+    createdAt: number;
 }
 
 export interface Message {

@@ -18,7 +18,7 @@ import ReasonPage from './reason/page';
 import ReachPage from './reach/page';
 import { Toast } from './components/Toast';
 import { ToolsPanel } from './components/ToolsPanel';
-import { Message, Role, Campaign, ViewMode, Lead, Session, ArtistProfile, Subscription, SubscriptionTier, AgentMode, ToolId } from './types';
+import { Message, Role, Campaign, ViewMode, Lead, Session, ArtistProfile, Subscription, SubscriptionTier, AgentMode, ToolId, LeadList, StrategyBrief } from './types';
 import { AITier } from './components/Composer';
 import { Menu, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import { BackgroundBeams } from './components/ui/background-beams';
@@ -34,8 +34,12 @@ import {
   loadSessions,
   deleteSession,
   loadSubscription,
-  updateSubscription
+  updateSubscription,
+  saveLeads,
+  loadStrategyBriefs,
+  saveStrategyBrief
 } from '@/lib/data-service';
+import { generateLeadListCSV, downloadCSV } from '@/lib/csv-export';
 
 // Default Campaigns (Folders) - Users create their own
 const DEFAULT_CAMPAIGNS: Campaign[] = [];
@@ -88,6 +92,7 @@ export default function Home() {
   // Initialize sessions list
   const [sessions, setSessions] = useState<Session[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string>('');
+  const [strategyBriefs, setStrategyBriefs] = useState<Map<string, StrategyBrief>>(new Map());
   const [subscription, setSubscription] = useState<Subscription>({
     tier: 'artist',
     status: 'active',
@@ -483,7 +488,8 @@ export default function Home() {
         return;
       }
 
-      const loadedSessions = await loadSessions();
+      const [loadedSessions, briefs] = await Promise.all([loadSessions(), loadStrategyBriefs()]);
+      if (briefs.size > 0) setStrategyBriefs(briefs);
       const merged = mergeSessions(cached, loadedSessions || []);
       if (merged.length > 0) {
         setSessions(merged);
@@ -923,6 +929,23 @@ export default function Home() {
       updatedSessions[activeSessionIndex] = finalSession;
       setSessions([...updatedSessions]);
 
+      // Generate strategy brief if leads were returned
+      if (data.leads && data.leads.length > 0) {
+        fetch('/api/generate-brief', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId: finalSession.id, messages: finalSession.messages.slice(-20).map(m => ({ role: m.role, content: m.content })) })
+        })
+          .then(r => r.json())
+          .then(brief => {
+            if (brief && brief.summary) {
+              setStrategyBriefs(prev => new Map(prev).set(finalSession.id, brief));
+              saveStrategyBrief(brief).catch(() => { });
+            }
+          })
+          .catch(() => { });
+      }
+
     } catch (error: any) {
       console.error("Agent Error:", error);
       const finalMessages = sessionWithThinking.messages.map(msg => {
@@ -940,11 +963,27 @@ export default function Home() {
     }
   };
 
-  const handleSaveLead = (lead: Lead) => {
-    // Find current session and update message with 'saved' status...
-    // Actually we just need to ensure it's in our lead database.
-    // For now, toast.
-    setToastMessage(`Saved lead: ${lead.name}`);
+  const handleSaveLead = async (lead: Lead) => {
+    try {
+      const success = await saveLeads([{
+        id: lead.id,
+        name: lead.name,
+        email: lead.email,
+        company: lead.company,
+        title: lead.title,
+        source: lead.source,
+        metadata: {
+          matchScore: lead.matchScore,
+          followers: lead.followers,
+          country: lead.country,
+          socials: lead.socials,
+          snippet: lead.snippet,
+        }
+      }]);
+      setToastMessage(success ? `Saved lead: ${lead.name}` : 'Failed to save lead');
+    } catch {
+      setToastMessage('Failed to save lead');
+    }
   };
 
   const handleUpgrade = (tier: SubscriptionTier) => {
@@ -957,33 +996,43 @@ export default function Home() {
 
   // --- Derived Data ---
 
-  const allLeads = useMemo(() => {
-    const leads: Lead[] = [];
+  const leadLists: LeadList[] = useMemo(() => {
+    const lists: LeadList[] = [];
     sessions.forEach(session => {
+      const sessionLeads: Lead[] = [];
       session.messages.forEach(msg => {
-        // Check for direct leads array (from backend)
         if (msg.leads && msg.leads.length > 0) {
-          leads.push(...msg.leads);
+          sessionLeads.push(...msg.leads);
         }
-
-        // Legacy/Skin parsing for embedded JSON blocks
         const jsonBlockRegex = /```json\s*([\s\S]*?)\s*```/;
         const match = msg.content.match(jsonBlockRegex);
         if (match && match[1]) {
           try {
             const parsed = JSON.parse(match[1]);
-            // Only add if not already added via leads array
             if (!msg.leads || msg.leads.length === 0) {
-              leads.push(...parsed);
+              sessionLeads.push(...parsed);
             }
-          } catch (e) { }
+          } catch { }
         }
       });
+      if (sessionLeads.length > 0) {
+        const unique = new Map<string, Lead>();
+        sessionLeads.forEach(l => unique.set(l.id || l.name, l));
+        lists.push({
+          id: session.id,
+          sessionId: session.id,
+          title: session.title,
+          brief: strategyBriefs.get(session.id) || null,
+          leads: Array.from(unique.values()),
+          country: strategyBriefs.get(session.id)?.country || undefined,
+          createdAt: session.lastUpdated,
+        });
+      }
     });
-    const unique = new Map();
-    leads.forEach(l => unique.set(l.id, l));
-    return Array.from(unique.values());
-  }, [sessions]);
+    return lists.sort((a, b) => b.createdAt - a.createdAt);
+  }, [sessions, strategyBriefs]);
+
+  const allLeads = useMemo(() => leadLists.flatMap(ll => ll.leads), [leadLists]);
 
   const activeMessages = sessions.find(s => s.id === activeSessionId)?.messages || [];
   const lastActiveMessageId = activeMessages[activeMessages.length - 1]?.id;
@@ -1142,7 +1191,18 @@ export default function Home() {
                   stats={{
                     leads: allLeads.length,
                     actions: sessions.reduce((acc, s) => acc + s.messages.length, 0),
-                    campaigns: 0 // Placeholder until campaigns are fully implemented
+                    campaigns: leadLists.length
+                  }}
+                  leadLists={leadLists}
+                  onExportLeadList={(list) => {
+                    const csv = generateLeadListCSV(list);
+                    const filename = `visio-leads-${list.title.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().split('T')[0]}.csv`;
+                    downloadCSV(csv, filename);
+                    setToastMessage(`Exported ${list.leads.length} leads to CSV`);
+                  }}
+                  onOpenSession={(sessionId) => {
+                    setActiveSessionId(sessionId);
+                    navigateTo('dashboard');
                   }}
                 />
               </div>

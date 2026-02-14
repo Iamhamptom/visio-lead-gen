@@ -239,6 +239,16 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSaveLead })
                                             <LeadCard lead={lead} onSave={onSaveLead} />
                                         </div>
                                     ))}
+                                    {parsedContent.leads.length > 1 && onSaveLead && (
+                                        <div className="flex justify-center mt-3">
+                                            <button
+                                                onClick={() => parsedContent.leads.forEach(lead => onSaveLead(lead))}
+                                                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-visio-teal/10 border border-visio-teal/20 text-visio-teal text-xs font-medium hover:bg-visio-teal/20 transition-colors"
+                                            >
+                                                Save All {parsedContent.leads.length} Leads
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
