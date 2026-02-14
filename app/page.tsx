@@ -14,6 +14,7 @@ import { Billing } from './components/Billing';
 import { DashboardOverview } from './components/DashboardOverview';
 import { OnboardingTutorial } from './components/OnboardingTutorial';
 import { HowToUsePage } from './components/HowToUsePage';
+import { Marketplace } from './components/Marketplace';
 import ReasonPage from './reason/page';
 import ReachPage from './reach/page';
 import { Toast } from './components/Toast';
@@ -335,6 +336,7 @@ export default function Home() {
       else if (path === '/reach') targetView = 'reach';
       else if (path === '/pending') targetView = 'pending';
       else if (path === '/help') targetView = 'help';
+      else if (path === '/marketplace') targetView = 'marketplace';
       else if (path === '/landing') targetView = 'landing';
 
       // 2. Auth Guards
@@ -1542,6 +1544,11 @@ export default function Home() {
                 onBack={() => navigateTo('overview')}
                 onNavigateHome={() => navigateTo('overview')}
                 onLogout={handleLogout}
+              />
+            ) : currentView === 'marketplace' ? (
+              <Marketplace
+                onNewChat={handleNewChat}
+                subscriptionTier={effectiveSubscription.tier}
               />
             ) : currentView === 'help' ? (
               <HowToUsePage

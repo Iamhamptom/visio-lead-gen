@@ -10,6 +10,7 @@ export type ViewMode =
     | 'overview' // New Dashboard Overview
     | 'dashboard' // Chat Interface
     | 'leads'
+    | 'marketplace' // Marketplace - Browse pages & contacts
     | 'billing'
     | 'reason'
     | 'reach'
