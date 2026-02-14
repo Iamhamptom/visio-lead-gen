@@ -140,7 +140,7 @@ export function extractSocialLinks(text: string): SocialLinks {
     };
 
     for (const [platform, regex] of Object.entries(SOCIAL_PATTERNS) as [keyof SocialLinks, RegExp][]) {
-        let matches = text.match(regex) || [];
+        let matches: string[] = Array.from(text.match(regex) || []);
         // Filter out common non-profile Twitter/X paths
         if (platform === 'twitter') {
             matches = matches.filter(url => {
