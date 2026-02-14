@@ -91,6 +91,7 @@ export type IntentCategory =
     | 'smart_scrape'
     | 'content_creation'
     | 'strategy'
+    | 'portal_collection'
     | 'clarify';
 
 export interface IntentResult {
@@ -119,6 +120,7 @@ Categories:
 - "smart_scrape": user wants to research what's working on social media — e.g. "what's trending on TikTok for amapiano?", "show me viral music marketing videos", "research what pitches are working on YouTube", "find me the best PR advice on social media", "what are people saying about album rollouts on Twitter?"
 - "content_creation": requests to draft/write a pitch email, press release, social media pack, email sequence, EPK copy, bio
 - "strategy": campaign plan, budget breakdown, market analysis, release strategy, rollout plan, growth strategy
+- "portal_collection": user is sharing personal/artist info for their profile — e.g. "I'm an amapiano artist from Johannesburg", "my name is...", "I make hip-hop", "my Instagram is @...", "I have 50k followers", "my goal is to get playlisted", "I'm based in Cape Town"
 - "clarify": user's request is too vague to classify — need more information
 
 CRITICAL RULES:
@@ -133,6 +135,7 @@ CRITICAL RULES:
 9. "Draft a pitch to..." → "content_creation"
 10. "Plan my album rollout" → "strategy"
 11. "What's working on TikTok?" / "Research viral music content" / "Find best PR advice videos" → "smart_scrape"
+12. "I'm an amapiano artist from Joburg" / "My name is Tony, I make hip-hop" / "My Instagram is @tony" / "I have 100k streams" → "portal_collection"
 
 Also extract:
 - "searchQuery": optimized search query IF lead_generation/deep_search/web_search (include genre+country+type for leads)
@@ -483,6 +486,101 @@ Be warm, sharp, and strategic. Use "we" language.`;
         const { type } = categorizeApiError(error);
         console.error(`Search synthesis error [${type}]:`, error?.message || error);
         return `Found ${searchResults.length} potential contacts. Check the results below — want me to draft a pitch to any of them?`;
+    }
+}
+
+// ─── Portal Data Extraction (BETA) ─────────────────────
+
+/**
+ * Extracts artist profile data from a conversation where the user
+ * shares info about themselves. V-Prai collects this and updates
+ * the Artist Portal automatically.
+ */
+export async function extractPortalData(
+    message: string,
+    history: { role: string; content: string }[] = [],
+    existingContext: ContextPack | null = null,
+): Promise<{ profileUpdates: Record<string, any>; response: string } | null> {
+    try {
+        const client = getClient();
+
+        const recentHistory = history.slice(-8).map(m =>
+            `${m.role === 'user' ? 'User' : 'V-Prai'}: ${m.content.slice(0, 300)}`
+        ).join('\n');
+
+        const existingData = existingContext ? JSON.stringify({
+            name: existingContext.identity.name,
+            genre: existingContext.identity.genre,
+            city: existingContext.location.city,
+            country: existingContext.location.country,
+            goals: existingContext.campaign.goals,
+        }) : '{}';
+
+        const systemPrompt = `You are V-Prai's data extraction module. The user is sharing personal/artist information through conversation.
+
+Your job:
+1. Extract structured profile data from what the user shared
+2. Generate a friendly confirmation response acknowledging the data and asking for more
+3. ONLY extract data the user explicitly stated — never guess or fabricate
+
+Existing profile data: ${existingData}
+
+Return ONLY valid JSON (no markdown, no code fences):
+{
+  "profileUpdates": {
+    "name": "string or null (artist/stage name)",
+    "genre": "string or null (primary genre)",
+    "description": "string or null (short bio from what they said)",
+    "city": "string or null",
+    "country": "string or null",
+    "instagram": "string or null (@handle)",
+    "tiktok": "string or null (@handle)",
+    "twitter": "string or null (@handle)",
+    "youtube": "string or null",
+    "spotify": "string or null (link)",
+    "website": "string or null",
+    "instagramFollowers": "number or null",
+    "monthlyListeners": "number or null",
+    "promotionalFocus": "Streaming|Live Events|Brand Deals|Press or null",
+    "primaryGoal": "grow_streams|get_signed|book_shows|brand_deals|press_coverage or null",
+    "similarArtists": ["array of strings or null"],
+    "careerHighlights": ["array of strings or null"],
+    "desiredCommunities": ["array of strings or null"]
+  },
+  "response": "Your friendly V-Prai response acknowledging the data, summarizing what you now know, and asking about what's still missing. Use the BETA tag: [BETA: Artist Portal Auto-Collect]. Be warm and encouraging."
+}
+
+Rules:
+- Set fields to null if not mentioned
+- Only update fields that the user explicitly mentioned in this message or recent conversation
+- Keep existing data — only ADD or UPDATE, never clear existing fields
+- If you can't determine a field with certainty, leave it null
+- The response should feel natural and conversational, not robotic`;
+
+        const response = await client.messages.create({
+            model: getModel('instant'),
+            max_tokens: 1024,
+            system: systemPrompt,
+            messages: [{
+                role: 'user',
+                content: `${recentHistory ? `Recent conversation:\n${recentHistory}\n\n` : ''}Latest message from user: ${message}`
+            }],
+        });
+
+        const firstBlock = response.content?.[0];
+        const text = firstBlock && firstBlock.type === 'text' ? firstBlock.text : '';
+        const cleaned = text.replace(/```json?\s*/g, '').replace(/```\s*/g, '').trim();
+
+        if (!cleaned) return null;
+
+        const parsed = JSON.parse(cleaned);
+        return {
+            profileUpdates: parsed.profileUpdates || {},
+            response: parsed.response || "Got it! I'm saving that to your profile.",
+        };
+    } catch (error: any) {
+        console.error('Portal data extraction error:', error?.message || error);
+        return null;
     }
 }
 

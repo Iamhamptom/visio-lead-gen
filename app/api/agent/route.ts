@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { parseIntent, ParsedIntent, createGeminiClient } from '@/lib/gemini';
-import { classifyIntent, generateChatResponse, generateWithSearchResults, IntentResult, hasClaudeKey } from '@/lib/claude';
+import { classifyIntent, generateChatResponse, generateWithSearchResults, extractPortalData, IntentResult, hasClaudeKey } from '@/lib/claude';
 import { getLeadsByCountry, filterLeads, getDatabaseSummary, DBLead, FilterOptions } from '@/lib/db';
 import { performSmartSearch, performLeadSearch } from '@/lib/search';
 import { getContextPack } from '@/lib/god-mode';
@@ -565,6 +565,93 @@ Format with markdown tables for top content, bullet points for insights. End wit
 
                         intent = { action: 'search', filters: {}, message: scrapeResponse };
                         suggestedNextSteps = ['Research another topic', 'Draft content based on these insights', 'Find contacts mentioned in the research'];
+                        break;
+                    }
+
+                    case 'portal_collection': {
+                        // BETA: V-Prai collects artist profile data from conversation
+                        logs.push('📝 [BETA] Collecting artist portal data...');
+                        toolsUsed.push('portal_collection');
+
+                        const extractionResult = await extractPortalData(
+                            userMessage,
+                            conversationHistory,
+                            artistContext,
+                        );
+
+                        if (extractionResult && extractionResult.profileUpdates) {
+                            // Save profile updates to Supabase
+                            const updates = extractionResult.profileUpdates;
+                            const nonNullUpdates = Object.fromEntries(
+                                Object.entries(updates).filter(([, v]) => v !== null && v !== undefined)
+                            );
+
+                            if (Object.keys(nonNullUpdates).length > 0) {
+                                try {
+                                    const supabaseRls = auth.accessToken ? createRlsSupabaseClient(auth.accessToken) : null;
+                                    if (supabaseRls) {
+                                        // Build the profile update object
+                                        const profilePatch: Record<string, any> = {};
+                                        if (nonNullUpdates.name) profilePatch.artist_name = nonNullUpdates.name;
+                                        if (nonNullUpdates.genre) profilePatch.genre = nonNullUpdates.genre;
+                                        if (nonNullUpdates.description) profilePatch.description = nonNullUpdates.description;
+                                        if (nonNullUpdates.city || nonNullUpdates.country) {
+                                            profilePatch.location = JSON.stringify({
+                                                city: nonNullUpdates.city || artistContext?.location?.city || '',
+                                                country: nonNullUpdates.country || artistContext?.location?.country || '',
+                                            });
+                                        }
+                                        if (nonNullUpdates.promotionalFocus) profilePatch.promotional_focus = nonNullUpdates.promotionalFocus;
+
+                                        // Build socials object
+                                        const socialsUpdate: Record<string, string> = {};
+                                        if (nonNullUpdates.instagram) socialsUpdate.instagram = nonNullUpdates.instagram;
+                                        if (nonNullUpdates.tiktok) socialsUpdate.tiktok = nonNullUpdates.tiktok;
+                                        if (nonNullUpdates.twitter) socialsUpdate.twitter = nonNullUpdates.twitter;
+                                        if (nonNullUpdates.youtube) socialsUpdate.youtube = nonNullUpdates.youtube;
+                                        if (nonNullUpdates.spotify) socialsUpdate.website = nonNullUpdates.spotify;
+                                        if (nonNullUpdates.website) socialsUpdate.website = nonNullUpdates.website;
+                                        if (Object.keys(socialsUpdate).length > 0) {
+                                            profilePatch.socials = JSON.stringify(socialsUpdate);
+                                        }
+
+                                        // Build metadata for extended fields
+                                        const metadata: Record<string, any> = {};
+                                        if (nonNullUpdates.instagramFollowers) metadata.instagramFollowers = nonNullUpdates.instagramFollowers;
+                                        if (nonNullUpdates.monthlyListeners) metadata.monthlyListeners = nonNullUpdates.monthlyListeners;
+                                        if (nonNullUpdates.similarArtists) metadata.similarArtists = nonNullUpdates.similarArtists;
+                                        if (nonNullUpdates.careerHighlights) metadata.careerHighlights = nonNullUpdates.careerHighlights;
+                                        if (nonNullUpdates.desiredCommunities) metadata.desiredCommunities = nonNullUpdates.desiredCommunities;
+                                        if (nonNullUpdates.primaryGoal) metadata.primaryGoal = nonNullUpdates.primaryGoal;
+                                        if (Object.keys(metadata).length > 0) {
+                                            profilePatch.metadata = JSON.stringify(metadata);
+                                        }
+
+                                        if (Object.keys(profilePatch).length > 0) {
+                                            await supabaseRls
+                                                .from('profiles')
+                                                .update(profilePatch)
+                                                .eq('id', auth.user.id);
+                                            logs.push(`✅ Updated ${Object.keys(nonNullUpdates).length} profile fields`);
+                                        }
+                                    }
+                                } catch (e) {
+                                    console.error('Portal collection save error:', e);
+                                    logs.push('⚠️ Could not save profile data');
+                                }
+                            }
+
+                            intent = { action: 'clarify', filters: {}, message: extractionResult.response };
+                        } else {
+                            // Fallback to regular conversation
+                            const fallbackResponse = await generateChatResponse(
+                                userMessage, conversationHistory, artistContext,
+                                validatedTier as 'instant' | 'business' | 'enterprise',
+                                knowledgeContext
+                            );
+                            intent = { action: 'clarify', filters: {}, message: fallbackResponse };
+                        }
+                        suggestedNextSteps = ['Tell me more about your music', 'Share your social media links', 'Start searching for contacts'];
                         break;
                     }
 
