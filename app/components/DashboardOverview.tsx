@@ -1,15 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-    TrendingUp,
     Briefcase,
     CheckCircle2,
-    ArrowRight,
     Plus,
-    Music,
-    Sparkles
+    Sparkles,
+    Users
 } from 'lucide-react';
-import { ArtistProfile } from '../types';
+import { ArtistProfile, LeadList } from '../types';
+import { LeadListCard } from './LeadListCard';
 
 interface DashboardOverviewProps {
     artistProfile: ArtistProfile | null;
@@ -20,15 +19,23 @@ interface DashboardOverviewProps {
         actions: number;
         campaigns: number;
     };
+    leadLists?: LeadList[];
+    onExportLeadList?: (list: LeadList) => void;
+    onOpenSession?: (sessionId: string) => void;
 }
 
 export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
     artistProfile,
     onNavigate,
     onNewChat,
-    stats = { leads: 0, actions: 0, campaigns: 0 }
+    stats = { leads: 0, actions: 0, campaigns: 0 },
+    leadLists = [],
+    onExportLeadList,
+    onOpenSession
 }) => {
-    // Real Stats
+    const [showAll, setShowAll] = useState(false);
+    const visibleLists = showAll ? leadLists : leadLists.slice(0, 5);
+
     const dashboardStats = [
         {
             label: "Total Leads",
@@ -47,12 +54,12 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             trend: "Messages & tasks"
         },
         {
-            label: "Campaigns",
+            label: "Lead Lists",
             value: stats.campaigns.toString(),
             icon: Briefcase,
             color: "text-blue-400",
             bg: "bg-blue-500/10",
-            trend: "Active projects"
+            trend: "From conversations"
         }
     ];
 
@@ -101,10 +108,8 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
             {/* Quick Actions */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Start Consult */}
                 <div className="bg-gradient-to-br from-white/5 to-transparent border border-white/5 rounded-2xl p-6 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-32 bg-visio-teal/5 blur-3xl rounded-full translate-x-10 -translate-y-10 group-hover:bg-visio-teal/10 transition-all duration-700" />
-
                     <div className="relative z-10 space-y-4">
                         <div className="w-12 h-12 rounded-xl bg-visio-teal/20 flex items-center justify-center text-visio-teal">
                             <Sparkles size={24} />
@@ -124,6 +129,53 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                         </div>
                     </div>
                 </div>
+            </div>
+
+            {/* Lead Lists */}
+            <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <Users size={20} className="text-visio-teal" />
+                        <h2 className="text-xl font-bold text-white">Your Lead Lists</h2>
+                        {leadLists.length > 0 && (
+                            <span className="text-xs bg-white/10 text-white/60 px-2 py-0.5 rounded-full">
+                                {leadLists.length}
+                            </span>
+                        )}
+                    </div>
+                    {leadLists.length > 5 && (
+                        <button
+                            onClick={() => setShowAll(!showAll)}
+                            className="text-sm text-visio-teal hover:text-visio-teal/80 transition-colors"
+                        >
+                            {showAll ? 'Show less' : `Show all (${leadLists.length})`}
+                        </button>
+                    )}
+                </div>
+
+                {leadLists.length === 0 ? (
+                    <div className="bg-white/5 border border-white/5 rounded-2xl p-8 text-center">
+                        <Users size={32} className="text-white/20 mx-auto mb-3" />
+                        <p className="text-white/40 text-sm">No leads yet. Start a conversation to generate leads.</p>
+                        <button
+                            onClick={onNewChat}
+                            className="mt-4 text-sm text-visio-teal hover:text-visio-teal/80 transition-colors"
+                        >
+                            Start a session
+                        </button>
+                    </div>
+                ) : (
+                    <div className="space-y-3">
+                        {visibleLists.map((list) => (
+                            <LeadListCard
+                                key={list.id}
+                                list={list}
+                                onExport={onExportLeadList || (() => { })}
+                                onOpenSession={onOpenSession || (() => { })}
+                            />
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );
