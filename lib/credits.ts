@@ -26,6 +26,14 @@ export const CREDIT_COSTS: Record<string, number> = {
 
     // Smart Scrape (social media research)
     smart_scrape: 3,
+
+    // Automation Bank Skills
+    viral_content_research: 3,
+    curator_discovery: 2,
+    deep_contact_enrichment: 5,
+    pr_trend_monitor: 3,
+    campaign_rollout_research: 3,
+    competitor_intelligence: 3,
 };
 
 /** Monthly credit allocation per subscription tier */

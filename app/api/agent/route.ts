@@ -10,6 +10,7 @@ import { performDeepSearch, searchApollo, searchLinkedInPipeline, getPipelineSta
 import { scrapeContactsFromUrl, scrapeMultipleUrls } from '@/lib/scraper';
 import { searchAllSocials, flattenSocialResults } from '@/lib/social-search';
 import { performSmartScrape, formatScrapeForContext } from '@/lib/smart-scrape';
+import { detectAndExecuteAutomation, listAvailableAutomations } from '@/lib/automation-bank';
 import { requireUser, isAdminUser } from '@/lib/api-auth';
 import { getUserCredits, deductCredits, getCreditCost } from '@/lib/credits';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
@@ -341,6 +342,64 @@ export async function POST(request: NextRequest) {
                 );
 
                 logs.push(`📋 Intent: ${intentResult.category} (${Math.round((intentResult.confidence || 0) * 100)}%)`);
+
+                // ═══ AUTOMATION BANK CHECK ═══
+                // Before dispatching to normal intent handlers, check if this triggers a pre-built automation
+                const automationResult = await detectAndExecuteAutomation(userMessage, {
+                    userMessage,
+                    query: intentResult.searchQuery,
+                    country: normalizeCountry(intentResult.filters?.country || artistContext?.location?.country),
+                    genre: artistContext?.identity?.genre,
+                    artistContext,
+                    conversationHistory
+                });
+
+                // If automation was triggered, check credits and use its result
+                if (automationResult) {
+                    const automationCost = automationResult.data?.automationUsed
+                        ? getCreditCost(automationResult.data.automationUsed)
+                        : 3; // Default automation cost
+
+                    logs.push(`🤖 Automation triggered: ${automationResult.data?.automationName || 'Unknown'}`);
+
+                    // Credit check for automation
+                    if (automationCost > 0 && !isAdminUser(auth.user)) {
+                        const balance = await getUserCredits(auth.user.id);
+                        if (balance < automationCost) {
+                            logs.push(`💳 Insufficient credits (need ${automationCost}, have ${balance})`);
+                            return NextResponse.json({
+                                message: `This automation requires ${automationCost} credit${automationCost > 1 ? 's' : ''}, but you have ${balance}. Upgrade your plan for more credits!`,
+                                leads: [],
+                                webResults: [],
+                                toolsUsed: [],
+                                suggestedNextSteps: ['Upgrade your plan for more credits'],
+                                logs,
+                                intent: { action: 'clarify', filters: {}, message: automationResult.summary }
+                            });
+                        }
+                        // Deduct credits
+                        await deductCredits(auth.user.id, automationCost, `automation: ${automationResult.data.automationName}`);
+                        logs.push(`💳 ${automationCost} credit${automationCost > 1 ? 's' : ''} used (${balance - automationCost} remaining)`);
+                    }
+
+                    // Add automation logs
+                    logs.push(...automationResult.logs);
+
+                    // Return automation result
+                    return NextResponse.json({
+                        message: automationResult.summary,
+                        leads: [],
+                        webResults: [],
+                        toolsUsed: [automationResult.data.automationUsed || 'automation'],
+                        suggestedNextSteps: automationResult.suggestedNextSteps || [],
+                        logs,
+                        intent: { action: 'automation_executed', filters: {}, message: automationResult.summary },
+                        meta: {
+                            automation: automationResult.data.automationName,
+                            automationData: automationResult.data
+                        }
+                    });
+                }
 
                 // Stage 2: Dispatch based on structured category
                 switch (intentResult.category) {
