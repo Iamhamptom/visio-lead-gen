@@ -642,15 +642,6 @@ export default function Home() {
     chatScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
-  const handleChatWheel = useCallback((event: React.WheelEvent) => {
-    const el = chatScrollRef.current;
-    if (!el) return;
-    if (el.scrollHeight <= el.clientHeight) return;
-    // Force the scroll on the chat container even if the wheel event hits the wrapper.
-    el.scrollTop += event.deltaY;
-    event.preventDefault();
-  }, []);
-
   // When switching sessions / entering the chat view, jump to the bottom.
   useEffect(() => {
     if (currentView !== 'dashboard') return;
@@ -1392,7 +1383,7 @@ export default function Home() {
               </div>
             ) : currentView === 'dashboard' ? (
               <>
-                <div className="flex-1 min-h-0 relative" onWheel={handleChatWheel}>
+                <div className="flex-1 min-h-0 relative">
                   <div
                     ref={chatScrollRef}
                     onScroll={handleChatScroll}

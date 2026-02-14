@@ -452,8 +452,62 @@ export async function POST(request: NextRequest) {
                         webResults = webLeads.map(r => ({ title: r.name, url: r.url, snippet: r.snippet, source: r.source, date: r.date }));
                         logs.push(`🌐 Found ${webLeads.length} web results`);
 
-                        // Claude synthesizes results
-                        const enrichedMsg = await generateWithSearchResults(userMessage, webLeads, validatedTier as any, artistContext);
+                        // Scrape top URLs for real contact data (emails, socials)
+                        const urlsToScrape = webLeads
+                            .filter(r => r.url && !r.url.includes('google.com') && !r.url.includes('youtube.com/watch'))
+                            .slice(0, 5)
+                            .map(r => r.url);
+
+                        if (urlsToScrape.length > 0) {
+                            logs.push(`🔍 Scraping ${urlsToScrape.length} pages for real contacts...`);
+                            const scrapeResult = await scrapeMultipleUrls(urlsToScrape, 3);
+                            if (scrapeResult.success) {
+                                const scrapedLeads: LeadResponse[] = scrapeResult.contacts
+                                    .filter(c => c.name || c.email)
+                                    .map((c, i) => ({
+                                        id: -(1000 + i),
+                                        name: c.name || c.email || 'Unknown',
+                                        company: c.company || '',
+                                        title: c.title || '',
+                                        email: c.email || '',
+                                        url: c.url || '',
+                                        snippet: c.source || 'Scraped Contact',
+                                        source: 'Verified (Scraped)',
+                                        instagram: c.instagram || '',
+                                        tiktok: c.tiktok || '',
+                                        twitter: c.twitter || '',
+                                        followers: '',
+                                        country,
+                                    }));
+                                if (scrapedLeads.length > 0) {
+                                    leads = [...leads, ...scrapedLeads];
+                                    logs.push(`✅ Scraped ${scrapedLeads.length} verified contacts + ${scrapeResult.emails.length} emails`);
+                                }
+                                // Add loose emails that weren't tied to a named contact
+                                const existingEmails = new Set(leads.map(l => l.email).filter(Boolean));
+                                for (const email of scrapeResult.emails) {
+                                    if (!existingEmails.has(email)) {
+                                        leads.push({
+                                            id: -(2000 + leads.length),
+                                            name: email.split('@')[0].replace(/[._-]/g, ' '),
+                                            email,
+                                            url: '',
+                                            snippet: 'Email found on page',
+                                            source: 'Verified (Scraped Email)',
+                                            country,
+                                        });
+                                        existingEmails.add(email);
+                                    }
+                                }
+                            }
+                        }
+
+                        // Claude synthesizes results — pass scraped data so it doesn't fabricate
+                        const allResultsForSynthesis = [
+                            ...leads.map(l => ({ name: l.name, url: l.url, snippet: l.snippet, source: l.source, email: l.email, instagram: l.instagram, twitter: l.twitter, tiktok: l.tiktok })),
+                            ...webLeads.filter(w => !leads.some(l => l.url === w.url)),
+                        ];
+                        const enrichedMsg = await generateWithSearchResults(userMessage, allResultsForSynthesis, validatedTier as any, artistContext);
                         intent = { action: 'find_leads', filters: { country }, message: enrichedMsg || `Found ${leads.length + webLeads.length} potential contacts.` };
                         suggestedNextSteps = ['Draft a pitch to these contacts', 'Search for more in a different market', 'Create an email outreach sequence'];
                         break;
