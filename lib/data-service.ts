@@ -1,5 +1,5 @@
 import { supabase } from './supabase/client';
-import { ArtistProfile, Session, Message, Subscription, SubscriptionTier, Role } from '@/app/types';
+import { ArtistProfile, Session, Message, Subscription, SubscriptionTier, Role, StrategyBrief } from '@/app/types';
 
 /**
  * Supabase Data Service
@@ -390,4 +390,57 @@ export async function logSearchQuery(query: string, country: string, resultsCoun
         results_count: resultsCount,
         created_at: new Date().toISOString()
     });
+}
+
+// ============ STRATEGY BRIEFS ============
+
+export async function saveStrategyBrief(brief: StrategyBrief): Promise<boolean> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    const { error } = await supabase
+        .from('lead_list_briefs')
+        .upsert({
+            session_id: brief.sessionId,
+            user_id: user.id,
+            summary: brief.summary,
+            target_audience: brief.targetAudience,
+            objective: brief.objective,
+            pitch_angle: brief.pitchAngle,
+            country: brief.country || null,
+            generated_at: new Date(brief.generatedAt).toISOString()
+        }, { onConflict: 'session_id' });
+
+    if (error) {
+        console.error('Error saving strategy brief:', error);
+        return false;
+    }
+    return true;
+}
+
+export async function loadStrategyBriefs(): Promise<Map<string, StrategyBrief>> {
+    const { data: { user } } = await supabase.auth.getUser();
+    const briefs = new Map<string, StrategyBrief>();
+    if (!user) return briefs;
+
+    const { data, error } = await supabase
+        .from('lead_list_briefs')
+        .select('*')
+        .eq('user_id', user.id);
+
+    if (error || !data) return briefs;
+
+    for (const row of data) {
+        briefs.set(row.session_id, {
+            sessionId: row.session_id,
+            summary: row.summary,
+            targetAudience: row.target_audience || '',
+            objective: row.objective || '',
+            pitchAngle: row.pitch_angle || '',
+            country: row.country || undefined,
+            generatedAt: new Date(row.generated_at).getTime(),
+        });
+    }
+
+    return briefs;
 }

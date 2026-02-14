@@ -35,6 +35,7 @@ interface LeadResponse {
     tiktok?: string;
     twitter?: string;
     followers?: string;
+    country?: string;
 }
 
 interface WebResult {
@@ -80,7 +81,8 @@ function mapLeadsToResponse(leads: DBLead[], country: string): LeadResponse[] {
         instagram: (l as any).instagram || '',
         tiktok: (l as any).tiktok || '',
         twitter: (l as any).twitter || '',
-        followers: (l as any).followers || ''
+        followers: (l as any).followers || '',
+        country: l.country || country
     }));
 }
 
@@ -136,13 +138,14 @@ async function enrichLeadsWithAI(searchResults: any[], userMessage: string, tier
 I searched and found these results:
 ${resultsContext}
 
-Now provide a helpful summary of what I found. For each relevant result:
-- Highlight the name/publication/blog
-- Note what they cover and why they're relevant
-- Note the URL so the user can reach out
-- If any contact info is visible in snippets, include it
+Provide a strategic summary using **rich markdown formatting**:
+- Present contacts in a **markdown table** with columns: Name | Role | Company | Contact | Platform
+- Use **numbered lists** for strategic recommendations and next steps
+- Use **[clickable links](url)** for any URLs, profiles, or websites
+- Use **bold** for names, platforms, and key terms
+- Add a brief strategic note on why these contacts are relevant
 
-Be warm, strategic, and concise. Use markdown formatting. End with a suggestion for next steps (e.g., "Want me to draft a pitch to any of these?").`;
+End with 2-3 specific next steps (e.g., "Want me to draft a pitch to any of these?").`;
 
         const result = await model.generateContent(prompt);
         return result.response.text().trim();
@@ -358,7 +361,7 @@ export async function POST(request: NextRequest) {
                     } else {
                         const country = normalizeCountry(intent.filters?.country || artistContext?.location?.country);
                         const pipelineStatus = getPipelineStatus();
-                        logs.push(`📡 Pipelines: Apollo=${pipelineStatus.apollo ? '🟢' : '⚪'} LinkedIn=${pipelineStatus.linkedin ? '🟢' : '⚪'} ZoomInfo=${pipelineStatus.zoominfo ? '🟢' : '⚪'} PhantomBuster=${pipelineStatus.phantombuster ? '🟢' : '⚪'}`);
+                        logs.push(`📡 Pipelines: Apify=${pipelineStatus.apify ? '🟢' : '⚪'} Apollo=${pipelineStatus.apollo ? '🟢' : '⚪'} LinkedIn=${pipelineStatus.linkedin ? '🟢' : '⚪'} ZoomInfo=${pipelineStatus.zoominfo ? '🟢' : '⚪'} PhantomBuster=${pipelineStatus.phantombuster ? '🟢' : '⚪'}`);
 
                         const deepResult = await performDeepSearch(deepQuery, country);
                         logs.push(...deepResult.logs);
@@ -376,7 +379,8 @@ export async function POST(request: NextRequest) {
                             instagram: c.instagram,
                             tiktok: c.tiktok,
                             twitter: c.twitter,
-                            followers: c.followers
+                            followers: c.followers,
+                            country
                         }));
 
                         // AI enrichment
@@ -414,6 +418,7 @@ export async function POST(request: NextRequest) {
                             instagram: p.platform === 'instagram' ? p.url : undefined,
                             tiktok: p.platform === 'tiktok' ? p.url : undefined,
                             twitter: p.platform === 'twitter' ? p.url : undefined,
+                            country
                         }));
 
                         // Summarize by platform
@@ -453,6 +458,7 @@ export async function POST(request: NextRequest) {
                             instagram: c.instagram,
                             twitter: c.twitter,
                             tiktok: c.tiktok,
+                            country: normalizeCountry(intent.filters?.country || artistContext?.location?.country)
                         }));
 
                         // Build rich response
@@ -499,6 +505,7 @@ export async function POST(request: NextRequest) {
                         url: c.url || '',
                         snippet: `${c.source} • Confidence: ${c.confidence}`,
                         source: c.source,
+                        country
                     }));
 
                     const enrichedMessage = await enrichLeadsWithAI(leads, userMessage, validatedTier);
@@ -525,6 +532,7 @@ export async function POST(request: NextRequest) {
                         url: c.url || '',
                         snippet: `${c.source} • Confidence: ${c.confidence}`,
                         source: c.source,
+                        country
                     }));
 
                     const enrichedMessage = await enrichLeadsWithAI(leads, userMessage, validatedTier);

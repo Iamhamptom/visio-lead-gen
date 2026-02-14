@@ -50,6 +50,7 @@ export interface PipelineContact {
 // ─── Pipeline Status ───────────────────────────────────
 export interface PipelineStatus {
     apollo: boolean;
+    apify: boolean;
     linkedin: boolean;
     zoominfo: boolean;
     phantombuster: boolean;
@@ -58,6 +59,7 @@ export interface PipelineStatus {
 export function getPipelineStatus(): PipelineStatus {
     return {
         apollo: !!process.env.APOLLO_API_KEY,
+        apify: !!process.env.APIFY_API_TOKEN,
         linkedin: !!process.env.LINKEDIN_API_KEY,
         zoominfo: !!process.env.ZOOMINFO_API_KEY,
         phantombuster: !!process.env.PHANTOMBUSTER_API_KEY,
@@ -68,11 +70,76 @@ export function getPipelineStatus(): PipelineStatus {
 // APOLLO.IO PIPELINE
 // ═══════════════════════════════════════════════════════
 
+// ─── Apify Helper ────────────────────────────────────
+async function waitForApifyRun(runId: string, token: string, timeoutMs = 30000): Promise<void> {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+        const res = await fetch(`https://api.apify.com/v2/actor-runs/${runId}?token=${token}`);
+        const status = await res.json();
+        if (status.data?.status === 'SUCCEEDED') return;
+        if (status.data?.status === 'FAILED' || status.data?.status === 'ABORTED') {
+            throw new Error(`Apify run ${status.data?.status}`);
+        }
+        await new Promise(r => setTimeout(r, 2000));
+    }
+    throw new Error('Apify run timed out');
+}
+
 export async function searchApollo(query: string, country: string = 'ZA'): Promise<PipelineResult> {
     const apiKey = process.env.APOLLO_API_KEY;
+    const apifyToken = process.env.APIFY_API_TOKEN;
     const logs: string[] = [];
 
-    // ─── Official API Path ─────────────────────────
+    // ─── Path 1: Apify Scraper (cheapest) ──────────
+    if (apifyToken) {
+        logs.push('[Apollo-Apify] 🔄 Using Apify scraper (cost-optimized)...');
+        try {
+            const countryName = country === 'ZA' ? 'South Africa' : country === 'NG' ? 'Nigeria' : country === 'UK' ? 'United Kingdom' : country === 'USA' ? 'United States' : country;
+            const runRes = await fetch(
+                `https://api.apify.com/v2/acts/curious_coder~apollo-io-scraper/runs?token=${apifyToken}`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        searchQuery: query,
+                        country: countryName,
+                        maxResults: 25,
+                    })
+                }
+            );
+
+            if (runRes.ok) {
+                const runData = await runRes.json();
+                await waitForApifyRun(runData.data.id, apifyToken);
+
+                const datasetRes = await fetch(
+                    `https://api.apify.com/v2/datasets/${runData.data.defaultDatasetId}/items?token=${apifyToken}`
+                );
+                const results = await datasetRes.json();
+
+                const contacts: PipelineContact[] = (results || []).map((r: any) => ({
+                    name: r.name || `${r.first_name || ''} ${r.last_name || ''}`.trim(),
+                    email: r.email,
+                    title: r.title,
+                    company: r.organization?.name || r.company,
+                    url: r.linkedin_url,
+                    linkedin: r.linkedin_url,
+                    followers: r.twitter_followers?.toString(),
+                    source: 'Apollo (via Apify)',
+                    confidence: r.email ? 'high' as const : 'medium' as const,
+                }));
+
+                logs.push(`[Apollo-Apify] ✅ Found ${contacts.length} contacts`);
+                return { contacts, source: 'Apollo-Apify', apiUsed: true, logs, total: contacts.length };
+            } else {
+                logs.push(`[Apollo-Apify] ❌ Failed to start run: ${runRes.status}`);
+            }
+        } catch (error: any) {
+            logs.push(`[Apollo-Apify] ❌ Error: ${error.message}`);
+        }
+    }
+
+    // ─── Path 2: Official Apollo API ───────────────
     if (apiKey) {
         logs.push('[Apollo] 🔑 API key detected — using official Apollo.io API');
         try {
@@ -113,8 +180,11 @@ export async function searchApollo(query: string, country: string = 'ZA'): Promi
         } catch (error: any) {
             logs.push(`[Apollo] ❌ API error: ${error.message} — falling back to Google`);
         }
-    } else {
-        logs.push('[Apollo] ⚪ No API key — using Google Search fallback');
+    }
+
+    // ─── Path 3: Google Fallback ───────────────────
+    if (!apiKey && !apifyToken) {
+        logs.push('[Apollo] ⚪ No API key or Apify token — using Google Search fallback');
     }
 
     // ─── Google Fallback ───────────────────────────
