@@ -325,6 +325,10 @@ export async function POST(request: NextRequest) {
 
             if (hasClaude) {
                 // ═══ CLAUDE-POWERED TWO-STAGE ARCHITECTURE ═══
+                // Diagnostic: log key status for debugging (never log full key)
+                const keyPrefix = process.env.ANTHROPIC_API_KEY?.slice(0, 12) || 'NOT_SET';
+                console.log(`[Visio Agent] Claude key: ${keyPrefix}..., tier: ${validatedTier}, user: ${auth.user.email || auth.user.id}`);
+
                 // Stage 1: Classify intent (fast, cheap, deterministic)
                 logs.push('🧠 Visio is thinking...');
                 const intentResult: IntentResult = await classifyIntent(
