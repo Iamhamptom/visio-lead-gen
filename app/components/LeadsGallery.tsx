@@ -49,7 +49,7 @@ export const LeadsGallery: React.FC<LeadsGalleryProps> = ({ leads, onSaveLead, i
     const generateMarkdown = () => {
         const date = new Date().toLocaleDateString();
         const listToExport = searchQuery ? filteredLeads : leads;
-        let md = `# Visio Leads Export\nDate: ${date}\nTotal Leads: ${listToExport.length}\n\n## Contact List\n\n`;
+        let md = `# V-Prai Leads Export\nDate: ${date}\nTotal Leads: ${listToExport.length}\n\n## Contact List\n\n`;
 
         listToExport.forEach(lead => {
             md += `### ${lead.name}\n`;
@@ -199,7 +199,7 @@ export const LeadsGallery: React.FC<LeadsGalleryProps> = ({ leads, onSaveLead, i
                                 {filteredLeads.length === 0 ? (
                                     <tr>
                                         <td colSpan={7} className="px-4 py-12 text-center text-white/40">
-                                            {searchQuery ? 'No leads match your search.' : 'No leads yet. Ask Visio to find contacts.'}
+                                            {searchQuery ? 'No leads match your search.' : 'No leads yet. Ask V-Prai to find contacts.'}
                                         </td>
                                     </tr>
                                 ) : (
@@ -237,7 +237,7 @@ export const LeadsGallery: React.FC<LeadsGalleryProps> = ({ leads, onSaveLead, i
                                 </div>
                                 <p className="text-white/40 text-lg">No leads found.</p>
                                 <p className="text-white/20 text-sm">
-                                    {searchQuery ? 'Try a different search term.' : 'Ask Visio to find contacts to populate this list.'}
+                                    {searchQuery ? 'Try a different search term.' : 'Ask V-Prai to find contacts to populate this list.'}
                                 </p>
                             </div>
                         ) : (

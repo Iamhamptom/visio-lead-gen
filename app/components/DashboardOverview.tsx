@@ -117,7 +117,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                         <div>
                             <h3 className="text-xl font-bold text-white mb-2">Consult & Chat</h3>
                             <p className="text-sm text-white/50 mb-6 max-w-sm">
-                                Start a new session with Visio AI to develop your brand, find leads, or plan your next release.
+                                Start a new session with V-Prai to develop your brand, find leads, or plan your next release.
                             </p>
                             <button
                                 onClick={onNewChat}

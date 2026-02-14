@@ -111,7 +111,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSaveLead })
                     {/* Header for Bot */}
                     {!isUser && (
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <span className="text-xs font-medium text-visio-teal/80">Visio AI</span>
+                            <span className="text-xs font-medium text-visio-teal/80">V-Prai</span>
                             {message.webResults && message.webResults.length > 0 && (
                                 <span className="text-[10px] uppercase tracking-widest text-visio-teal/70 border border-visio-teal/30 bg-visio-teal/10 px-2 py-0.5 rounded-full">
                                     Web Search Used

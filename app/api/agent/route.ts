@@ -9,6 +9,8 @@ import { getToolInstruction, TOOL_REGISTRY } from '@/lib/tools';
 import { performDeepSearch, searchApollo, searchLinkedInPipeline, getPipelineStatus, PipelineContact } from '@/lib/pipelines';
 import { scrapeContactsFromUrl, scrapeMultipleUrls } from '@/lib/scraper';
 import { searchAllSocials, flattenSocialResults } from '@/lib/social-search';
+import { performSmartScrape, formatScrapeForContext } from '@/lib/smart-scrape';
+import { detectAndExecuteAutomation, listAvailableAutomations } from '@/lib/automation-bank';
 import { requireUser, isAdminUser } from '@/lib/api-auth';
 import { getUserCredits, deductCredits, getCreditCost } from '@/lib/credits';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
@@ -155,7 +157,7 @@ async function enrichLeadsWithAI(searchResults: any[], userMessage: string, tier
             `Title: ${r.name || r.title}\nURL: ${r.url}\nSnippet: ${r.snippet}`
         ).join('\n\n');
 
-        const prompt = `You are Visio, an elite PR strategist. The user asked: "${userMessage}"
+        const prompt = `You are V-Prai, the AI brain behind Visio Lead Gen. The user asked: "${userMessage}"
 
 I searched and found these results:
 ${resultsContext}
@@ -276,7 +278,7 @@ export async function POST(request: NextRequest) {
         // 2. FETCH KNOWLEDGE BASE (RAG)
         let knowledgeContext = '';
         try {
-            logs.push('🧠 Scanning Visio Brain...');
+            logs.push('🧠 Scanning V-Prai Brain...');
             const relevantChunks = await searchKnowledgeBase(userMessage, 3);
             if (relevantChunks && relevantChunks.length > 0) {
                 knowledgeContext = relevantChunks.map(c =>
@@ -328,10 +330,10 @@ export async function POST(request: NextRequest) {
                 // Diagnostic: log key source for debugging (never log full key)
                 const keySource = process.env.AI_GATEWAY_API_KEY ? 'AI Gateway' : 'Direct Anthropic';
                 const keyPrefix = (process.env.AI_GATEWAY_API_KEY || process.env.ANTHROPIC_API_KEY)?.slice(0, 12) || 'NOT_SET';
-                console.log(`[Visio Agent] Claude via ${keySource}: ${keyPrefix}..., tier: ${validatedTier}, user: ${auth.user.email || auth.user.id}`);
+                console.log(`[V-Prai] Claude via ${keySource}: ${keyPrefix}..., tier: ${validatedTier}, user: ${auth.user.email || auth.user.id}`);
 
                 // Stage 1: Classify intent (fast, cheap, deterministic)
-                logs.push('🧠 Visio is thinking...');
+                logs.push('🧠 V-Prai is thinking...');
                 const intentResult: IntentResult = await classifyIntent(
                     userMessage,
                     conversationHistory,
@@ -340,6 +342,64 @@ export async function POST(request: NextRequest) {
                 );
 
                 logs.push(`📋 Intent: ${intentResult.category} (${Math.round((intentResult.confidence || 0) * 100)}%)`);
+
+                // ═══ AUTOMATION BANK CHECK ═══
+                // Before dispatching to normal intent handlers, check if this triggers a pre-built automation
+                const automationResult = await detectAndExecuteAutomation(userMessage, {
+                    userMessage,
+                    query: intentResult.searchQuery,
+                    country: normalizeCountry(intentResult.filters?.country || artistContext?.location?.country),
+                    genre: artistContext?.identity?.genre,
+                    artistContext,
+                    conversationHistory
+                });
+
+                // If automation was triggered, check credits and use its result
+                if (automationResult) {
+                    const automationCost = automationResult.data?.automationUsed
+                        ? getCreditCost(automationResult.data.automationUsed)
+                        : 3; // Default automation cost
+
+                    logs.push(`🤖 Automation triggered: ${automationResult.data?.automationName || 'Unknown'}`);
+
+                    // Credit check for automation
+                    if (automationCost > 0 && !isAdminUser(auth.user)) {
+                        const balance = await getUserCredits(auth.user.id);
+                        if (balance < automationCost) {
+                            logs.push(`💳 Insufficient credits (need ${automationCost}, have ${balance})`);
+                            return NextResponse.json({
+                                message: `This automation requires ${automationCost} credit${automationCost > 1 ? 's' : ''}, but you have ${balance}. Upgrade your plan for more credits!`,
+                                leads: [],
+                                webResults: [],
+                                toolsUsed: [],
+                                suggestedNextSteps: ['Upgrade your plan for more credits'],
+                                logs,
+                                intent: { action: 'clarify', filters: {}, message: automationResult.summary }
+                            });
+                        }
+                        // Deduct credits
+                        await deductCredits(auth.user.id, automationCost, `automation: ${automationResult.data.automationName}`);
+                        logs.push(`💳 ${automationCost} credit${automationCost > 1 ? 's' : ''} used (${balance - automationCost} remaining)`);
+                    }
+
+                    // Add automation logs
+                    logs.push(...automationResult.logs);
+
+                    // Return automation result
+                    return NextResponse.json({
+                        message: automationResult.summary,
+                        leads: [],
+                        webResults: [],
+                        toolsUsed: [automationResult.data.automationUsed || 'automation'],
+                        suggestedNextSteps: automationResult.suggestedNextSteps || [],
+                        logs,
+                        intent: { action: 'automation_executed', filters: {}, message: automationResult.summary },
+                        meta: {
+                            automation: automationResult.data.automationName,
+                            automationData: automationResult.data
+                        }
+                    });
+                }
 
                 // Stage 2: Dispatch based on structured category
                 switch (intentResult.category) {
@@ -462,6 +522,52 @@ export async function POST(request: NextRequest) {
                         break;
                     }
 
+                    case 'smart_scrape': {
+                        toolsUsed.push('smart_scrape');
+                        const scrapeQuery = intentResult.searchQuery || userMessage;
+                        logs.push(`🔬 Smart Scrape: "${scrapeQuery}"`);
+
+                        if (!webSearchEnabled) {
+                            intent = { action: 'clarify', filters: {}, message: 'Smart Scrape needs web access. Toggle Web Search on to research social media content!' };
+                            break;
+                        }
+
+                        // Scrape YouTube, TikTok, Twitter in parallel
+                        const scrapeResults = await performSmartScrape({
+                            query: scrapeQuery,
+                            platforms: ['youtube', 'tiktok', 'twitter'],
+                            maxResults: 10,
+                            sortBy: 'engagement',
+                        });
+
+                        const totalScraped = scrapeResults.reduce((s, r) => s + r.totalFound, 0);
+                        logs.push(`✅ Scraped ${totalScraped} results across ${scrapeResults.length} platform(s)`);
+
+                        // Synthesize with Claude
+                        const scrapeContext = formatScrapeForContext(scrapeResults);
+                        const scrapeResponse = await generateChatResponse(
+                            userMessage,
+                            conversationHistory,
+                            artistContext,
+                            validatedTier as 'instant' | 'business' | 'enterprise',
+                            scrapeContext,
+                            `You just performed a Smart Scrape research across YouTube, TikTok, and Twitter for "${scrapeQuery}". The research data is provided above.
+
+Your job:
+1. Summarize the key insights from top-performing content
+2. Identify patterns in what works (hooks, formats, topics, hashtags)
+3. Extract actionable advice the user can apply
+4. Note audience sentiment from comments
+5. Recommend specific next steps
+
+Format with markdown tables for top content, bullet points for insights. End with yes/no action suggestions.`
+                        );
+
+                        intent = { action: 'search', filters: {}, message: scrapeResponse };
+                        suggestedNextSteps = ['Research another topic', 'Draft content based on these insights', 'Find contacts mentioned in the research'];
+                        break;
+                    }
+
                     case 'clarify':
                     default: {
                         const clarifyResponse = await generateChatResponse(
@@ -476,7 +582,7 @@ export async function POST(request: NextRequest) {
 
             } else if (hasGemini) {
                 // Fallback to Gemini with fixed error handling
-                logs.push('🧠 Visio is thinking (Gemini)...');
+                logs.push('🧠 V-Prai is thinking (Gemini)...');
                 intent = await parseIntent(
                     toolInstruction ? `${toolInstruction}\n\nUser request: ${userMessage}` : userMessage,
                     conversationHistory,
@@ -512,6 +618,7 @@ export async function POST(request: NextRequest) {
             'find_leads': 'lead_search',
             'search': 'web_search',
             'deep_search': 'deep_search',
+            'smart_scrape': 'smart_scrape',
         };
         const creditCategory = creditCategoryMap[intent.action] || 'chat_message';
         const creditCost = getCreditCost(creditCategory);

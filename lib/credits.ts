@@ -3,13 +3,37 @@ import { SubscriptionTier } from '@/app/types';
 
 /** Credit cost per intent category */
 export const CREDIT_COSTS: Record<string, number> = {
+    // Free actions (Claude's training knowledge)
     chat_message: 0,
+    conversation: 0,
+    knowledge: 0,
+    clarify: 0,
+
+    // Standard actions
     web_search: 1,
-    lead_search: 2,
-    deep_search: 5,
     content_creation: 1,
+
+    // Premium actions
+    lead_search: 2,
+    lead_generation: 2,
+    strategy: 3,
     campaign_plan: 3,
+
+    // Heavy actions
+    deep_search: 5,
     apollo_search: 5,
+    deep_thinking: 5,
+
+    // Smart Scrape (social media research)
+    smart_scrape: 3,
+
+    // Automation Bank Skills
+    viral_content_research: 3,
+    curator_discovery: 2,
+    deep_contact_enrichment: 5,
+    pr_trend_monitor: 3,
+    campaign_rollout_research: 3,
+    competitor_intelligence: 3,
 };
 
 /** Monthly credit allocation per subscription tier */

@@ -129,7 +129,7 @@ export default function HowItWorksSection() {
                     <span className="bg-gradient-to-r from-visio-teal to-visio-sage bg-clip-text text-transparent">Global Outreach</span>
                 </h2>
                 <p className="text-lg text-white/60 max-w-2xl mx-auto">
-                    See how Visio AI transforms your campaign goals into targeted outreach in just 10 simple steps.
+                    See how V-Prai transforms your campaign goals into targeted outreach in just 10 simple steps.
                 </p>
             </div>
 
@@ -201,7 +201,7 @@ export default function HowItWorksSection() {
             {/* Use Cases */}
             <div className="max-w-6xl mx-auto px-6">
                 <h2 className="text-3xl font-bold mb-4 text-center">Real-World Use Cases</h2>
-                <p className="text-white/60 text-center mb-12">See how artists use Visio AI for different campaigns</p>
+                <p className="text-white/60 text-center mb-12">See how artists use V-Prai for different campaigns</p>
                 <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-4">
                     {useCases.map((uc, i) => (
                         <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-6 text-center hover:border-visio-teal/30 transition-colors">

@@ -98,6 +98,11 @@ export interface LeadList {
     createdAt: number;
 }
 
+export interface ThinkingBlock {
+    type: 'thinking';
+    thinking: string;
+}
+
 export interface Message {
     id: string;
     role: Role;
@@ -108,6 +113,7 @@ export interface Message {
     toolUsed?: ToolId;
     isThinking?: boolean;
     mode?: AgentMode;
+    thinkingBlocks?: ThinkingBlock[];
 }
 
 export interface WebResult {
@@ -129,7 +135,7 @@ export type ToolId =
     | 'campaign_plan'
     | 'market_research';
 
-export type AgentMode = 'chat' | 'research';
+export type AgentMode = 'chat' | 'research' | 'deep_thinking';
 
 export interface Campaign {
     id: string;
