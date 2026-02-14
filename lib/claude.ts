@@ -15,14 +15,36 @@ const MODEL_MAP = {
     enterprise: 'claude-opus-4-6',
 } as const;
 
+// Detect whether we're using Vercel AI Gateway or direct Anthropic API
+function isUsingGateway(): boolean {
+    return !!process.env.AI_GATEWAY_API_KEY;
+}
+
 function getClient(): Anthropic {
+    // Priority 1: Vercel AI Gateway (proxy through Vercel)
+    const gatewayKey = process.env.AI_GATEWAY_API_KEY;
+    if (gatewayKey) {
+        return new Anthropic({
+            apiKey: gatewayKey,
+            baseURL: 'https://ai-gateway.vercel.sh',
+        });
+    }
+
+    // Priority 2: Direct Anthropic API
     const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) throw new Error('ANTHROPIC_API_KEY is not set');
+    if (!apiKey) throw new Error('No AI API key configured. Set AI_GATEWAY_API_KEY (Vercel AI Gateway) or ANTHROPIC_API_KEY (direct Anthropic).');
     return new Anthropic({ apiKey });
 }
 
 function getModel(tier: 'instant' | 'business' | 'enterprise'): string {
-    return MODEL_MAP[tier] || MODEL_MAP.instant;
+    const model = MODEL_MAP[tier] || MODEL_MAP.instant;
+    // Vercel AI Gateway requires "anthropic/" prefix on model names
+    return isUsingGateway() ? `anthropic/${model}` : model;
+}
+
+/** Check if any Claude API key is configured */
+export function hasClaudeKey(): boolean {
+    return !!(process.env.AI_GATEWAY_API_KEY || process.env.ANTHROPIC_API_KEY);
 }
 
 // ─── Error Categorization ─────────────────────────────
@@ -31,8 +53,8 @@ function categorizeApiError(error: any): { type: string; userMessage: string } {
     const msg = error?.message || String(error);
     const status = error?.status || error?.statusCode;
 
-    if (!process.env.ANTHROPIC_API_KEY) {
-        return { type: 'missing_key', userMessage: "Visio's AI engine isn't connected yet. The API key needs to be configured in the deployment environment." };
+    if (!process.env.ANTHROPIC_API_KEY && !process.env.AI_GATEWAY_API_KEY) {
+        return { type: 'missing_key', userMessage: "Visio's AI engine isn't connected yet. Set AI_GATEWAY_API_KEY or ANTHROPIC_API_KEY in your deployment environment." };
     }
 
     if (msg.includes('API key') || msg.includes('api_key') || msg.includes('authentication') || status === 401) {
