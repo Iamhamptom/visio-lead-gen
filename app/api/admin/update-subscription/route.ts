@@ -14,8 +14,21 @@ export async function POST(req: Request) {
         // Parse Body
         const { userId, tier, status } = await req.json();
 
-        if (!userId || !tier) {
+        if (typeof userId !== 'string' || userId.length < 10) {
+            return NextResponse.json({ error: 'Invalid userId' }, { status: 400 });
+        }
+        if (typeof tier !== 'string' || !tier.trim()) {
             return NextResponse.json({ error: 'Missing userId or tier' }, { status: 400 });
+        }
+
+        const allowedTiers = new Set(['artist', 'starter', 'artiste', 'starter_label', 'label', 'agency', 'enterprise']);
+        if (!allowedTiers.has(tier)) {
+            return NextResponse.json({ error: `Invalid tier: ${tier}` }, { status: 400 });
+        }
+
+        const allowedStatuses = new Set(['active', 'trialing', 'past_due', 'canceled']);
+        if (status && (typeof status !== 'string' || !allowedStatuses.has(status))) {
+            return NextResponse.json({ error: `Invalid status: ${String(status)}` }, { status: 400 });
         }
 
         // 4. Update Profile
