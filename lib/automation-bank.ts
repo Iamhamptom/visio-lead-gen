@@ -143,10 +143,13 @@ export const AUTOMATION_REGISTRY: Record<string, AutomationSkill> = {
             const deepResult = await performDeepSearch(query, country);
             logs.push(...deepResult.logs);
 
+            const sourcesUsed = Object.keys(deepResult.pipelineResults).length;
+            const totalContacts = deepResult.contacts.length;
+
             return {
                 success: true,
                 data: deepResult.contacts,
-                summary: `Deep search found ${deepResult.total} verified contacts across ${deepResult.sources.length} sources`,
+                summary: `Deep search found ${totalContacts} verified contacts across ${sourcesUsed} sources`,
                 logs,
                 suggestedNextSteps: [
                     'Filter by confidence score',
