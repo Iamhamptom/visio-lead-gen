@@ -258,7 +258,7 @@ export const Billing: React.FC<BillingProps> = ({
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {(Object.keys(TIER_DETAILS) as SubscriptionTier[]).map((tier) => {
                         const details = TIER_DETAILS[tier];
                         const Icon = details.icon;
@@ -269,12 +269,17 @@ export const Billing: React.FC<BillingProps> = ({
                                 key={tier}
                                 className={`
                                     relative flex flex-col p-6 rounded-3xl border transition-all duration-300
-                                    ${isCurrent ? 'bg-white/5 border-visio-accent/50 shadow-lg shadow-visio-accent/10' : 'bg-white/[0.02] border-white/5 hover:bg-white/5 hover:border-white/10'}
+                                    ${isCurrent ? 'bg-white/5 border-visio-accent/50 shadow-lg shadow-visio-accent/10' : details.recommended ? 'bg-white/[0.04] border-visio-teal/30 hover:bg-white/5' : 'bg-white/[0.02] border-white/5 hover:bg-white/5 hover:border-white/10'}
                                 `}
                             >
                                 {isCurrent && (
                                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-visio-accent text-black text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-lg">
                                         Current Plan
+                                    </div>
+                                )}
+                                {!isCurrent && details.recommended && (
+                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-visio-teal text-black text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-lg">
+                                        Recommended
                                     </div>
                                 )}
 
@@ -285,18 +290,32 @@ export const Billing: React.FC<BillingProps> = ({
                                     <h3 className="font-bold text-white">{details.name}</h3>
                                 </div>
 
-                                <div className="mb-6">
+                                <div className="mb-4">
                                     <span className="text-2xl font-bold text-white">{details.price}</span>
                                     {tier !== 'artist' && tier !== 'enterprise' && (
                                         <span className="text-white/40 text-sm">{isYearly ? '/yr' : '/mo'}</span>
                                     )}
                                 </div>
 
-                                <div className="flex-1 space-y-3 mb-6">
+                                {/* Credits badge */}
+                                <div className="mb-4 flex items-center gap-2">
+                                    <div className="px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold flex items-center gap-1">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                                        {details.credits === 'unlimited' ? 'Unlimited' : details.credits} Credits/mo
+                                    </div>
+                                </div>
+
+                                <div className="flex-1 space-y-2.5 mb-6">
                                     {details.features.map((feature, i) => (
                                         <div key={i} className="flex items-start gap-2">
-                                            <Check size={14} className="mt-1 text-visio-accent shrink-0" />
+                                            <Check size={14} className="mt-0.5 text-visio-accent shrink-0" />
                                             <span className="text-sm text-white/60">{feature}</span>
+                                        </div>
+                                    ))}
+                                    {details.extras?.map((extra, i) => (
+                                        <div key={`extra-${i}`} className="flex items-start gap-2">
+                                            <Check size={14} className="mt-0.5 text-white/20 shrink-0" />
+                                            <span className="text-sm text-white/40">{extra}</span>
                                         </div>
                                     ))}
                                 </div>

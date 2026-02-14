@@ -16,10 +16,12 @@ import {
     Shield,
     Lightbulb,
     Calculator,
-    HelpCircle
+    HelpCircle,
+    Coins
 } from 'lucide-react';
 import { Campaign, ViewMode, Session, Subscription, ArtistProfile } from '../types';
 import { PLAN_LIMITS } from '../config/plans';
+import { TIER_DETAILS } from '../data/pricing';
 
 interface SessionItemProps {
     session: Session;
@@ -180,6 +182,8 @@ interface SidebarProps {
     artistProfile: ArtistProfile | null;
     isRestricted?: boolean;
     isAdmin?: boolean;
+    creditsBalance?: number | null;
+    creditsAllocation?: number | string | null;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -199,7 +203,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     subscription = { tier: 'artist', status: 'active', currentPeriodEnd: 0, interval: 'month' },
     artistProfile,
     isRestricted = false,
-    isAdmin = false
+    isAdmin = false,
+    creditsBalance = null,
+    creditsAllocation = null,
 }) => {
 
     // State for collapsible folders
@@ -412,21 +418,44 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="px-3 pb-2">
                 <div className="bg-white/5 border border-white/5 rounded-xl p-3">
                     <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-medium text-white/60 uppercase">{subscription.tier} Plan</span>
-                        <a href="#" className="text-[10px] text-visio-accent hover:underline" onClick={() => onNavigate('billing')}>Upgrade</a>
+                        <span className="text-xs font-medium text-white/60 uppercase">{TIER_DETAILS[subscription.tier]?.name || subscription.tier}</span>
+                        {subscription.tier !== 'enterprise' && (
+                            <button className="text-[10px] text-visio-accent hover:underline" onClick={() => onNavigate('billing')}>Upgrade</button>
+                        )}
                     </div>
 
-                    {/* Mock Profile Usage - In real app, calculate from actual data */}
-                    <div className="space-y-1">
-                        <div className="flex justify-between text-[10px] text-white/40">
-                            <span>Profiles</span>
-                            <span>1 / {PLAN_LIMITS[subscription.tier].maxProfiles === Infinity ? '∞' : PLAN_LIMITS[subscription.tier].maxProfiles}</span>
+                    {/* Credits Usage */}
+                    <div className="space-y-2">
+                        <div className="space-y-1">
+                            <div className="flex justify-between text-[10px] text-white/40">
+                                <span className="flex items-center gap-1"><Coins size={9} /> Credits</span>
+                                <span>{creditsBalance ?? 0} / {creditsAllocation === 'unlimited' ? '∞' : (creditsAllocation ?? TIER_DETAILS[subscription.tier]?.credits ?? 0)}</span>
+                            </div>
+                            <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+                                {(() => {
+                                    const bal = creditsBalance ?? 0;
+                                    const alloc = creditsAllocation === 'unlimited' ? 1 : (typeof creditsAllocation === 'number' ? creditsAllocation : (typeof TIER_DETAILS[subscription.tier]?.credits === 'number' ? TIER_DETAILS[subscription.tier].credits as number : 1));
+                                    const pct = typeof alloc === 'number' && alloc > 0 ? Math.min(100, (bal / alloc) * 100) : 100;
+                                    return (
+                                        <div
+                                            className={`h-full rounded-full ${pct > 50 ? 'bg-visio-teal' : pct > 20 ? 'bg-amber-400' : 'bg-red-400'}`}
+                                            style={{ width: `${pct}%` }}
+                                        />
+                                    );
+                                })()}
+                            </div>
                         </div>
-                        <div className="h-1 bg-white/10 rounded-full overflow-hidden">
-                            <div
-                                className="h-full bg-visio-teal"
-                                style={{ width: `${Math.min(100, (1 / (PLAN_LIMITS[subscription.tier].maxProfiles || 1)) * 100)}%` }}
-                            />
+                        <div className="space-y-1">
+                            <div className="flex justify-between text-[10px] text-white/40">
+                                <span>Profiles</span>
+                                <span>1 / {PLAN_LIMITS[subscription.tier].maxProfiles === Infinity ? '∞' : PLAN_LIMITS[subscription.tier].maxProfiles}</span>
+                            </div>
+                            <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-visio-teal"
+                                    style={{ width: `${Math.min(100, (1 / (PLAN_LIMITS[subscription.tier].maxProfiles || 1)) * 100)}%` }}
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -443,7 +472,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     </div>
                     <div className="flex-1 overflow-hidden">
                         <p className="text-sm font-medium text-white truncate">{artistProfile?.name || 'Guest User'}</p>
-                        <p className="text-xs text-white/40 truncate capitalize">{subscription.tier} Plan</p>
+                        <p className="text-xs text-white/40 truncate">{TIER_DETAILS[subscription.tier]?.name || subscription.tier}</p>
                     </div>
                     <Settings size={16} className="text-white/40" />
                 </button>
