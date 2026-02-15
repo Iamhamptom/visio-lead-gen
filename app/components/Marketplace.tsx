@@ -1,13 +1,11 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     Search,
     Users,
-    Music,
     Filter,
-    Verified,
     ChevronDown,
     Store,
     Globe,
@@ -21,7 +19,11 @@ import {
     Download,
     Lock,
     Copy,
-    Check
+    Check,
+    ExternalLink,
+    X,
+    Music,
+    Instagram,
 } from 'lucide-react';
 import { SubscriptionTier } from '../types';
 
@@ -60,6 +62,48 @@ const AI_TOOLS = [
 
 const ITEMS_PER_PAGE = 30;
 
+// Deterministic gradient colors from a name
+const GRADIENT_PAIRS = [
+    ['from-pink-500', 'to-purple-600'],
+    ['from-cyan-500', 'to-blue-600'],
+    ['from-emerald-500', 'to-teal-600'],
+    ['from-orange-500', 'to-red-600'],
+    ['from-violet-500', 'to-indigo-600'],
+    ['from-amber-500', 'to-yellow-600'],
+    ['from-rose-500', 'to-pink-600'],
+    ['from-teal-500', 'to-cyan-600'],
+    ['from-fuchsia-500', 'to-purple-600'],
+    ['from-lime-500', 'to-emerald-600'],
+];
+
+function getGradient(name: string): string {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    const pair = GRADIENT_PAIRS[Math.abs(hash) % GRADIENT_PAIRS.length];
+    return `bg-gradient-to-br ${pair[0]} ${pair[1]}`;
+}
+
+function getInitials(name: string): string {
+    if (!name) return '?';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+}
+
+// TikTok SVG icon (not in lucide)
+const TikTokIcon = ({ size = 14, className = '' }: { size?: number; className?: string }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05A6.34 6.34 0 0 0 3.15 15a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.71a8.27 8.27 0 0 0 4.76 1.5v-3.4a4.85 4.85 0 0 1-1-.12z" />
+    </svg>
+);
+
+// Twitter/X SVG icon
+const XIcon = ({ size = 14, className = '' }: { size?: number; className?: string }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
+);
+
 function csvEscape(value: string): string {
     if (!value) return '';
     if (value.includes(',') || value.includes('"') || value.includes('\n')) {
@@ -80,16 +124,26 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
     const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
     const [activeTab, setActiveTab] = useState<'pages' | 'tools'>('pages');
     const [copied, setCopied] = useState(false);
+    const [expandedId, setExpandedId] = useState<string | null>(null);
 
-    // Load contacts on mount
+    // Load contacts from API on mount
     React.useEffect(() => {
-        fetch('/data/db_ZA.json')
+        fetch('/api/marketplace')
             .then(res => res.json())
             .then(data => {
-                setContacts(data || []);
+                setContacts(Array.isArray(data) ? data : []);
                 setLoading(false);
             })
-            .catch(() => setLoading(false));
+            .catch(() => {
+                // Fallback to static file
+                fetch('/data/db_ZA.json')
+                    .then(res => res.json())
+                    .then(data => {
+                        setContacts(Array.isArray(data) ? data : []);
+                        setLoading(false);
+                    })
+                    .catch(() => setLoading(false));
+            });
     }, []);
 
     // Get unique industries
@@ -107,7 +161,10 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
             result = result.filter(c =>
                 c.person?.toLowerCase().includes(q) ||
                 c.company?.toLowerCase().includes(q) ||
-                c.industry?.toLowerCase().includes(q)
+                c.industry?.toLowerCase().includes(q) ||
+                c.instagram?.toLowerCase().includes(q) ||
+                c.tiktok?.toLowerCase().includes(q) ||
+                c.twitter?.toLowerCase().includes(q)
             );
         }
         if (selectedIndustry !== 'all') {
@@ -118,12 +175,9 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
 
     const visibleContacts = filtered.slice(0, visibleCount);
 
-    const parseFollowers = (f: string): string => {
-        if (!f) return '—';
-        return f;
-    };
+    const hasSocials = (c: MarketplaceContact) => c.instagram || c.tiktok || c.twitter;
 
-    // Download filtered contacts as CSV (includes hidden contact details)
+    // Download filtered contacts as CSV
     const handleDownloadCSV = () => {
         const listToExport = searchQuery || selectedIndustry !== 'all' ? filtered : contacts;
         const lines: string[] = [];
@@ -154,7 +208,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
         URL.revokeObjectURL(url);
     };
 
-    // Download filtered contacts as Markdown (includes hidden contact details)
+    // Download filtered contacts as Markdown
     const handleDownloadMD = () => {
         const listToExport = searchQuery || selectedIndustry !== 'all' ? filtered : contacts;
         const date = new Date().toLocaleDateString();
@@ -209,6 +263,10 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
         setTimeout(() => setCopied(false), 2000);
     };
 
+    const handleCardClick = (id: string) => {
+        setExpandedId(expandedId === id ? null : id);
+    };
+
     return (
         <div className="flex-1 h-full overflow-y-auto p-8 space-y-6">
             {/* Header */}
@@ -220,7 +278,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                         {contacts.length} Pages
                     </span>
                 </div>
-                <p className="text-white/40">Browse curated SA industry pages. Download as CSV or MD to access contact details.</p>
+                <p className="text-white/40">Browse curated SA industry pages. Click a card to view details, or download as CSV/MD.</p>
             </div>
 
             {/* Tabs */}
@@ -279,7 +337,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                             <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
                             <input
                                 type="text"
-                                placeholder="Search pages, genres..."
+                                placeholder="Search pages, genres, handles..."
                                 value={searchQuery}
                                 onChange={(e) => { setSearchQuery(e.target.value); setVisibleCount(ITEMS_PER_PAGE); }}
                                 className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 text-sm focus:outline-none focus:border-visio-teal/50 transition-colors"
@@ -346,19 +404,23 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                         </div>
                     </div>
 
-                    {/* Results count + contacts hint */}
+                    {/* Results count */}
                     <div className="flex items-center justify-between">
                         <p className="text-xs text-white/30">{filtered.length} results</p>
                         <span className="text-[10px] text-white/20 flex items-center gap-1">
-                            <Lock size={10} /> Contact details available on download
+                            <Lock size={10} /> Full contact info on download
                         </span>
                     </div>
 
-                    {/* Contacts Grid */}
+                    {/* Pages Grid */}
                     {loading ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {[...Array(9)].map((_, i) => (
-                                <div key={i} className="h-32 bg-white/5 rounded-xl animate-pulse" />
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                            {[...Array(18)].map((_, i) => (
+                                <div key={i} className="flex flex-col items-center gap-3 p-4">
+                                    <div className="w-16 h-16 rounded-full bg-white/5 animate-pulse" />
+                                    <div className="w-20 h-3 bg-white/5 rounded animate-pulse" />
+                                    <div className="w-14 h-2 bg-white/5 rounded animate-pulse" />
+                                </div>
                             ))}
                         </div>
                     ) : filtered.length === 0 ? (
@@ -368,47 +430,120 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                         </div>
                     ) : (
                         <>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                {visibleContacts.map((contact, i) => (
-                                    <motion.div
-                                        key={contact.id}
-                                        initial={{ opacity: 0, y: 8 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: Math.min(i * 0.02, 0.5) }}
-                                        className="bg-white/[0.03] border border-white/5 rounded-xl p-4 hover:bg-white/[0.06] hover:border-white/10 transition-all group"
-                                    >
-                                        <div className="flex items-start justify-between mb-2">
-                                            <div className="flex items-center gap-2 min-w-0">
-                                                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-visio-teal/20 to-visio-sage/20 flex items-center justify-center text-visio-teal font-bold text-xs shrink-0">
-                                                    {contact.person?.charAt(0)?.toUpperCase() || '?'}
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                                {visibleContacts.map((contact, i) => {
+                                    const isExpanded = expandedId === contact.id;
+                                    return (
+                                        <motion.div
+                                            key={contact.id}
+                                            initial={{ opacity: 0, scale: 0.9 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            transition={{ delay: Math.min(i * 0.015, 0.4), type: 'spring', stiffness: 300, damping: 25 }}
+                                            onClick={() => handleCardClick(contact.id)}
+                                            className={`relative flex flex-col items-center p-4 rounded-2xl cursor-pointer transition-all duration-200 group
+                                                ${isExpanded
+                                                    ? 'bg-white/[0.08] border-visio-teal/30 border shadow-lg shadow-visio-teal/5 col-span-2 row-span-2 sm:col-span-2'
+                                                    : 'bg-white/[0.02] border border-white/5 hover:bg-white/[0.06] hover:border-white/15 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5'
+                                                }`}
+                                        >
+                                            {/* Profile Avatar Bubble */}
+                                            <div className={`relative mb-3 ${isExpanded ? 'w-20 h-20' : 'w-14 h-14'} transition-all duration-200`}>
+                                                <div className={`w-full h-full rounded-full ${getGradient(contact.person)} flex items-center justify-center text-white font-bold shadow-lg ${isExpanded ? 'text-xl' : 'text-sm'}`}>
+                                                    {getInitials(contact.person)}
                                                 </div>
-                                                <div className="min-w-0">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <h4 className="text-sm font-semibold text-white truncate">{contact.person}</h4>
-                                                        {contact.status === 'Verified' && (
-                                                            <Verified size={12} className="text-visio-teal shrink-0" />
-                                                        )}
+                                                {/* Verified badge */}
+                                                {contact.status === 'Verified' && (
+                                                    <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-visio-teal rounded-full flex items-center justify-center border-2 border-[#0a0a0a]">
+                                                        <Check size={10} className="text-white" strokeWidth={3} />
                                                     </div>
-                                                    <p className="text-[10px] text-white/30 truncate">{contact.company}</p>
-                                                </div>
+                                                )}
+                                                {/* Online-style dot for follower count */}
+                                                {contact.followers && (
+                                                    <div className="absolute -top-1 -right-1 px-1.5 py-0.5 bg-black/80 border border-white/10 rounded-full">
+                                                        <span className="text-[8px] text-white/70 font-medium">{contact.followers}</span>
+                                                    </div>
+                                                )}
                                             </div>
-                                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-white/40 shrink-0 ml-1">
-                                                {parseFollowers(contact.followers)}
-                                            </span>
-                                        </div>
 
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-visio-teal/10 text-visio-teal border border-visio-teal/20">
+                                            {/* Name */}
+                                            <h4 className={`font-semibold text-white text-center leading-tight mb-1 group-hover:text-visio-teal transition-colors ${isExpanded ? 'text-sm' : 'text-xs'}`}>
+                                                {contact.person}
+                                            </h4>
+
+                                            {/* Industry Tag */}
+                                            <span className="text-[9px] px-2 py-0.5 rounded-full bg-white/5 text-white/40 mb-2 truncate max-w-full">
                                                 {contact.industry || contact.title}
                                             </span>
-                                            {contact.country && (
-                                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-white/30">
-                                                    {contact.country}
-                                                </span>
+
+                                            {/* Social Platform Icons (always visible) */}
+                                            {hasSocials(contact) && (
+                                                <div className="flex items-center gap-1.5">
+                                                    {contact.instagram && (
+                                                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center" title={contact.instagram}>
+                                                            <Instagram size={10} className="text-white" />
+                                                        </div>
+                                                    )}
+                                                    {contact.tiktok && (
+                                                        <div className="w-5 h-5 rounded-full bg-black border border-white/20 flex items-center justify-center" title={contact.tiktok}>
+                                                            <TikTokIcon size={10} className="text-white" />
+                                                        </div>
+                                                    )}
+                                                    {contact.twitter && (
+                                                        <div className="w-5 h-5 rounded-full bg-black border border-white/20 flex items-center justify-center" title={contact.twitter}>
+                                                            <XIcon size={10} className="text-white" />
+                                                        </div>
+                                                    )}
+                                                </div>
                                             )}
-                                        </div>
-                                    </motion.div>
-                                ))}
+
+                                            {/* Expanded Details */}
+                                            <AnimatePresence>
+                                                {isExpanded && (
+                                                    <motion.div
+                                                        initial={{ opacity: 0, height: 0 }}
+                                                        animate={{ opacity: 1, height: 'auto' }}
+                                                        exit={{ opacity: 0, height: 0 }}
+                                                        className="w-full mt-3 pt-3 border-t border-white/10 space-y-2 overflow-hidden"
+                                                    >
+                                                        {contact.company && contact.company !== contact.person && (
+                                                            <div className="flex items-center gap-2 text-xs text-white/50">
+                                                                <Globe size={12} className="shrink-0" />
+                                                                <span className="truncate">{contact.company}</span>
+                                                            </div>
+                                                        )}
+                                                        {contact.country && (
+                                                            <div className="flex items-center gap-2 text-xs text-white/50">
+                                                                <span className="text-sm">🇿🇦</span>
+                                                                <span>{contact.country === 'ZA' ? 'South Africa' : contact.country}</span>
+                                                            </div>
+                                                        )}
+                                                        {contact.instagram && (
+                                                            <div className="flex items-center gap-2 text-xs text-pink-400/80">
+                                                                <Instagram size={12} className="shrink-0" />
+                                                                <span className="truncate">{contact.instagram}</span>
+                                                            </div>
+                                                        )}
+                                                        {contact.tiktok && (
+                                                            <div className="flex items-center gap-2 text-xs text-white/60">
+                                                                <TikTokIcon size={12} />
+                                                                <span className="truncate">{contact.tiktok}</span>
+                                                            </div>
+                                                        )}
+                                                        {contact.twitter && (
+                                                            <div className="flex items-center gap-2 text-xs text-white/60">
+                                                                <XIcon size={12} />
+                                                                <span className="truncate">{contact.twitter}</span>
+                                                            </div>
+                                                        )}
+                                                        {contact.dateAdded && (
+                                                            <p className="text-[10px] text-white/20 pt-1">Added {contact.dateAdded}</p>
+                                                        )}
+                                                    </motion.div>
+                                                )}
+                                            </AnimatePresence>
+                                        </motion.div>
+                                    );
+                                })}
                             </div>
 
                             {/* Load More */}
