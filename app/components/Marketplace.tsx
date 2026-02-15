@@ -5,11 +5,8 @@ import { motion } from 'framer-motion';
 import {
     Search,
     Users,
-    Instagram,
-    Twitter,
     Music,
     Filter,
-    ExternalLink,
     Verified,
     ChevronDown,
     Store,
@@ -20,7 +17,11 @@ import {
     BarChart3,
     FileText,
     TrendingUp,
-    Sparkles
+    Sparkles,
+    Download,
+    Lock,
+    Copy,
+    Check
 } from 'lucide-react';
 import { SubscriptionTier } from '../types';
 
@@ -59,6 +60,14 @@ const AI_TOOLS = [
 
 const ITEMS_PER_PAGE = 30;
 
+function csvEscape(value: string): string {
+    if (!value) return '';
+    if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+        return `"${value.replace(/"/g, '""')}"`;
+    }
+    return value;
+}
+
 export const Marketplace: React.FC<MarketplaceProps> = ({
     onNewChat,
     subscriptionTier = 'artist',
@@ -70,6 +79,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
     const [showFilters, setShowFilters] = useState(false);
     const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
     const [activeTab, setActiveTab] = useState<'pages' | 'tools'>('pages');
+    const [copied, setCopied] = useState(false);
 
     // Load contacts on mount
     React.useEffect(() => {
@@ -97,9 +107,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
             result = result.filter(c =>
                 c.person?.toLowerCase().includes(q) ||
                 c.company?.toLowerCase().includes(q) ||
-                c.industry?.toLowerCase().includes(q) ||
-                c.instagram?.toLowerCase().includes(q) ||
-                c.twitter?.toLowerCase().includes(q)
+                c.industry?.toLowerCase().includes(q)
             );
         }
         if (selectedIndustry !== 'all') {
@@ -115,6 +123,92 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
         return f;
     };
 
+    // Download filtered contacts as CSV (includes hidden contact details)
+    const handleDownloadCSV = () => {
+        const listToExport = searchQuery || selectedIndustry !== 'all' ? filtered : contacts;
+        const lines: string[] = [];
+        lines.push('Name,Company,Industry,Email,Followers,Country,Instagram,TikTok,Twitter,Status');
+        listToExport.forEach(c => {
+            lines.push([
+                csvEscape(c.person || ''),
+                csvEscape(c.company || ''),
+                csvEscape(c.industry || c.title || ''),
+                csvEscape(c.email || ''),
+                csvEscape(c.followers || ''),
+                csvEscape(c.country || ''),
+                csvEscape(c.instagram || ''),
+                csvEscape(c.tiktok || ''),
+                csvEscape(c.twitter || ''),
+                csvEscape(c.status || ''),
+            ].join(','));
+        });
+        const csv = lines.join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `visio-marketplace-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
+    // Download filtered contacts as Markdown (includes hidden contact details)
+    const handleDownloadMD = () => {
+        const listToExport = searchQuery || selectedIndustry !== 'all' ? filtered : contacts;
+        const date = new Date().toLocaleDateString();
+        let md = `# Visio Marketplace Export\n`;
+        md += `Date: ${date}\n`;
+        md += `Total Pages: ${listToExport.length}\n`;
+        md += `Filter: ${selectedIndustry === 'all' ? 'All Industries' : selectedIndustry}\n\n`;
+        md += `---\n\n`;
+
+        listToExport.forEach(c => {
+            md += `### ${c.person}\n`;
+            md += `- **Industry:** ${c.industry || c.title || 'N/A'}\n`;
+            md += `- **Company:** ${c.company || 'N/A'}\n`;
+            md += `- **Email:** ${c.email || 'N/A'}\n`;
+            md += `- **Followers:** ${c.followers || 'N/A'}\n`;
+            md += `- **Country:** ${c.country || 'N/A'}\n`;
+            if (c.instagram) md += `- **Instagram:** ${c.instagram}\n`;
+            if (c.tiktok) md += `- **TikTok:** ${c.tiktok}\n`;
+            if (c.twitter) md += `- **Twitter:** ${c.twitter}\n`;
+            md += `- **Status:** ${c.status || 'N/A'}\n`;
+            md += `\n---\n\n`;
+        });
+
+        const blob = new Blob([md], { type: 'text/markdown' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `visio-marketplace-${new Date().toISOString().split('T')[0]}.md`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
+    // Copy as Markdown to clipboard
+    const handleCopyMD = () => {
+        const listToExport = searchQuery || selectedIndustry !== 'all' ? filtered : contacts;
+        const date = new Date().toLocaleDateString();
+        let md = `# Visio Marketplace Export\nDate: ${date}\nTotal: ${listToExport.length}\n\n`;
+        listToExport.forEach(c => {
+            md += `### ${c.person}\n`;
+            md += `- **Email:** ${c.email || 'N/A'}\n`;
+            md += `- **Industry:** ${c.industry || 'N/A'}\n`;
+            md += `- **Followers:** ${c.followers || 'N/A'}\n`;
+            if (c.instagram) md += `- **Instagram:** ${c.instagram}\n`;
+            if (c.tiktok) md += `- **TikTok:** ${c.tiktok}\n`;
+            if (c.twitter) md += `- **Twitter:** ${c.twitter}\n`;
+            md += `\n`;
+        });
+        navigator.clipboard.writeText(md);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
     return (
         <div className="flex-1 h-full overflow-y-auto p-8 space-y-6">
             {/* Header */}
@@ -123,10 +217,10 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                     <Store size={28} className="text-visio-teal" />
                     <h1 className="text-3xl font-outfit font-bold text-white">Marketplace</h1>
                     <span className="text-xs bg-visio-teal/10 text-visio-teal px-3 py-1 rounded-full border border-visio-teal/20 font-medium">
-                        {contacts.length} Pages & Tools
+                        {contacts.length} Pages
                     </span>
                 </div>
-                <p className="text-white/40">Browse curated industry contacts, AI tools, and resources for your campaigns.</p>
+                <p className="text-white/40">Browse curated SA industry pages. Download as CSV or MD to access contact details.</p>
             </div>
 
             {/* Tabs */}
@@ -137,7 +231,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                 >
                     <span className="flex items-center gap-2">
                         <Users size={14} />
-                        Pages & Contacts ({contacts.length})
+                        Pages ({contacts.length})
                     </span>
                 </button>
                 <button
@@ -179,13 +273,13 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
             ) : (
                 /* Pages & Contacts */
                 <>
-                    {/* Search & Filters */}
+                    {/* Search, Filters & Export */}
                     <div className="flex flex-col md:flex-row gap-3">
                         <div className="flex-1 relative">
                             <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
                             <input
                                 type="text"
-                                placeholder="Search pages, contacts, genres..."
+                                placeholder="Search pages, genres..."
                                 value={searchQuery}
                                 onChange={(e) => { setSearchQuery(e.target.value); setVisibleCount(ITEMS_PER_PAGE); }}
                                 className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 text-sm focus:outline-none focus:border-visio-teal/50 transition-colors"
@@ -223,11 +317,41 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                                 </div>
                             )}
                         </div>
+                        {/* Export buttons */}
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={handleCopyMD}
+                                className="flex items-center gap-2 px-3 py-3 rounded-xl hover:bg-white/5 text-white/50 hover:text-white transition-colors text-sm"
+                                title="Copy contacts as Markdown"
+                            >
+                                {copied ? <Check size={16} className="text-visio-teal" /> : <Copy size={16} />}
+                                <span className="hidden sm:inline text-xs">{copied ? 'Copied' : 'Copy'}</span>
+                            </button>
+                            <button
+                                onClick={handleDownloadMD}
+                                className="flex items-center gap-2 px-3 py-3 hover:bg-white/5 border border-white/10 rounded-xl text-white/50 hover:text-white text-sm transition-colors"
+                                title="Download as Markdown (includes contacts)"
+                            >
+                                <Download size={16} />
+                                <span className="hidden sm:inline text-xs">MD</span>
+                            </button>
+                            <button
+                                onClick={handleDownloadCSV}
+                                className="flex items-center gap-2 px-3 py-3 bg-visio-teal/10 hover:bg-visio-teal/20 border border-visio-teal/20 rounded-xl text-visio-teal text-sm transition-colors"
+                                title="Download as CSV (includes contacts)"
+                            >
+                                <Download size={16} />
+                                <span className="hidden sm:inline text-xs">CSV</span>
+                            </button>
+                        </div>
                     </div>
 
-                    {/* Results count */}
+                    {/* Results count + contacts hint */}
                     <div className="flex items-center justify-between">
                         <p className="text-xs text-white/30">{filtered.length} results</p>
+                        <span className="text-[10px] text-white/20 flex items-center gap-1">
+                            <Lock size={10} /> Contact details available on download
+                        </span>
                     </div>
 
                     {/* Contacts Grid */}
@@ -273,26 +397,13 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                                             </span>
                                         </div>
 
-                                        <div className="flex items-center gap-2 mb-3">
+                                        <div className="flex items-center gap-2">
                                             <span className="text-[10px] px-2 py-0.5 rounded-full bg-visio-teal/10 text-visio-teal border border-visio-teal/20">
                                                 {contact.industry || contact.title}
                                             </span>
                                             {contact.country && (
                                                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-white/30">
                                                     {contact.country}
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        <div className="flex items-center gap-3">
-                                            {contact.instagram && (
-                                                <span className="text-[10px] text-white/30 flex items-center gap-1">
-                                                    <Instagram size={10} /> {contact.instagram}
-                                                </span>
-                                            )}
-                                            {contact.twitter && (
-                                                <span className="text-[10px] text-white/30 flex items-center gap-1">
-                                                    <Twitter size={10} /> {contact.twitter}
                                                 </span>
                                             )}
                                         </div>
