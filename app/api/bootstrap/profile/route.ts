@@ -25,16 +25,21 @@ export async function POST(req: NextRequest) {
                 ? meta.full_name
                 : null;
 
-        // Check if profile already exists (to avoid resetting credits on re-bootstrap)
-        const { data: existing } = await supabaseAdmin
+        // Check if profile already exists — only select columns guaranteed to exist
+        const { data: existing, error: selectError } = await supabaseAdmin
             .from('profiles')
-            .select('id, credits_balance, subscription_tier')
+            .select('id, subscription_tier')
             .eq('id', auth.user.id)
             .maybeSingle();
 
+        // If the select itself fails (e.g. missing table), still try to upsert
+        if (selectError) {
+            console.warn('Profile select failed, attempting upsert:', selectError.message);
+        }
+
         if (existing) {
-            // Profile exists - just update name/email, don't reset credits
-            const { error } = await supabaseAdmin
+            // Profile exists — update name/email
+            await supabaseAdmin
                 .from('profiles')
                 .update({
                     email,
@@ -43,44 +48,62 @@ export async function POST(req: NextRequest) {
                 })
                 .eq('id', auth.user.id);
 
-            if (error) {
-                return NextResponse.json({ error: error.message }, { status: 500 });
-            }
-
-            // If credits_balance is 0 and no reset date, seed initial credits
-            if ((existing.credits_balance ?? 0) === 0) {
-                const tier = (existing.subscription_tier || 'artist') as SubscriptionTier;
-                const allocation = PLAN_CREDITS[tier];
-                const credits = allocation === Infinity ? 99999 : allocation;
-                await supabaseAdmin
+            // Try to seed credits if the column exists and balance is 0
+            try {
+                const { data: creditCheck } = await supabaseAdmin
                     .from('profiles')
-                    .update({
-                        credits_balance: credits,
-                        credits_reset_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-                    })
-                    .eq('id', auth.user.id);
+                    .select('credits_balance')
+                    .eq('id', auth.user.id)
+                    .maybeSingle();
+
+                if (creditCheck && (creditCheck.credits_balance ?? 0) === 0) {
+                    const tier = (existing.subscription_tier || 'artist') as SubscriptionTier;
+                    const allocation = PLAN_CREDITS[tier];
+                    const credits = allocation === Infinity ? 99999 : allocation;
+                    await supabaseAdmin
+                        .from('profiles')
+                        .update({
+                            credits_balance: credits,
+                            credits_reset_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+                        })
+                        .eq('id', auth.user.id);
+                }
+            } catch {
+                // credits columns may not exist yet — non-fatal
             }
         } else {
-            // New profile - create with initial credits
+            // New profile — create with basic fields first
             const tier: SubscriptionTier = 'artist';
             const initialCredits = PLAN_CREDITS[tier];
 
-            const { error } = await supabaseAdmin
+            const insertPayload: Record<string, any> = {
+                id: auth.user.id,
+                email,
+                name,
+                subscription_tier: tier,
+                subscription_status: 'active',
+                updated_at: new Date().toISOString()
+            };
+
+            // Try inserting with credit columns
+            const { error: insertErr } = await supabaseAdmin
                 .from('profiles')
                 .insert({
-                    id: auth.user.id,
-                    email,
-                    name,
-                    subscription_tier: tier,
-                    subscription_status: 'active',
+                    ...insertPayload,
                     credits_balance: initialCredits,
                     credits_used: 0,
                     credits_reset_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-                    updated_at: new Date().toISOString()
                 });
 
-            if (error) {
-                return NextResponse.json({ error: error.message }, { status: 500 });
+            // If insert failed due to missing credit columns, retry without them
+            if (insertErr) {
+                const { error: fallbackErr } = await supabaseAdmin
+                    .from('profiles')
+                    .insert(insertPayload);
+
+                if (fallbackErr) {
+                    return NextResponse.json({ error: fallbackErr.message }, { status: 500 });
+                }
             }
         }
 
@@ -89,4 +112,3 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: e?.message || 'Bootstrap failed' }, { status: 500 });
     }
 }
-
