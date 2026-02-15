@@ -56,6 +56,17 @@ interface MarketplaceProps {
     subscriptionTier?: SubscriptionTier;
 }
 
+function parseFollowers(str: string | undefined): number {
+    if (!str || str === '\u2014' || str === '-') return 0;
+    const s = str.replace(/\+/g, '').replace(/,/g, '').trim();
+    const mMatch = s.match(/([\d.]+)\s*M/i);
+    if (mMatch) return parseFloat(mMatch[1]) * 1_000_000;
+    const kMatch = s.match(/([\d.]+)\s*K/i);
+    if (kMatch) return parseFloat(kMatch[1]) * 1_000;
+    const num = parseFloat(s);
+    return isNaN(num) ? 0 : num;
+}
+
 const AI_TOOLS = [
     { icon: Search, name: 'Lead Finder', description: 'Find curators, bloggers, journalists & DJs', credits: 2, color: 'text-visio-teal', bg: 'bg-visio-teal/10' },
     { icon: Mail, name: 'Pitch Drafter', description: 'AI-powered pitch emails for any campaign', credits: 1, color: 'text-blue-400', bg: 'bg-blue-500/10' },
@@ -402,6 +413,8 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
         if (selectedIndustry !== 'all') {
             result = result.filter(c => c.industry === selectedIndustry);
         }
+        // Always sort by follower count descending (most followers first)
+        result = [...result].sort((a, b) => parseFollowers(b.followers) - parseFollowers(a.followers));
         return result;
     }, [contacts, searchQuery, selectedIndustry]);
 
