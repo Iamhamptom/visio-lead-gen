@@ -14,6 +14,7 @@ import { Billing } from './components/Billing';
 import { DashboardOverview } from './components/DashboardOverview';
 import { OnboardingTutorial } from './components/OnboardingTutorial';
 import { HowToUsePage } from './components/HowToUsePage';
+import { Marketplace } from './components/Marketplace';
 import ReasonPage from './reason/page';
 import ReachPage from './reach/page';
 import { Toast } from './components/Toast';
@@ -335,6 +336,7 @@ export default function Home() {
       else if (path === '/reach') targetView = 'reach';
       else if (path === '/pending') targetView = 'pending';
       else if (path === '/help') targetView = 'help';
+      else if (path === '/marketplace') targetView = 'marketplace';
       else if (path === '/landing') targetView = 'landing';
 
       // 2. Auth Guards
@@ -638,15 +640,6 @@ export default function Home() {
 
   const scrollToTop = useCallback(() => {
     chatScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
-
-  const handleChatWheel = useCallback((event: React.WheelEvent) => {
-    const el = chatScrollRef.current;
-    if (!el) return;
-    if (el.scrollHeight <= el.clientHeight) return;
-    // Force the scroll on the chat container even if the wheel event hits the wrapper.
-    el.scrollTop += event.deltaY;
-    event.preventDefault();
   }, []);
 
   // When switching sessions / entering the chat view, jump to the bottom.
@@ -1390,7 +1383,7 @@ export default function Home() {
               </div>
             ) : currentView === 'dashboard' ? (
               <>
-                <div className="flex-1 min-h-0 relative" onWheel={handleChatWheel}>
+                <div className="flex-1 min-h-0 relative">
                   <div
                     ref={chatScrollRef}
                     onScroll={handleChatScroll}
@@ -1542,6 +1535,11 @@ export default function Home() {
                 onBack={() => navigateTo('overview')}
                 onNavigateHome={() => navigateTo('overview')}
                 onLogout={handleLogout}
+              />
+            ) : currentView === 'marketplace' ? (
+              <Marketplace
+                onNewChat={handleNewChat}
+                subscriptionTier={effectiveSubscription.tier}
               />
             ) : currentView === 'help' ? (
               <HowToUsePage

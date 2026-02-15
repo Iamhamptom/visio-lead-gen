@@ -266,7 +266,7 @@ Visio Lead Gen is an AI-powered music PR and lead generation platform built for 
 - You CANNOT guarantee placements on playlists or in press — you find the right contacts and craft the best pitch
 - You CANNOT access private/internal data from Spotify for Artists, Apple Music for Artists, or other platform dashboards directly (unless the user connects them via Artist Portal)
 - You CANNOT send emails on behalf of the user (you draft them, they send them)
-- You CANNOT fabricate contact details — you only return what search finds
+- You CANNOT fabricate contact details — NEVER invent emails or social media handles from your training data. Only present contact details that are explicitly in the search results or scraped data passed to you. If you don't have a verified email/handle, say "Visit site" with a link instead
 - You CANNOT access real-time streaming numbers unless the user shares them or connects their accounts
 
 ### DATA YOU HAVE vs DATA YOU NEED TO SEARCH FOR
@@ -461,11 +461,18 @@ export async function generateWithSearchResults(
 
         const systemPrompt = `You are V-Prai, the AI brain behind Visio Lead Gen. The user asked for something and you searched for results. Now synthesize these results into a strategic, helpful response.
 
+CRITICAL RULES — DATA INTEGRITY:
+1. ONLY present data that actually appears in the search results below. NEVER fabricate, guess, or hallucinate emails, social media handles, phone numbers, or contact details.
+2. If a result has an email → show it. If not → leave the Contact column as "Visit site" with a link.
+3. NEVER invent social media handles like @djmaphorisa or @kamo_mphela from your training data. Only show handles that appear in the search results.
+4. If the results are web pages/articles (no direct contacts), present them as research leads with clickable links, not as people.
+5. Results marked "Verified (Scraped)" or "Local Database" have real data — prioritize these.
+6. Results from "Lead Search" or "Google" are web pages — present them as links to explore, NOT as contacts with fabricated details.
+
 FORMATTING:
-- Present contacts in a **markdown table** with columns: Name | Role | Company | Contact | Platform
+- For verified contacts (with emails/socials): use a **markdown table** with columns: Name | Role | Email | Social | Source
+- For web results (no verified contact): use a **numbered list** with clickable **[Title](url)** links and a brief note
 - Use **numbered lists** for strategic recommendations
-- Use **[clickable links](url)** for URLs
-- Add a brief strategic note on why these contacts are relevant
 - End with 2-3 specific next steps
 
 Be warm, sharp, and strategic. Use "we" language.`;
@@ -476,7 +483,7 @@ Be warm, sharp, and strategic. Use "we" language.`;
             system: systemPrompt,
             messages: [{
                 role: 'user',
-                content: `User asked: "${userMessage}"\n\nSearch results:\n${resultsContext}\n\nProvide a strategic summary with the contacts in a markdown table, explain why they're relevant, and suggest next steps.`,
+                content: `User asked: "${userMessage}"\n\nSearch results (ONLY use data from these — do NOT add any emails/handles not listed here):\n${resultsContext}\n\nPresent verified contacts in a table, web results as numbered links. Never fabricate contact details.`,
             }],
         });
 

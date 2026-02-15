@@ -17,7 +17,8 @@ import {
     Lightbulb,
     Calculator,
     HelpCircle,
-    Coins
+    Coins,
+    Store
 } from 'lucide-react';
 import { Campaign, ViewMode, Session, Subscription, ArtistProfile } from '../types';
 import { PLAN_LIMITS } from '../config/plans';
@@ -281,6 +282,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         label="Home"
                         active={activeView === 'overview'}
                         onClick={() => onNavigate('overview')}
+                    />
+                    <NavItem
+                        icon={<Store size={18} />}
+                        label="Marketplace"
+                        active={activeView === 'marketplace'}
+                        onClick={() => onNavigate('marketplace')}
                     />
                     {/* Inbox / Unfiled Drop Zone */}
                     <div
