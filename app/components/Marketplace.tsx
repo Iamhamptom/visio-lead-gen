@@ -859,6 +859,40 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                                     </button>
                                 </div>
                             )}
+
+                            {/* CTA Banner */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.5 }}
+                                className="mt-8 relative overflow-hidden rounded-2xl border border-visio-teal/20 bg-gradient-to-r from-visio-teal/10 via-purple-500/10 to-visio-teal/10 p-6 sm:p-8"
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-r from-visio-teal/5 via-transparent to-purple-500/5 animate-pulse" />
+                                <div className="relative flex flex-col sm:flex-row items-center gap-4 sm:gap-6 text-center sm:text-left">
+                                    <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-visio-teal/20 flex items-center justify-center">
+                                        <Zap size={24} className="text-visio-teal" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="text-white font-semibold text-lg mb-1">
+                                            Want more access to our insane VisioCorp tools?
+                                        </h3>
+                                        <p className="text-white/50 text-sm">
+                                            Partner with us and unlock the full power of AI-driven music marketing.
+                                        </p>
+                                    </div>
+                                    <a
+                                        href="mailto:admin@visiocorp.co"
+                                        className="flex-shrink-0 flex items-center gap-2 px-6 py-3 bg-visio-teal text-black font-semibold rounded-xl hover:bg-visio-teal/90 transition-all hover:scale-105 shadow-lg shadow-visio-teal/20"
+                                    >
+                                        <Mail size={16} />
+                                        Contact us
+                                        <ArrowRight size={16} />
+                                    </a>
+                                </div>
+                                <p className="relative text-center mt-4 text-white/30 text-xs tracking-wide">
+                                    admin@visiocorp.co
+                                </p>
+                            </motion.div>
                         </>
                     )}
                 </>
