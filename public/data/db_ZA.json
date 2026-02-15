@@ -1,6 +1,23 @@
 [
   {
     "id": "1",
+    "person": "Chris Excel",
+    "company": "Chris Excel",
+    "title": "Entertainment/Gossip",
+    "email": "",
+    "country": "ZA",
+    "industry": "Entertainment/Gossip",
+    "source": "@chrisexcel_102 | @ChrisExcel102",
+    "dateAdded": "2026-01-21",
+    "followers": "3.4M",
+    "instagram": "@chrisexcel_102",
+    "tiktok": "",
+    "twitter": "@ChrisExcel102",
+    "status": "Verified",
+    "profilePic": "/avatars/1.jpg"
+  },
+  {
+    "id": "2",
     "person": "Yano Lyrics",
     "company": "Yano Lyrics",
     "title": "Lyrics",
@@ -12,10 +29,11 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@yanolyrics",
-    "followers": "3.3M"
+    "followers": "3.1M",
+    "profilePic": "/avatars/2.jpg"
   },
   {
-    "id": "2",
+    "id": "3",
     "person": "Ooooomerr",
     "company": "Ooooomerr",
     "title": "Content",
@@ -27,10 +45,28 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@ooooomerr_",
-    "followers": "2.9M"
+    "followers": "2.9M",
+    "profilePic": "/avatars/3.jpg"
   },
   {
-    "id": "3",
+    "id": "4",
+    "person": "Okay Africa",
+    "company": "Okay Africa",
+    "title": "African Music",
+    "email": "",
+    "country": "ZA",
+    "industry": "African Music",
+    "source": "@okayafrica | @okayafrica",
+    "dateAdded": "2026-01-21",
+    "followers": "880K",
+    "instagram": "@okayafrica",
+    "tiktok": "",
+    "twitter": "@okayafrica",
+    "status": "Verified",
+    "profilePic": "/avatars/4.jpg"
+  },
+  {
+    "id": "5",
     "person": "Immaculate Vibez",
     "company": "Immaculate Vibez",
     "title": "Lyrics/Promo",
@@ -42,10 +78,11 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@immaculatetunes",
-    "followers": "843.8K"
+    "followers": "843.8K",
+    "profilePic": "/avatars/5.jpg"
   },
   {
-    "id": "4",
+    "id": "6",
     "person": "Soulful Deep ZA",
     "company": "Soulful Deep ZA",
     "title": "Deep House",
@@ -58,10 +95,11 @@
     "instagram": "@soulful_deep_za",
     "tiktok": "@soulful_deep_za",
     "twitter": "@soulful_deep_za",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/6.jpg"
   },
   {
-    "id": "5",
+    "id": "7",
     "person": "Deck Masters SA",
     "company": "Deck Masters SA",
     "title": "DJ",
@@ -74,10 +112,11 @@
     "instagram": "@deck.masters.sa",
     "tiktok": "@deck_masters_sa",
     "twitter": "@DeckMastersSa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/7.jpg"
   },
   {
-    "id": "6",
+    "id": "8",
     "person": "The Cypher SA",
     "company": "The Cypher SA",
     "title": "Hip-Hop",
@@ -90,10 +129,11 @@
     "instagram": "@thecyphersa",
     "tiktok": "",
     "twitter": "@thecyphersa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/8.jpg"
   },
   {
-    "id": "7",
+    "id": "9",
     "person": "Vibe Curators Mzansi",
     "company": "Vibe Curators Mzansi",
     "title": "Playlist Curator",
@@ -106,10 +146,11 @@
     "instagram": "@vibe_curators_mzansi",
     "tiktok": "@vibe_curators_mzansi",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/9.jpg"
   },
   {
-    "id": "8",
+    "id": "10",
     "person": "SA Music (Viral)",
     "company": "SA Music (Viral)",
     "title": "Promo",
@@ -121,10 +162,11 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@viralmusicemzansi",
-    "followers": "771.4K"
+    "followers": "771.4K",
+    "profilePic": "/avatars/10.jpg"
   },
   {
-    "id": "9",
+    "id": "11",
     "person": "Viral Music Mzansi",
     "company": "Viral Music Mzansi",
     "title": "Promo",
@@ -136,10 +178,11 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@viralmusicmzansi",
-    "followers": "769.5K"
+    "followers": "769.5K",
+    "profilePic": "/avatars/11.jpg"
   },
   {
-    "id": "10",
+    "id": "12",
     "person": "Producers Hub SA",
     "company": "Producers Hub SA",
     "title": "Producer",
@@ -152,10 +195,11 @@
     "instagram": "@producers.hub.sa",
     "tiktok": "",
     "twitter": "@ProducersHubSa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/12.jpg"
   },
   {
-    "id": "11",
+    "id": "13",
     "person": "Piano Vibes Mzansi",
     "company": "Piano Vibes Mzansi",
     "title": "Amapiano",
@@ -168,10 +212,11 @@
     "instagram": "@piano.vibes.mzansi",
     "tiktok": "",
     "twitter": "@piano_vibes_mzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/13.jpg"
   },
   {
-    "id": "12",
+    "id": "14",
     "person": "Praise Republic SA",
     "company": "Praise Republic SA",
     "title": "Gospel",
@@ -184,10 +229,11 @@
     "instagram": "@praiserepublicsa",
     "tiktok": "@praiserepublicsa",
     "twitter": "@Praiserepublicsa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/14.jpg"
   },
   {
-    "id": "13",
+    "id": "15",
     "person": "Freshmen Magazine",
     "company": "Freshmen Magazine",
     "title": "Culture/Entertainment",
@@ -196,30 +242,15 @@
     "industry": "Culture/Entertainment",
     "source": "@freshmenmag | @freshmenmag | @FreshmenMag",
     "dateAdded": "2026-01-21",
-    "followers": "681K",
+    "followers": "684K",
     "instagram": "@freshmenmag",
     "tiktok": "@freshmenmag",
     "twitter": "@FreshmenMag",
     "status": "Verified",
-    "profilePic": "/avatars/1.jpg"
+    "profilePic": "/avatars/15.jpg"
   },
   {
-    "id": "14",
-    "person": "Lyric Vill",
-    "company": "Lyric Vill",
-    "title": "Lyrics",
-    "email": "Lyric.vill7@gmail.com",
-    "phone": "0818017918",
-    "country": "ZA",
-    "industry": "Lyrics",
-    "source": "TikTok List - Paid Promo Only - YouTube: @LyricVill",
-    "dateAdded": "2026-01-21",
-    "status": "New",
-    "tiktok": "@lyric.vill",
-    "followers": "656.3K"
-  },
-  {
-    "id": "15",
+    "id": "16",
     "person": "Kwaito Mzansi Hub",
     "company": "Kwaito Mzansi Hub",
     "title": "Kwaito",
@@ -232,10 +263,28 @@
     "instagram": "@kwaitomzansihub",
     "tiktok": "@kwaitomzansihub",
     "twitter": "@kwaitomzansihub",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/16.jpg"
   },
   {
-    "id": "16",
+    "id": "17",
+    "person": "SA Vibes",
+    "company": "SA Vibes",
+    "title": "Dance/Culture",
+    "email": "",
+    "country": "ZA",
+    "industry": "Dance/Culture",
+    "source": "@sa_vibez | @sa_vibez",
+    "dateAdded": "2026-01-21",
+    "followers": "637K",
+    "instagram": "@sa_vibez",
+    "tiktok": "",
+    "twitter": "@sa_vibez",
+    "status": "Verified",
+    "profilePic": "/avatars/17.jpg"
+  },
+  {
+    "id": "18",
     "person": "Blue Note Mzansi",
     "company": "Blue Note Mzansi",
     "title": "Jazz",
@@ -248,10 +297,11 @@
     "instagram": "@bluenotemzansi",
     "tiktok": "",
     "twitter": "@Bluenotemzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/18.jpg"
   },
   {
-    "id": "17",
+    "id": "19",
     "person": "Amapiano Boss",
     "company": "Amapiano Boss",
     "title": "Amapiano",
@@ -260,32 +310,15 @@
     "industry": "Amapiano",
     "source": "@amapianoboss | @amapianoboss | @amapianoboss",
     "dateAdded": "2026-01-21",
-    "followers": "622K",
+    "followers": "631K",
     "instagram": "@amapianoboss",
     "tiktok": "@amapianoboss",
     "twitter": "@amapianoboss",
     "status": "Verified",
-    "profilePic": "/avatars/2.jpg"
+    "profilePic": "/avatars/19.jpg"
   },
   {
-    "id": "18",
-    "person": "SA Vibes",
-    "company": "SA Vibes",
-    "title": "Dance/Culture",
-    "email": "",
-    "country": "ZA",
-    "industry": "Dance/Culture",
-    "source": "@sa_vibez | @sa_vibez",
-    "dateAdded": "2026-01-21",
-    "followers": "619K",
-    "instagram": "@sa_vibez",
-    "tiktok": "",
-    "twitter": "@sa_vibez",
-    "status": "Verified",
-    "profilePic": "/avatars/3.jpg"
-  },
-  {
-    "id": "19",
+    "id": "20",
     "person": "Traditional Sounds SA",
     "company": "Traditional Sounds SA",
     "title": "Traditional/Maskandi",
@@ -298,10 +331,11 @@
     "instagram": "@traditional.sounds.sa",
     "tiktok": "@traditional_sounds_sa",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/20.jpg"
   },
   {
-    "id": "20",
+    "id": "21",
     "person": "Kokota Afrika",
     "company": "Kokota Afrika",
     "title": "Amapiano",
@@ -310,15 +344,15 @@
     "industry": "Amapiano",
     "source": "@kokota.afrika | @kokota.afrika | @KokotaAfrika",
     "dateAdded": "2026-01-21",
-    "followers": "604K",
+    "followers": "605K",
     "instagram": "@kokota.afrika",
     "tiktok": "@kokota.afrika",
     "twitter": "@KokotaAfrika",
     "status": "Verified",
-    "profilePic": "/avatars/4.jpg"
+    "profilePic": "/avatars/21.jpg"
   },
   {
-    "id": "21",
+    "id": "22",
     "person": "The Sound Board SA",
     "company": "The Sound Board SA",
     "title": "Music Blog",
@@ -331,10 +365,27 @@
     "instagram": "@the_sound_board_sa",
     "tiktok": "@the_sound_board_sa_official",
     "twitter": "@TheSoundBoardSa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/22.jpg"
   },
   {
-    "id": "22",
+    "id": "23",
+    "person": "Espezee",
+    "company": "Espezee",
+    "title": "Content",
+    "email": "espezeesithole@gmail.com",
+    "phone": "",
+    "country": "ZA",
+    "industry": "Content",
+    "source": "TikTok List - Content page",
+    "dateAdded": "2026-01-21",
+    "status": "New",
+    "tiktok": "@_espezee_",
+    "followers": "575.6K",
+    "profilePic": "/avatars/23.jpg"
+  },
+  {
+    "id": "24",
     "person": "Late Night Mzansi",
     "company": "Late Night Mzansi",
     "title": "Nightlife",
@@ -347,10 +398,11 @@
     "instagram": "@latenightmzansi",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/24.jpg"
   },
   {
-    "id": "23",
+    "id": "25",
     "person": "Gqom Underground ZA",
     "company": "Gqom Underground ZA",
     "title": "Gqom",
@@ -363,10 +415,11 @@
     "instagram": "@gqom.underground.za",
     "tiktok": "@gqom_underground_za",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/25.jpg"
   },
   {
-    "id": "24",
+    "id": "26",
     "person": "Worship Central ZA",
     "company": "Worship Central ZA",
     "title": "Gospel",
@@ -379,10 +432,11 @@
     "instagram": "@worship.central.za",
     "tiktok": "@worship_central_za",
     "twitter": "@WorshipCentralZa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/26.jpg"
   },
   {
-    "id": "25",
+    "id": "27",
     "person": "Amapiano TV",
     "company": "Amapiano TV",
     "title": "Amapiano",
@@ -391,15 +445,15 @@
     "industry": "Amapiano",
     "source": "@amapiano.tv | @amapiano.tv | @AmapianoTV",
     "dateAdded": "2026-01-21",
-    "followers": "544K",
+    "followers": "543K",
     "instagram": "@amapiano.tv",
     "tiktok": "@amapiano.tv",
     "twitter": "@AmapianoTV",
     "status": "Verified",
-    "profilePic": "/avatars/5.jpg"
+    "profilePic": "/avatars/27.jpg"
   },
   {
-    "id": "26",
+    "id": "28",
     "person": "Mzansi Radio Hub",
     "company": "Mzansi Radio Hub",
     "title": "Radio",
@@ -412,10 +466,45 @@
     "instagram": "@mzansi.radio.hub",
     "tiktok": "",
     "twitter": "@mzansi_radio_hub",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/28.jpg"
   },
   {
-    "id": "27",
+    "id": "29",
+    "person": "Culture Collector & Top 3",
+    "company": "Culture Collector & Top 3",
+    "title": "Culture",
+    "email": "",
+    "country": "ZA",
+    "industry": "Culture",
+    "source": "@culturecollector | @culturecollector",
+    "dateAdded": "2026-01-21",
+    "followers": "538K",
+    "instagram": "@culturecollector",
+    "tiktok": "",
+    "twitter": "@culturecollector",
+    "status": "Verified",
+    "profilePic": "/avatars/29.jpg"
+  },
+  {
+    "id": "30",
+    "person": "Culture Collecter",
+    "company": "Culture Collecter",
+    "title": "African Culture",
+    "email": "",
+    "country": "ZA",
+    "industry": "African Culture",
+    "source": "@culturecollecter | @culturecollecter",
+    "dateAdded": "2026-01-21",
+    "followers": "538K",
+    "instagram": "@culturecollecter",
+    "tiktok": "@culturecollecter",
+    "twitter": "",
+    "status": "Verified",
+    "profilePic": "/avatars/30.jpg"
+  },
+  {
+    "id": "31",
     "person": "Mzansi Shakers",
     "company": "Mzansi Shakers",
     "title": "Entertainment",
@@ -429,25 +518,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/6.jpg"
+    "profilePic": "/avatars/31.jpg"
   },
   {
-    "id": "28",
-    "person": "Espezee",
-    "company": "Espezee",
-    "title": "Content",
-    "email": "espezeesithole@gmail.com",
-    "phone": "",
-    "country": "ZA",
-    "industry": "Content",
-    "source": "TikTok List - Content page",
-    "dateAdded": "2026-01-21",
-    "status": "New",
-    "tiktok": "@_espezee_",
-    "followers": "530K"
-  },
-  {
-    "id": "29",
+    "id": "32",
     "person": "Threads & Tunes ZA",
     "company": "Threads & Tunes ZA",
     "title": "Fashion/Music",
@@ -460,10 +534,11 @@
     "instagram": "@threadsandtunesza",
     "tiktok": "@threadsandtunesza",
     "twitter": "@Threadsandtunesza",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/32.jpg"
   },
   {
-    "id": "30",
+    "id": "33",
     "person": "Sound National",
     "company": "Sound National",
     "title": "Lyrics",
@@ -475,10 +550,11 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@soundnational1",
-    "followers": "516K"
+    "followers": "516K",
+    "profilePic": "/avatars/33.jpg"
   },
   {
-    "id": "31",
+    "id": "34",
     "person": "Heritage Records SA",
     "company": "Heritage Records SA",
     "title": "Record Label",
@@ -491,44 +567,11 @@
     "instagram": "@heritage.records.sa",
     "tiktok": "",
     "twitter": "@HeritageRecordsSa",
-    "status": "Verified"
-  },
-  {
-    "id": "32",
-    "person": "Chris Excel",
-    "company": "Chris Excel",
-    "title": "Entertainment/Gossip",
-    "email": "",
-    "country": "ZA",
-    "industry": "Entertainment/Gossip",
-    "source": "@chrisexcel_102 | @ChrisExcel102",
-    "dateAdded": "2026-01-21",
-    "followers": "500K+ X",
-    "instagram": "@chrisexcel_102",
-    "tiktok": "",
-    "twitter": "@ChrisExcel102",
     "status": "Verified",
-    "profilePic": "/avatars/7.jpg"
+    "profilePic": "/avatars/34.jpg"
   },
   {
-    "id": "33",
-    "person": "Okay Africa",
-    "company": "Okay Africa",
-    "title": "African Music",
-    "email": "",
-    "country": "ZA",
-    "industry": "African Music",
-    "source": "@okayafrica | @okayafrica",
-    "dateAdded": "2026-01-21",
-    "followers": "500K+",
-    "instagram": "@okayafrica",
-    "tiktok": "",
-    "twitter": "@okayafrica",
-    "status": "Verified",
-    "profilePic": "/avatars/8.jpg"
-  },
-  {
-    "id": "34",
+    "id": "35",
     "person": "Rhyme Factory SA",
     "company": "Rhyme Factory SA",
     "title": "Hip-Hop",
@@ -541,10 +584,11 @@
     "instagram": "@rhyme.factory.sa",
     "tiktok": "@rhyme_factory_sa",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/35.jpg"
   },
   {
-    "id": "35",
+    "id": "36",
     "person": "The Rap Vault SA",
     "company": "The Rap Vault SA",
     "title": "Hip-Hop",
@@ -557,10 +601,11 @@
     "instagram": "@the_rap_vault_sa",
     "tiktok": "@the_rap_vault_sa",
     "twitter": "@the_rap_vault_saSA",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/36.jpg"
   },
   {
-    "id": "36",
+    "id": "37",
     "person": "Radio Revolution Mzansi",
     "company": "Radio Revolution Mzansi",
     "title": "Radio",
@@ -573,10 +618,11 @@
     "instagram": "@radio_revolution_mzansi",
     "tiktok": "@radio_revolution_mzansi_official",
     "twitter": "@radio_revolution_mzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/37.jpg"
   },
   {
-    "id": "37",
+    "id": "38",
     "person": "Gqom Life Durban",
     "company": "Gqom Life Durban",
     "title": "Gqom",
@@ -589,10 +635,11 @@
     "instagram": "@gqomlifedurban",
     "tiktok": "@gqomlifedurban_official",
     "twitter": "@gqomlifedurban",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/38.jpg"
   },
   {
-    "id": "38",
+    "id": "39",
     "person": "Pop Culture SA",
     "company": "Pop Culture SA",
     "title": "Pop",
@@ -605,10 +652,28 @@
     "instagram": "@pop_culture_sa",
     "tiktok": "@pop_culture_sa",
     "twitter": "@PopCultureSa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/39.jpg"
   },
   {
-    "id": "39",
+    "id": "40",
+    "person": "Kreative Kornerr",
+    "company": "Kreative Kornerr",
+    "title": "Culture",
+    "email": "",
+    "country": "ZA",
+    "industry": "Culture",
+    "source": "@kreative.kornerr | @kreative.kornerr | @kreativekornerr",
+    "dateAdded": "2026-01-21",
+    "followers": "444K",
+    "instagram": "@kreative.kornerr",
+    "tiktok": "@kreative.kornerr",
+    "twitter": "@kreativekornerr",
+    "status": "Verified",
+    "profilePic": "/avatars/40.jpg"
+  },
+  {
+    "id": "41",
     "person": "Roots & Culture SA",
     "company": "Roots & Culture SA",
     "title": "Reggae",
@@ -621,10 +686,11 @@
     "instagram": "@roots_and_culture_sa",
     "tiktok": "@roots_and_culture_sa",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/41.jpg"
   },
   {
-    "id": "40",
+    "id": "42",
     "person": "Block Culture ZA",
     "company": "Block Culture ZA",
     "title": "Street Culture",
@@ -637,10 +703,11 @@
     "instagram": "@block.culture.za",
     "tiktok": "",
     "twitter": "@block_culture_za",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/42.jpg"
   },
   {
-    "id": "41",
+    "id": "43",
     "person": "SA Events Guide",
     "company": "SA Events Guide",
     "title": "Events",
@@ -653,10 +720,11 @@
     "instagram": "@sa.events.guide",
     "tiktok": "@sa_events_guide_official",
     "twitter": "@sa_events_guide",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/43.jpg"
   },
   {
-    "id": "42",
+    "id": "44",
     "person": "Yanos Underground",
     "company": "Yanos Underground",
     "title": "Amapiano",
@@ -669,10 +737,11 @@
     "instagram": "@yanos_underground",
     "tiktok": "",
     "twitter": "@yanos_underground",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/44.jpg"
   },
   {
-    "id": "43",
+    "id": "45",
     "person": "Nova Sound Records SA",
     "company": "Nova Sound Records SA",
     "title": "Record Label",
@@ -685,10 +754,11 @@
     "instagram": "@nova_sound_records_sa",
     "tiktok": "@nova_sound_records_sa",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/45.jpg"
   },
   {
-    "id": "44",
+    "id": "46",
     "person": "Everything SA Music",
     "company": "Everything SA Music",
     "title": "Music News",
@@ -702,10 +772,10 @@
     "tiktok": "@everythingsamusic",
     "twitter": "@ESAMofficial_",
     "status": "Verified",
-    "profilePic": "/avatars/9.jpg"
+    "profilePic": "/avatars/46.jpg"
   },
   {
-    "id": "45",
+    "id": "47",
     "person": "Drybones",
     "company": "Drybones",
     "title": "Content",
@@ -717,10 +787,11 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@drybones.ww",
-    "followers": "394.1K"
+    "followers": "394.1K",
+    "profilePic": "/avatars/47.jpg"
   },
   {
-    "id": "46",
+    "id": "48",
     "person": "Afromixx Entertainment",
     "company": "Afromixx Entertainment",
     "title": "African Music",
@@ -734,10 +805,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/10.jpg"
+    "profilePic": "/avatars/48.jpg"
   },
   {
-    "id": "47",
+    "id": "49",
     "person": "Amapiano Junction SA",
     "company": "Amapiano Junction SA",
     "title": "Amapiano",
@@ -750,10 +821,11 @@
     "instagram": "@amapiano_junction_sa",
     "tiktok": "@amapiano_junction_sa_official",
     "twitter": "@AmapianoJunctionSa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/49.jpg"
   },
   {
-    "id": "48",
+    "id": "50",
     "person": "Flow State Mzansi",
     "company": "Flow State Mzansi",
     "title": "Hip-Hop",
@@ -766,10 +838,11 @@
     "instagram": "@flow_state_mzansi",
     "tiktok": "",
     "twitter": "@flow_state_mzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/50.jpg"
   },
   {
-    "id": "49",
+    "id": "51",
     "person": "Studio Rats SA",
     "company": "Studio Rats SA",
     "title": "Producer",
@@ -782,10 +855,11 @@
     "instagram": "@studioratssa",
     "tiktok": "@studioratssa",
     "twitter": "@Studioratssa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/51.jpg"
   },
   {
-    "id": "50",
+    "id": "52",
     "person": "Deep House Joburg",
     "company": "Deep House Joburg",
     "title": "Deep House",
@@ -798,10 +872,11 @@
     "instagram": "@deep_house_joburg",
     "tiktok": "@deep_house_joburg",
     "twitter": "@deep_house_joburg",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/52.jpg"
   },
   {
-    "id": "51",
+    "id": "53",
     "person": "Session Studio SA",
     "company": "Session Studio SA",
     "title": "Studio",
@@ -814,10 +889,11 @@
     "instagram": "@sessionstudiosa",
     "tiktok": "@sessionstudiosa",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/53.jpg"
   },
   {
-    "id": "52",
+    "id": "54",
     "person": "Fresh Off The Press SA",
     "company": "Fresh Off The Press SA",
     "title": "Music News",
@@ -830,10 +906,11 @@
     "instagram": "@fresh_off_the_press_sa",
     "tiktok": "",
     "twitter": "@fresh_off_the_press_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/54.jpg"
   },
   {
-    "id": "53",
+    "id": "55",
     "person": "Bassline Records SA",
     "company": "Bassline Records SA",
     "title": "Record Label",
@@ -846,10 +923,11 @@
     "instagram": "@bassline_records_sa",
     "tiktok": "",
     "twitter": "@bassline_records_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/55.jpg"
   },
   {
-    "id": "54",
+    "id": "56",
     "person": "Club Culture ZA",
     "company": "Club Culture ZA",
     "title": "Nightlife",
@@ -862,10 +940,11 @@
     "instagram": "@club.culture.za",
     "tiktok": "@club_culture_za",
     "twitter": "@club_culture_za",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/56.jpg"
   },
   {
-    "id": "55",
+    "id": "57",
     "person": "Drip Culture SA",
     "company": "Drip Culture SA",
     "title": "Fashion/Music",
@@ -878,10 +957,11 @@
     "instagram": "@drip.culture.sa",
     "tiktok": "@drip_culture_sa",
     "twitter": "@DripCultureSa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/57.jpg"
   },
   {
-    "id": "56",
+    "id": "58",
     "person": "Deep Mzansi",
     "company": "Deep Mzansi",
     "title": "Deep House",
@@ -894,10 +974,11 @@
     "instagram": "@deep_mzansi",
     "tiktok": "@deep_mzansi",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/58.jpg"
   },
   {
-    "id": "57",
+    "id": "59",
     "person": "Amapiano Land",
     "company": "Amapiano Land",
     "title": "Amapiano",
@@ -911,10 +992,10 @@
     "tiktok": "@amapianoland",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/37.jpg"
+    "profilePic": "/avatars/59.jpg"
   },
   {
-    "id": "58",
+    "id": "60",
     "person": "Yanos Republic",
     "company": "Yanos Republic",
     "title": "Amapiano",
@@ -927,10 +1008,11 @@
     "instagram": "@yanosrepublic",
     "tiktok": "@yanosrepublic_official",
     "twitter": "@Yanosrepublic",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/60.jpg"
   },
   {
-    "id": "59",
+    "id": "61",
     "person": "Promo Squad ZA",
     "company": "Promo Squad ZA",
     "title": "PR/Marketing",
@@ -943,42 +1025,8 @@
     "instagram": "@promo_squad_za",
     "tiktok": "@promo_squad_za",
     "twitter": "@promo_squad_za",
-    "status": "Verified"
-  },
-  {
-    "id": "60",
-    "person": "Musa Khawula",
-    "company": "Musa Khawula",
-    "title": "Celeb News",
-    "email": "",
-    "country": "ZA",
-    "industry": "Celeb News",
-    "source": "@musakhawula1 | @Musa_Khawula",
-    "dateAdded": "2026-01-21",
-    "followers": "300K+ X",
-    "instagram": "@musakhawula1",
-    "tiktok": "",
-    "twitter": "@Musa_Khawula",
     "status": "Verified",
-    "profilePic": "/avatars/11.jpg",
-    "realInstagram": "@musakhawulaproduction"
-  },
-  {
-    "id": "61",
-    "person": "Trace Africa",
-    "company": "Trace Africa",
-    "title": "African Music",
-    "email": "",
-    "country": "ZA",
-    "industry": "African Music",
-    "source": "@traceafrica",
-    "dateAdded": "2026-01-21",
-    "followers": "300K+",
-    "instagram": "@traceafrica",
-    "tiktok": "",
-    "twitter": "",
-    "status": "Verified",
-    "profilePic": "/avatars/12.jpg"
+    "profilePic": "/avatars/61.jpg"
   },
   {
     "id": "62",
@@ -994,7 +1042,8 @@
     "instagram": "@bass.culture.sa",
     "tiktok": "@bass_culture_sa",
     "twitter": "@bass_culture_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/62.jpg"
   },
   {
     "id": "63",
@@ -1011,7 +1060,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/13.jpg"
+    "profilePic": "/avatars/63.jpg"
   },
   {
     "id": "64",
@@ -1027,7 +1076,8 @@
     "instagram": "@lensculturesa",
     "tiktok": "@lensculturesa",
     "twitter": "@lensculturesa_SA",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/64.jpg"
   },
   {
     "id": "65",
@@ -1043,7 +1093,8 @@
     "instagram": "@jazz.lounge.sa",
     "tiktok": "@jazz_lounge_sa",
     "twitter": "@jazz_lounge_sa_ZA",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/65.jpg"
   },
   {
     "id": "66",
@@ -1059,7 +1110,8 @@
     "instagram": "@kwaito.vault.sa",
     "tiktok": "@kwaito_vault_sa",
     "twitter": "@kwaito_vault_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/66.jpg"
   },
   {
     "id": "67",
@@ -1074,7 +1126,8 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@manunaykene",
-    "followers": "272K"
+    "followers": "272K",
+    "profilePic": "/avatars/67.jpg"
   },
   {
     "id": "68",
@@ -1089,7 +1142,8 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@mzansimusic8",
-    "followers": "267.5K"
+    "followers": "267.5K",
+    "profilePic": "/avatars/68.jpg"
   },
   {
     "id": "69",
@@ -1105,7 +1159,8 @@
     "instagram": "@footworkmzansi",
     "tiktok": "@footworkmzansi",
     "twitter": "@footworkmzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/69.jpg"
   },
   {
     "id": "70",
@@ -1117,12 +1172,12 @@
     "industry": "Hip-Hop Blog",
     "source": "@slikouronlife | @SliksOnLife",
     "dateAdded": "2026-01-21",
-    "followers": "253K IG / 487K X",
+    "followers": "254K",
     "instagram": "@slikouronlife",
     "tiktok": "",
     "twitter": "@SliksOnLife",
     "status": "Verified",
-    "profilePic": "/avatars/14.jpg"
+    "profilePic": "/avatars/70.jpg"
   },
   {
     "id": "71",
@@ -1138,7 +1193,8 @@
     "instagram": "@indie_mzansi",
     "tiktok": "@indie_mzansi",
     "twitter": "@indie_mzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/71.jpg"
   },
   {
     "id": "72",
@@ -1154,10 +1210,29 @@
     "instagram": "@smoothgrooveza",
     "tiktok": "@smoothgrooveza",
     "twitter": "@smoothgroovezaZA",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/72.jpg"
   },
   {
     "id": "73",
+    "person": "Musa Khawula",
+    "company": "Musa Khawula",
+    "title": "Celeb News",
+    "email": "",
+    "country": "ZA",
+    "industry": "Celeb News",
+    "source": "@musakhawula1 | @Musa_Khawula",
+    "dateAdded": "2026-01-21",
+    "followers": "244.8K",
+    "instagram": "@musakhawula1",
+    "tiktok": "",
+    "twitter": "@Musa_Khawula",
+    "status": "Verified",
+    "profilePic": "/avatars/73.jpg",
+    "realInstagram": "@musakhawulaproduction"
+  },
+  {
+    "id": "74",
     "person": "Top Charts Africa",
     "company": "Top Charts Africa",
     "title": "Charts",
@@ -1171,10 +1246,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/15.jpg"
+    "profilePic": "/avatars/74.jpg"
   },
   {
-    "id": "74",
+    "id": "75",
     "person": "Step Culture Mzansi",
     "company": "Step Culture Mzansi",
     "title": "Dance",
@@ -1187,10 +1262,11 @@
     "instagram": "@step.culture.mzansi",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/75.jpg"
   },
   {
-    "id": "75",
+    "id": "76",
     "person": "Music Visuals Mzansi",
     "company": "Music Visuals Mzansi",
     "title": "Music Video",
@@ -1203,10 +1279,11 @@
     "instagram": "@music_visuals_mzansi",
     "tiktok": "@music_visuals_mzansi",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/76.jpg"
   },
   {
-    "id": "76",
+    "id": "77",
     "person": "Kwaito Nation ZA",
     "company": "Kwaito Nation ZA",
     "title": "Kwaito",
@@ -1219,10 +1296,11 @@
     "instagram": "@kwaito.nation.za",
     "tiktok": "@kwaito_nation_za",
     "twitter": "@kwaito_nation_za",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/77.jpg"
   },
   {
-    "id": "77",
+    "id": "78",
     "person": "Amapiano Sounds Daily",
     "company": "Amapiano Sounds Daily",
     "title": "Amapiano",
@@ -1235,10 +1313,11 @@
     "instagram": "@amapianosoundsdaily",
     "tiktok": "@amapianosoundsdaily",
     "twitter": "@Amapianosoundsdaily",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/78.jpg"
   },
   {
-    "id": "78",
+    "id": "79",
     "person": "Afro Vibes Collective",
     "company": "Afro Vibes Collective",
     "title": "Afrobeats",
@@ -1251,10 +1330,11 @@
     "instagram": "@afro.vibes.collective",
     "tiktok": "@afro_vibes_collective",
     "twitter": "@AfroVibesCollective",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/79.jpg"
   },
   {
-    "id": "79",
+    "id": "80",
     "person": "Style & Sound ZA",
     "company": "Style & Sound ZA",
     "title": "Fashion/Music",
@@ -1267,10 +1347,11 @@
     "instagram": "@style_and_sound_za",
     "tiktok": "@style_and_sound_za",
     "twitter": "@style_and_sound_za",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/80.jpg"
   },
   {
-    "id": "80",
+    "id": "81",
     "person": "SA Hip Hop 24/7",
     "company": "SA Hip Hop 24/7",
     "title": "Hip-Hop",
@@ -1284,10 +1365,10 @@
     "tiktok": "",
     "twitter": "@sahiphop247",
     "status": "Verified",
-    "profilePic": "/avatars/16.jpg"
+    "profilePic": "/avatars/81.jpg"
   },
   {
-    "id": "81",
+    "id": "82",
     "person": "Amapiano Lyrics 92",
     "company": "Amapiano Lyrics 92",
     "title": "Lyrics",
@@ -1299,10 +1380,11 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@amapiano.lyrics92",
-    "followers": "211.5K"
+    "followers": "211.5K",
+    "profilePic": "/avatars/82.jpg"
   },
   {
-    "id": "82",
+    "id": "83",
     "person": "Piano Frequency SA",
     "company": "Piano Frequency SA",
     "title": "Amapiano",
@@ -1315,10 +1397,11 @@
     "instagram": "@piano.frequency.sa",
     "tiktok": "",
     "twitter": "@piano_frequency_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/83.jpg"
   },
   {
-    "id": "83",
+    "id": "84",
     "person": "Jazz Fusion SA",
     "company": "Jazz Fusion SA",
     "title": "Jazz",
@@ -1331,10 +1414,11 @@
     "instagram": "@jazz_fusion_sa",
     "tiktok": "",
     "twitter": "@JazzFusionSa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/84.jpg"
   },
   {
-    "id": "84",
+    "id": "85",
     "person": "Pop Culture Mzansi",
     "company": "Pop Culture Mzansi",
     "title": "Pop",
@@ -1347,10 +1431,11 @@
     "instagram": "@pop.culture.mzansi",
     "tiktok": "@pop_culture_mzansi",
     "twitter": "@PopCultureMzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/85.jpg"
   },
   {
-    "id": "85",
+    "id": "86",
     "person": "Jazz Heritage SA",
     "company": "Jazz Heritage SA",
     "title": "Jazz",
@@ -1363,10 +1448,11 @@
     "instagram": "@jazz_heritage_sa",
     "tiktok": "@jazz_heritage_sa",
     "twitter": "@JazzHeritageSasa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/86.jpg"
   },
   {
-    "id": "86",
+    "id": "87",
     "person": "MacG Podcast and Chill",
     "company": "MacG Podcast and Chill",
     "title": "Entertainment",
@@ -1380,10 +1466,10 @@
     "tiktok": "",
     "twitter": "@podcastwithmacg",
     "status": "Verified",
-    "profilePic": "/avatars/17.jpg"
+    "profilePic": "/avatars/87.jpg"
   },
   {
-    "id": "87",
+    "id": "88",
     "person": "Sol Phenduka",
     "company": "Sol Phenduka",
     "title": "Entertainment",
@@ -1397,10 +1483,10 @@
     "tiktok": "",
     "twitter": "@Aborginaldj",
     "status": "Verified",
-    "profilePic": "/avatars/18.jpg"
+    "profilePic": "/avatars/88.jpg"
   },
   {
-    "id": "88",
+    "id": "89",
     "person": "NotJustOk",
     "company": "NotJustOk",
     "title": "Afrobeats",
@@ -1414,10 +1500,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/19.jpg"
+    "profilePic": "/avatars/89.jpg"
   },
   {
-    "id": "89",
+    "id": "90",
     "person": "Sound Kitchen Mzansi",
     "company": "Sound Kitchen Mzansi",
     "title": "Producer",
@@ -1430,10 +1516,11 @@
     "instagram": "@sound_kitchen_mzansi",
     "tiktok": "",
     "twitter": "@sound_kitchen_mzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/90.jpg"
   },
   {
-    "id": "90",
+    "id": "91",
     "person": "South Afrikak",
     "company": "South Afrikak",
     "title": "Memes/Culture",
@@ -1447,10 +1534,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/20.jpg"
+    "profilePic": "/avatars/91.jpg"
   },
   {
-    "id": "91",
+    "id": "92",
     "person": "Rhythm & Soul Mzansi",
     "company": "Rhythm & Soul Mzansi",
     "title": "R&B/Soul",
@@ -1463,10 +1550,11 @@
     "instagram": "@rhythm.and.soul.mzansi",
     "tiktok": "",
     "twitter": "@rhythm_and_soul_mzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/92.jpg"
   },
   {
-    "id": "92",
+    "id": "93",
     "person": "Proudly Mzansi SA",
     "company": "Proudly Mzansi SA",
     "title": "Culture",
@@ -1480,10 +1568,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/21.jpg"
+    "profilePic": "/avatars/93.jpg"
   },
   {
-    "id": "93",
+    "id": "94",
     "person": "Deep Grooves CPT",
     "company": "Deep Grooves CPT",
     "title": "Deep House",
@@ -1496,10 +1584,11 @@
     "instagram": "@deep.grooves.cpt",
     "tiktok": "",
     "twitter": "@deep_grooves_cpt",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/94.jpg"
   },
   {
-    "id": "94",
+    "id": "95",
     "person": "Piano District SA",
     "company": "Piano District SA",
     "title": "Amapiano",
@@ -1512,10 +1601,11 @@
     "instagram": "@piano.district.sa",
     "tiktok": "",
     "twitter": "@piano_district_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/95.jpg"
   },
   {
-    "id": "95",
+    "id": "96",
     "person": "Gqom Radar",
     "company": "Gqom Radar",
     "title": "Gqom",
@@ -1528,10 +1618,11 @@
     "instagram": "@gqom_radar",
     "tiktok": "@gqom_radar",
     "twitter": "@GqomRadar",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/96.jpg"
   },
   {
-    "id": "96",
+    "id": "97",
     "person": "Afro House Community",
     "company": "Afro House Community",
     "title": "Afro House",
@@ -1545,10 +1636,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/22.jpg"
+    "profilePic": "/avatars/97.jpg"
   },
   {
-    "id": "97",
+    "id": "98",
     "person": "Jazz Republic SA",
     "company": "Jazz Republic SA",
     "title": "Jazz",
@@ -1561,10 +1652,11 @@
     "instagram": "@jazz.republic.sa",
     "tiktok": "",
     "twitter": "@jazz_republic_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/98.jpg"
   },
   {
-    "id": "98",
+    "id": "99",
     "person": "Tlkdoit2",
     "company": "Tlkdoit2",
     "title": "Content",
@@ -1576,10 +1668,11 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@tlkdoit2",
-    "followers": "174.9K"
+    "followers": "174.9K",
+    "profilePic": "/avatars/99.jpg"
   },
   {
-    "id": "99",
+    "id": "100",
     "person": "City Lights Records ZA",
     "company": "City Lights Records ZA",
     "title": "Record Label",
@@ -1592,10 +1685,11 @@
     "instagram": "@citylightsrecordsza",
     "tiktok": "@citylightsrecordsza",
     "twitter": "@citylightsrecordsza",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/100.jpg"
   },
   {
-    "id": "100",
+    "id": "101",
     "person": "Kwaito Classics ZA",
     "company": "Kwaito Classics ZA",
     "title": "Kwaito",
@@ -1608,10 +1702,11 @@
     "instagram": "@kwaitoclassicsza",
     "tiktok": "@kwaitoclassicsza_official",
     "twitter": "@kwaitoclassicsza_ZA",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/101.jpg"
   },
   {
-    "id": "101",
+    "id": "102",
     "person": "West Lyrics",
     "company": "West Lyrics",
     "title": "Lyrics",
@@ -1623,10 +1718,11 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@west_lyrics",
-    "followers": "160K"
+    "followers": "160K",
+    "profilePic": "/avatars/102.jpg"
   },
   {
-    "id": "102",
+    "id": "103",
     "person": "Mzansi Pop",
     "company": "Mzansi Pop",
     "title": "Pop",
@@ -1639,10 +1735,11 @@
     "instagram": "@mzansi_pop",
     "tiktok": "",
     "twitter": "@MzansiPop",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/103.jpg"
   },
   {
-    "id": "103",
+    "id": "104",
     "person": "One Love SA",
     "company": "One Love SA",
     "title": "Reggae",
@@ -1655,10 +1752,11 @@
     "instagram": "@one.love.sa",
     "tiktok": "@one_love_sa",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/104.jpg"
   },
   {
-    "id": "104",
+    "id": "105",
     "person": "DJ Culture SA",
     "company": "DJ Culture SA",
     "title": "DJ",
@@ -1671,10 +1769,11 @@
     "instagram": "@dj_culture_sa",
     "tiktok": "",
     "twitter": "@dj_culture_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/105.jpg"
   },
   {
-    "id": "105",
+    "id": "106",
     "person": "Amapiano Central",
     "company": "Amapiano Central",
     "title": "Amapiano",
@@ -1687,10 +1786,11 @@
     "instagram": "@amapiano.central",
     "tiktok": "@amapiano_central",
     "twitter": "@amapiano_central",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/106.jpg"
   },
   {
-    "id": "106",
+    "id": "107",
     "person": "The Playlist Hub ZA",
     "company": "The Playlist Hub ZA",
     "title": "Playlist Curator",
@@ -1703,10 +1803,11 @@
     "instagram": "@theplaylisthubza",
     "tiktok": "@theplaylisthubza_official",
     "twitter": "@theplaylisthubza",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/107.jpg"
   },
   {
-    "id": "107",
+    "id": "108",
     "person": "Afro Wave SA",
     "company": "Afro Wave SA",
     "title": "Afrobeats",
@@ -1719,10 +1820,11 @@
     "instagram": "@afrowavesa",
     "tiktok": "@afrowavesa",
     "twitter": "@afrowavesa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/108.jpg"
   },
   {
-    "id": "108",
+    "id": "109",
     "person": "Amapiano Waves",
     "company": "Amapiano Waves",
     "title": "Amapiano",
@@ -1735,10 +1837,11 @@
     "instagram": "@amapiano_waves",
     "tiktok": "@amapiano_waves_official",
     "twitter": "@amapiano_waves",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/109.jpg"
   },
   {
-    "id": "109",
+    "id": "110",
     "person": "Gqom Base ZA",
     "company": "Gqom Base ZA",
     "title": "Gqom",
@@ -1751,10 +1854,11 @@
     "instagram": "@gqombaseza",
     "tiktok": "",
     "twitter": "@GqombasezaZa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/110.jpg"
   },
   {
-    "id": "110",
+    "id": "111",
     "person": "Mzansi Backthen Music",
     "company": "Mzansi Backthen Music",
     "title": "Nostalgia",
@@ -1766,10 +1870,11 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@mzansi_backthen_music",
-    "followers": "141K"
+    "followers": "141K",
+    "profilePic": "/avatars/111.jpg"
   },
   {
-    "id": "111",
+    "id": "112",
     "person": "SA Rap Radar",
     "company": "SA Rap Radar",
     "title": "Hip-Hop",
@@ -1782,10 +1887,11 @@
     "instagram": "@sa.rap.radar",
     "tiktok": "",
     "twitter": "@sa_rap_radar",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/112.jpg"
   },
   {
-    "id": "112",
+    "id": "113",
     "person": "After Hours Mzansi",
     "company": "After Hours Mzansi",
     "title": "Nightlife",
@@ -1798,10 +1904,11 @@
     "instagram": "@afterhoursmzansi",
     "tiktok": "",
     "twitter": "@Afterhoursmzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/113.jpg"
   },
   {
-    "id": "113",
+    "id": "114",
     "person": "Music PR SA",
     "company": "Music PR SA",
     "title": "PR/Marketing",
@@ -1814,10 +1921,11 @@
     "instagram": "@music_pr_sa",
     "tiktok": "@music_pr_sa",
     "twitter": "@music_pr_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/114.jpg"
   },
   {
-    "id": "114",
+    "id": "115",
     "person": "Fashion Forward Mzansi",
     "company": "Fashion Forward Mzansi",
     "title": "Fashion/Music",
@@ -1830,10 +1938,11 @@
     "instagram": "@fashion_forward_mzansi",
     "tiktok": "",
     "twitter": "@fashion_forward_mzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/115.jpg"
   },
   {
-    "id": "115",
+    "id": "116",
     "person": "Mzansi Sound Report",
     "company": "Mzansi Sound Report",
     "title": "Music News",
@@ -1846,10 +1955,28 @@
     "instagram": "@mzansisoundreport",
     "tiktok": "",
     "twitter": "@mzansisoundreport",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/116.jpg"
   },
   {
-    "id": "116",
+    "id": "117",
+    "person": "Trace Africa",
+    "company": "Trace Africa",
+    "title": "African Music",
+    "email": "",
+    "country": "ZA",
+    "industry": "African Music",
+    "source": "@traceafrica",
+    "dateAdded": "2026-01-21",
+    "followers": "138K",
+    "instagram": "@traceafrica",
+    "tiktok": "",
+    "twitter": "",
+    "status": "Verified",
+    "profilePic": "/avatars/117.jpg"
+  },
+  {
+    "id": "118",
     "person": "Night Owls SA",
     "company": "Night Owls SA",
     "title": "Nightlife",
@@ -1862,10 +1989,11 @@
     "instagram": "@night.owls.sa",
     "tiktok": "",
     "twitter": "@night_owls_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/118.jpg"
   },
   {
-    "id": "117",
+    "id": "119",
     "person": "Party Republic SA",
     "company": "Party Republic SA",
     "title": "Nightlife",
@@ -1878,10 +2006,11 @@
     "instagram": "@party.republic.sa",
     "tiktok": "",
     "twitter": "@party_republic_sa_ZA",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/119.jpg"
   },
   {
-    "id": "118",
+    "id": "120",
     "person": "Spirit Sounds SA",
     "company": "Spirit Sounds SA",
     "title": "Gospel",
@@ -1894,10 +2023,11 @@
     "instagram": "@spirit.sounds.sa",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/120.jpg"
   },
   {
-    "id": "119",
+    "id": "121",
     "person": "Amapiano Groove ZA",
     "company": "Amapiano Groove ZA",
     "title": "Amapiano",
@@ -1910,10 +2040,11 @@
     "instagram": "@amapianogrooveza",
     "tiktok": "",
     "twitter": "@Amapianogrooveza",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/121.jpg"
   },
   {
-    "id": "120",
+    "id": "122",
     "person": "The Hip Hop Plug ZA",
     "company": "The Hip Hop Plug ZA",
     "title": "Hip-Hop",
@@ -1926,10 +2057,11 @@
     "instagram": "@the_hip_hop_plug_za",
     "tiktok": "",
     "twitter": "@the_hip_hop_plug_za",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/122.jpg"
   },
   {
-    "id": "121",
+    "id": "123",
     "person": "Praise Movement ZA",
     "company": "Praise Movement ZA",
     "title": "Gospel",
@@ -1942,10 +2074,11 @@
     "instagram": "@praise.movement.za",
     "tiktok": "",
     "twitter": "@PraiseMovementZa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/123.jpg"
   },
   {
-    "id": "122",
+    "id": "124",
     "person": "Vibe District Records",
     "company": "Vibe District Records",
     "title": "Record Label",
@@ -1958,10 +2091,11 @@
     "instagram": "@vibe.district.records",
     "tiktok": "@vibe_district_records",
     "twitter": "@vibe_district_records",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/124.jpg"
   },
   {
-    "id": "123",
+    "id": "125",
     "person": "Daily Rotation SA",
     "company": "Daily Rotation SA",
     "title": "Playlist Curator",
@@ -1974,10 +2108,11 @@
     "instagram": "@dailyrotationsa",
     "tiktok": "@dailyrotationsa",
     "twitter": "@dailyrotationsa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/125.jpg"
   },
   {
-    "id": "124",
+    "id": "126",
     "person": "SA Music School",
     "company": "SA Music School",
     "title": "Music Education",
@@ -1990,10 +2125,11 @@
     "instagram": "@samusicschool",
     "tiktok": "@samusicschool_official",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/126.jpg"
   },
   {
-    "id": "125",
+    "id": "127",
     "person": "Raw Bars ZA",
     "company": "Raw Bars ZA",
     "title": "Hip-Hop",
@@ -2006,10 +2142,11 @@
     "instagram": "@raw.bars.za",
     "tiktok": "@raw_bars_za",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/127.jpg"
   },
   {
-    "id": "126",
+    "id": "128",
     "person": "Unorthodox Reviews",
     "company": "Unorthodox Reviews",
     "title": "Hip-Hop Blog",
@@ -2023,10 +2160,10 @@
     "tiktok": "",
     "twitter": "@UnorthodoxRSA",
     "status": "Verified",
-    "profilePic": "/avatars/23.jpg"
+    "profilePic": "/avatars/128.jpg"
   },
   {
-    "id": "127",
+    "id": "129",
     "person": "Jazz Corner ZA",
     "company": "Jazz Corner ZA",
     "title": "Jazz",
@@ -2039,10 +2176,11 @@
     "instagram": "@jazz.corner.za",
     "tiktok": "",
     "twitter": "@jazz_corner_za",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/129.jpg"
   },
   {
-    "id": "128",
+    "id": "130",
     "person": "I Love Amapiano",
     "company": "I Love Amapiano",
     "title": "Amapiano",
@@ -2056,10 +2194,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/24.jpg"
+    "profilePic": "/avatars/130.jpg"
   },
   {
-    "id": "129",
+    "id": "131",
     "person": "Deep House Republic SA",
     "company": "Deep House Republic SA",
     "title": "Deep House",
@@ -2072,10 +2210,11 @@
     "instagram": "@deep.house.republic.sa",
     "tiktok": "@deep_house_republic_sa",
     "twitter": "@deep_house_republic_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/131.jpg"
   },
   {
-    "id": "130",
+    "id": "132",
     "person": "Heritage Sounds Mzansi",
     "company": "Heritage Sounds Mzansi",
     "title": "Traditional/Maskandi",
@@ -2088,10 +2227,11 @@
     "instagram": "@heritage.sounds.mzansi",
     "tiktok": "",
     "twitter": "@heritage_sounds_mzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/132.jpg"
   },
   {
-    "id": "131",
+    "id": "133",
     "person": "DJ Spotlight ZA",
     "company": "DJ Spotlight ZA",
     "title": "DJ",
@@ -2104,10 +2244,11 @@
     "instagram": "@djspotlightza",
     "tiktok": "",
     "twitter": "@djspotlightza",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/133.jpg"
   },
   {
-    "id": "132",
+    "id": "134",
     "person": "Rhythm Movers ZA",
     "company": "Rhythm Movers ZA",
     "title": "Dance",
@@ -2120,10 +2261,11 @@
     "instagram": "@rhythmmoversza",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/134.jpg"
   },
   {
-    "id": "133",
+    "id": "135",
     "person": "Venue Guide SA",
     "company": "Venue Guide SA",
     "title": "Venue",
@@ -2136,10 +2278,11 @@
     "instagram": "@venue.guide.sa",
     "tiktok": "@venue_guide_sa_official",
     "twitter": "@VenueGuideSa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/135.jpg"
   },
   {
-    "id": "134",
+    "id": "136",
     "person": "SA Music Dispatch",
     "company": "SA Music Dispatch",
     "title": "Music News",
@@ -2152,10 +2295,11 @@
     "instagram": "@sa.music.dispatch",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/136.jpg"
   },
   {
-    "id": "135",
+    "id": "137",
     "person": "Producer Spotlight ZA",
     "company": "Producer Spotlight ZA",
     "title": "Producer",
@@ -2168,10 +2312,11 @@
     "instagram": "@producer_spotlight_za",
     "tiktok": "",
     "twitter": "@producer_spotlight_zaSA",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/137.jpg"
   },
   {
-    "id": "136",
+    "id": "138",
     "person": "Future Sounds Mzansi",
     "company": "Future Sounds Mzansi",
     "title": "Electronic",
@@ -2184,10 +2329,11 @@
     "instagram": "@future.sounds.mzansi",
     "tiktok": "",
     "twitter": "@future_sounds_mzansiSA",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/138.jpg"
   },
   {
-    "id": "137",
+    "id": "139",
     "person": "Mzansi Festival Guide",
     "company": "Mzansi Festival Guide",
     "title": "Festivals",
@@ -2200,10 +2346,11 @@
     "instagram": "@mzansifestivalguide",
     "tiktok": "@mzansifestivalguide_official",
     "twitter": "@mzansifestivalguide",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/139.jpg"
   },
   {
-    "id": "138",
+    "id": "140",
     "person": "SA Flow Report",
     "company": "SA Flow Report",
     "title": "Hip-Hop",
@@ -2216,10 +2363,11 @@
     "instagram": "@saflowreport",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/140.jpg"
   },
   {
-    "id": "139",
+    "id": "141",
     "person": "Amapiano Diary",
     "company": "Amapiano Diary",
     "title": "Amapiano",
@@ -2232,10 +2380,27 @@
     "instagram": "@amapiano.diary",
     "tiktok": "@amapiano_diary",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/141.jpg"
   },
   {
-    "id": "140",
+    "id": "142",
+    "person": "Lyric Vill",
+    "company": "Lyric Vill",
+    "title": "Lyrics",
+    "email": "Lyric.vill7@gmail.com",
+    "phone": "0818017918",
+    "country": "ZA",
+    "industry": "Lyrics",
+    "source": "TikTok List - Paid Promo Only - YouTube: @LyricVill",
+    "dateAdded": "2026-01-21",
+    "status": "New",
+    "tiktok": "@lyric.vill",
+    "followers": "120.6K",
+    "profilePic": "/avatars/142.jpg"
+  },
+  {
+    "id": "143",
     "person": "Yanos Movement",
     "company": "Yanos Movement",
     "title": "Amapiano",
@@ -2248,10 +2413,11 @@
     "instagram": "@yanos_movement",
     "tiktok": "@yanos_movement",
     "twitter": "@yanos_movementZA",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/143.jpg"
   },
   {
-    "id": "141",
+    "id": "144",
     "person": "Trevor S Swart",
     "company": "Trevor S Swart",
     "title": "Content",
@@ -2263,10 +2429,11 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@trevor.s.swart",
-    "followers": "119.2K"
+    "followers": "119.2K",
+    "profilePic": "/avatars/144.jpg"
   },
   {
-    "id": "142",
+    "id": "145",
     "person": "By Zar",
     "company": "By Zar",
     "title": "Hip-Hop/Amapiano",
@@ -2280,10 +2447,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/25.jpg"
+    "profilePic": "/avatars/145.jpg"
   },
   {
-    "id": "143",
+    "id": "146",
     "person": "African Celebs",
     "company": "African Celebs",
     "title": "Celeb News",
@@ -2297,10 +2464,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/26.jpg"
+    "profilePic": "/avatars/146.jpg"
   },
   {
-    "id": "144",
+    "id": "147",
     "person": "Afro Sound Lab",
     "company": "Afro Sound Lab",
     "title": "Afrobeats",
@@ -2313,10 +2480,11 @@
     "instagram": "@afrosoundlab",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/147.jpg"
   },
   {
-    "id": "145",
+    "id": "148",
     "person": "All Afrohouse",
     "company": "All Afrohouse",
     "title": "Promo",
@@ -2328,10 +2496,11 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@all_afrohouse",
-    "followers": "113.5K"
+    "followers": "113.5K",
+    "profilePic": "/avatars/148.jpg"
   },
   {
-    "id": "146",
+    "id": "149",
     "person": "Cape Town Jazz Hub",
     "company": "Cape Town Jazz Hub",
     "title": "Jazz",
@@ -2344,10 +2513,11 @@
     "instagram": "@capetownjazzhub",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/149.jpg"
   },
   {
-    "id": "147",
+    "id": "150",
     "person": "Concrete Culture SA",
     "company": "Concrete Culture SA",
     "title": "Street Culture",
@@ -2360,10 +2530,11 @@
     "instagram": "@concreteculturesa",
     "tiktok": "@concreteculturesa",
     "twitter": "@concreteculturesa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/150.jpg"
   },
   {
-    "id": "148",
+    "id": "151",
     "person": "SA Production Lab",
     "company": "SA Production Lab",
     "title": "Producer",
@@ -2376,10 +2547,11 @@
     "instagram": "@sa_production_lab",
     "tiktok": "@sa_production_lab_official",
     "twitter": "@sa_production_lab",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/151.jpg"
   },
   {
-    "id": "149",
+    "id": "152",
     "person": "Music Intel ZA",
     "company": "Music Intel ZA",
     "title": "Music News",
@@ -2392,10 +2564,11 @@
     "instagram": "@music_intel_za",
     "tiktok": "",
     "twitter": "@music_intel_za",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/152.jpg"
   },
   {
-    "id": "150",
+    "id": "153",
     "person": "CPT Events Hub",
     "company": "CPT Events Hub",
     "title": "Events",
@@ -2408,10 +2581,11 @@
     "instagram": "@cpteventshub",
     "tiktok": "@cpteventshub",
     "twitter": "@cpteventshub",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/153.jpg"
   },
   {
-    "id": "151",
+    "id": "154",
     "person": "Empire Africa",
     "company": "Empire Africa",
     "title": "Music/Culture",
@@ -2425,10 +2599,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/27.jpg"
+    "profilePic": "/avatars/154.jpg"
   },
   {
-    "id": "152",
+    "id": "155",
     "person": "Fashion Beats SA",
     "company": "Fashion Beats SA",
     "title": "Fashion/Music",
@@ -2441,10 +2615,11 @@
     "instagram": "@fashion_beats_sa",
     "tiktok": "@fashion_beats_sa",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/155.jpg"
   },
   {
-    "id": "153",
+    "id": "156",
     "person": "Island Sounds SA",
     "company": "Island Sounds SA",
     "title": "Reggae",
@@ -2457,10 +2632,11 @@
     "instagram": "@island_sounds_sa",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/156.jpg"
   },
   {
-    "id": "154",
+    "id": "157",
     "person": "Haci Kazino",
     "company": "Haci Kazino",
     "title": "Content",
@@ -2472,10 +2648,11 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@haci_kazino",
-    "followers": "101.1K"
+    "followers": "101.1K",
+    "profilePic": "/avatars/157.jpg"
   },
   {
-    "id": "155",
+    "id": "158",
     "person": "Deep Sessions ZA",
     "company": "Deep Sessions ZA",
     "title": "Deep House",
@@ -2488,10 +2665,11 @@
     "instagram": "@deep.sessions.za",
     "tiktok": "",
     "twitter": "@DeepSessionsZa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/158.jpg"
   },
   {
-    "id": "156",
+    "id": "159",
     "person": "Native Mag",
     "company": "Native Mag",
     "title": "African Music",
@@ -2505,10 +2683,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/28.jpg"
+    "profilePic": "/avatars/159.jpg"
   },
   {
-    "id": "157",
+    "id": "160",
     "person": "Gospel Heights SA",
     "company": "Gospel Heights SA",
     "title": "Gospel",
@@ -2521,10 +2699,11 @@
     "instagram": "@gospel.heights.sa",
     "tiktok": "@gospel_heights_sa",
     "twitter": "@gospel_heights_sa_ZA",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/160.jpg"
   },
   {
-    "id": "158",
+    "id": "161",
     "person": "Music Photography ZA",
     "company": "Music Photography ZA",
     "title": "Hip-Hop",
@@ -2537,10 +2716,11 @@
     "instagram": "@music.photography.za",
     "tiktok": "",
     "twitter": "@MusicPhotographyZa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/161.jpg"
   },
   {
-    "id": "159",
+    "id": "162",
     "person": "Soul Sessions SA",
     "company": "Soul Sessions SA",
     "title": "R&B/Soul",
@@ -2553,10 +2733,11 @@
     "instagram": "@soulsessionssa",
     "tiktok": "@soulsessionssa",
     "twitter": "@soulsessionssa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/162.jpg"
   },
   {
-    "id": "160",
+    "id": "163",
     "person": "SA Concert Guide",
     "company": "SA Concert Guide",
     "title": "Events",
@@ -2569,10 +2750,11 @@
     "instagram": "@sa_concert_guide",
     "tiktok": "@sa_concert_guide",
     "twitter": "@sa_concert_guideSA",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/163.jpg"
   },
   {
-    "id": "161",
+    "id": "164",
     "person": "Reggae Republic ZA",
     "company": "Reggae Republic ZA",
     "title": "Reggae",
@@ -2585,10 +2767,11 @@
     "instagram": "@reggae.republic.za",
     "tiktok": "@reggae_republic_za_official",
     "twitter": "@reggae_republic_za",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/164.jpg"
   },
   {
-    "id": "162",
+    "id": "165",
     "person": "Music Bulletin ZA",
     "company": "Music Bulletin ZA",
     "title": "Music News",
@@ -2601,10 +2784,11 @@
     "instagram": "@musicbulletinza",
     "tiktok": "@musicbulletinza",
     "twitter": "@musicbulletinza",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/165.jpg"
   },
   {
-    "id": "163",
+    "id": "166",
     "person": "The Music Brief ZA",
     "company": "The Music Brief ZA",
     "title": "Music News",
@@ -2617,10 +2801,11 @@
     "instagram": "@the.music.brief.za",
     "tiktok": "@the_music_brief_za",
     "twitter": "@TheMusicBriefZa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/166.jpg"
   },
   {
-    "id": "164",
+    "id": "167",
     "person": "Events Radar SA",
     "company": "Events Radar SA",
     "title": "Events",
@@ -2633,10 +2818,11 @@
     "instagram": "@events_radar_sa",
     "tiktok": "@events_radar_sa",
     "twitter": "@events_radar_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/167.jpg"
   },
   {
-    "id": "165",
+    "id": "168",
     "person": "Gospel Groove ZA",
     "company": "Gospel Groove ZA",
     "title": "Gospel",
@@ -2649,10 +2835,11 @@
     "instagram": "@gospelgrooveza",
     "tiktok": "@gospelgrooveza",
     "twitter": "@gospelgrooveza",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/168.jpg"
   },
   {
-    "id": "166",
+    "id": "169",
     "person": "I Love Amapiano (Clout)",
     "company": "I Love Amapiano (Clout)",
     "title": "Amapiano",
@@ -2666,10 +2853,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/29.jpg"
+    "profilePic": "/avatars/169.jpg"
   },
   {
-    "id": "167",
+    "id": "170",
     "person": "Dance Fever SA",
     "company": "Dance Fever SA",
     "title": "Dance",
@@ -2682,10 +2869,11 @@
     "instagram": "@dance_fever_sa",
     "tiktok": "",
     "twitter": "@DanceFeverSa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/170.jpg"
   },
   {
-    "id": "168",
+    "id": "171",
     "person": "SA Music Exclusiv",
     "company": "SA Music Exclusiv",
     "title": "Promo",
@@ -2697,10 +2885,11 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@sa.music.exclusiv",
-    "followers": "92.5K"
+    "followers": "92.5K",
+    "profilePic": "/avatars/171.jpg"
   },
   {
-    "id": "169",
+    "id": "172",
     "person": "Nduh Lyrics",
     "company": "Nduh Lyrics",
     "title": "Lyrics",
@@ -2712,10 +2901,11 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@nduh.lyrics",
-    "followers": "92.2K"
+    "followers": "92.2K",
+    "profilePic": "/avatars/172.jpg"
   },
   {
-    "id": "170",
+    "id": "173",
     "person": "Dance Hub SA",
     "company": "Dance Hub SA",
     "title": "Dance",
@@ -2728,10 +2918,11 @@
     "instagram": "@dance.hub.sa",
     "tiktok": "",
     "twitter": "@dance_hub_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/173.jpg"
   },
   {
-    "id": "171",
+    "id": "174",
     "person": "SA Gospel Music",
     "company": "SA Gospel Music",
     "title": "Gospel",
@@ -2745,10 +2936,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/30.jpg"
+    "profilePic": "/avatars/174.jpg"
   },
   {
-    "id": "172",
+    "id": "175",
     "person": "Music Lyrics SA",
     "company": "Music Lyrics SA",
     "title": "Lyrics",
@@ -2760,10 +2951,11 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@musiclyricssa",
-    "followers": "90K"
+    "followers": "90K",
+    "profilePic": "/avatars/175.jpg"
   },
   {
-    "id": "173",
+    "id": "176",
     "person": "Reggae Vibes Mzansi",
     "company": "Reggae Vibes Mzansi",
     "title": "Reggae",
@@ -2776,10 +2968,11 @@
     "instagram": "@reggae.vibes.mzansi",
     "tiktok": "@reggae_vibes_mzansi",
     "twitter": "@reggae_vibes_mzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/176.jpg"
   },
   {
-    "id": "174",
+    "id": "177",
     "person": "Strictly Soul",
     "company": "Strictly Soul",
     "title": "R&B/Soul",
@@ -2793,10 +2986,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/31.jpg"
+    "profilePic": "/avatars/177.jpg"
   },
   {
-    "id": "175",
+    "id": "178",
     "person": "Reggae Culture ZA",
     "company": "Reggae Culture ZA",
     "title": "Reggae",
@@ -2809,10 +3002,11 @@
     "instagram": "@reggaecultureza",
     "tiktok": "@reggaecultureza",
     "twitter": "@Reggaeculturezasa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/178.jpg"
   },
   {
-    "id": "176",
+    "id": "179",
     "person": "DJ Republic ZA",
     "company": "DJ Republic ZA",
     "title": "DJ",
@@ -2825,10 +3019,11 @@
     "instagram": "@dj_republic_za",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/179.jpg"
   },
   {
-    "id": "177",
+    "id": "180",
     "person": "Reggae Mzansi",
     "company": "Reggae Mzansi",
     "title": "Reggae",
@@ -2841,10 +3036,11 @@
     "instagram": "@reggae_mzansi",
     "tiktok": "@reggae_mzansi",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/180.jpg"
   },
   {
-    "id": "178",
+    "id": "181",
     "person": "Music Academy SA",
     "company": "Music Academy SA",
     "title": "Music Education",
@@ -2857,10 +3053,11 @@
     "instagram": "@music.academy.sa",
     "tiktok": "@music_academy_sa",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/181.jpg"
   },
   {
-    "id": "179",
+    "id": "182",
     "person": "Mzansi Trending",
     "company": "Mzansi Trending",
     "title": "Culture/Entertainment",
@@ -2873,10 +3070,11 @@
     "instagram": "@mzansi.trending",
     "tiktok": "@mzansi_trending_official",
     "twitter": "@mzansi_trending",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/182.jpg"
   },
   {
-    "id": "180",
+    "id": "183",
     "person": "Kwaito Reloaded",
     "company": "Kwaito Reloaded",
     "title": "Kwaito",
@@ -2889,10 +3087,11 @@
     "instagram": "@kwaitoreloaded",
     "tiktok": "@kwaitoreloaded",
     "twitter": "@Kwaitoreloaded",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/183.jpg"
   },
   {
-    "id": "181",
+    "id": "184",
     "person": "Dance Republic ZA",
     "company": "Dance Republic ZA",
     "title": "Dance",
@@ -2905,10 +3104,11 @@
     "instagram": "@dance.republic.za",
     "tiktok": "@dance_republic_za",
     "twitter": "@DanceRepublicZa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/184.jpg"
   },
   {
-    "id": "182",
+    "id": "185",
     "person": "House Projekt",
     "company": "House Projekt",
     "title": "Promo",
@@ -2920,10 +3120,11 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@house.projekt",
-    "followers": "84.1K"
+    "followers": "84.1K",
+    "profilePic": "/avatars/185.jpg"
   },
   {
-    "id": "183",
+    "id": "186",
     "person": "Durban Gqom Central",
     "company": "Durban Gqom Central",
     "title": "Gqom",
@@ -2936,10 +3137,11 @@
     "instagram": "@durbangqomcentral",
     "tiktok": "",
     "twitter": "@durbangqomcentral",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/186.jpg"
   },
   {
-    "id": "184",
+    "id": "187",
     "person": "Kwaito Revival SA",
     "company": "Kwaito Revival SA",
     "title": "Kwaito",
@@ -2952,10 +3154,11 @@
     "instagram": "@kwaito_revival_sa",
     "tiktok": "",
     "twitter": "@kwaito_revival_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/187.jpg"
   },
   {
-    "id": "185",
+    "id": "188",
     "person": "Talent Hub SA",
     "company": "Talent Hub SA",
     "title": "Artist Management",
@@ -2968,10 +3171,11 @@
     "instagram": "@talent_hub_sa",
     "tiktok": "@talent_hub_sa",
     "twitter": "@talent_hub_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/188.jpg"
   },
   {
-    "id": "186",
+    "id": "189",
     "person": "Durban Events Guide",
     "company": "Durban Events Guide",
     "title": "Events",
@@ -2984,10 +3188,11 @@
     "instagram": "@durban_events_guide",
     "tiktok": "@durban_events_guide",
     "twitter": "@durban_events_guide",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/189.jpg"
   },
   {
-    "id": "187",
+    "id": "190",
     "person": "Boom Bap Mzansi",
     "company": "Boom Bap Mzansi",
     "title": "Hip-Hop",
@@ -3000,10 +3205,11 @@
     "instagram": "@boom.bap.mzansi",
     "tiktok": "@boom_bap_mzansi",
     "twitter": "@boom_bap_mzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/190.jpg"
   },
   {
-    "id": "188",
+    "id": "191",
     "person": "Mzansi Records",
     "company": "Mzansi Records",
     "title": "Record Label",
@@ -3016,10 +3222,11 @@
     "instagram": "@mzansirecords",
     "tiktok": "",
     "twitter": "@Mzansirecords",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/191.jpg"
   },
   {
-    "id": "189",
+    "id": "192",
     "person": "SA Hip Hop Mag",
     "company": "SA Hip Hop Mag",
     "title": "Hip-Hop",
@@ -3033,10 +3240,10 @@
     "tiktok": "",
     "twitter": "@SAHipHopMag",
     "status": "Verified",
-    "profilePic": "/avatars/32.jpg"
+    "profilePic": "/avatars/192.jpg"
   },
   {
-    "id": "190",
+    "id": "193",
     "person": "Clout Africa",
     "company": "Clout Africa",
     "title": "African Culture",
@@ -3050,10 +3257,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/33.jpg"
+    "profilePic": "/avatars/193.jpg"
   },
   {
-    "id": "191",
+    "id": "194",
     "person": "Culture Vulture SA",
     "company": "Culture Vulture SA",
     "title": "Culture/Entertainment",
@@ -3066,10 +3273,11 @@
     "instagram": "@culture_vulture_sa",
     "tiktok": "@culture_vulture_sa",
     "twitter": "@culture_vulture_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/194.jpg"
   },
   {
-    "id": "192",
+    "id": "195",
     "person": "Mzansi Music Journal",
     "company": "Mzansi Music Journal",
     "title": "Music Blog",
@@ -3082,10 +3290,11 @@
     "instagram": "@mzansi.music.journal",
     "tiktok": "",
     "twitter": "@mzansi_music_journal",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/195.jpg"
   },
   {
-    "id": "193",
+    "id": "196",
     "person": "SA Culture Pulse",
     "company": "SA Culture Pulse",
     "title": "Culture/Entertainment",
@@ -3098,10 +3307,11 @@
     "instagram": "@sa.culture.pulse",
     "tiktok": "",
     "twitter": "@sa_culture_pulse",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/196.jpg"
   },
   {
-    "id": "194",
+    "id": "197",
     "person": "Curated Mzansi",
     "company": "Curated Mzansi",
     "title": "Playlist Curator",
@@ -3114,10 +3324,11 @@
     "instagram": "@curated.mzansi",
     "tiktok": "",
     "twitter": "@curated_mzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/197.jpg"
   },
   {
-    "id": "195",
+    "id": "198",
     "person": "Reggae Corner Mzansi",
     "company": "Reggae Corner Mzansi",
     "title": "Reggae",
@@ -3130,10 +3341,11 @@
     "instagram": "@reggaecornermzansi",
     "tiktok": "",
     "twitter": "@reggaecornermzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/198.jpg"
   },
   {
-    "id": "196",
+    "id": "199",
     "person": "Deep Frequencies SA",
     "company": "Deep Frequencies SA",
     "title": "Deep House",
@@ -3146,10 +3358,11 @@
     "instagram": "@deep_frequencies_sa",
     "tiktok": "@deep_frequencies_sa",
     "twitter": "@deep_frequencies_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/199.jpg"
   },
   {
-    "id": "197",
+    "id": "200",
     "person": "Video Vault ZA",
     "company": "Video Vault ZA",
     "title": "Music Video",
@@ -3162,10 +3375,11 @@
     "instagram": "@video_vault_za",
     "tiktok": "@video_vault_za",
     "twitter": "@video_vault_zaZA",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/200.jpg"
   },
   {
-    "id": "198",
+    "id": "201",
     "person": "The Crate SA",
     "company": "The Crate SA",
     "title": "Music Blog",
@@ -3178,10 +3392,11 @@
     "instagram": "@thecratesa",
     "tiktok": "",
     "twitter": "@thecratesa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/201.jpg"
   },
   {
-    "id": "199",
+    "id": "202",
     "person": "Rock Radar Mzansi",
     "company": "Rock Radar Mzansi",
     "title": "Rock",
@@ -3194,10 +3409,11 @@
     "instagram": "@rock_radar_mzansi",
     "tiktok": "",
     "twitter": "@rock_radar_mzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/202.jpg"
   },
   {
-    "id": "200",
+    "id": "203",
     "person": "The Stage ZA",
     "company": "The Stage ZA",
     "title": "Venue",
@@ -3210,10 +3426,11 @@
     "instagram": "@thestageza",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": "/avatars/203.jpg"
   },
   {
-    "id": "201",
+    "id": "204",
     "person": "HYPE Magazine",
     "company": "HYPE Magazine",
     "title": "Hip-Hop",
@@ -3227,10 +3444,10 @@
     "tiktok": "",
     "twitter": "@HYPEMagazineSA",
     "status": "Verified",
-    "profilePic": "/avatars/34.jpg"
+    "profilePic": "/avatars/204.jpg"
   },
   {
-    "id": "202",
+    "id": "205",
     "person": "Entertainment Mzansi Daily",
     "company": "Entertainment Mzansi Daily",
     "title": "Culture/Entertainment",
@@ -3243,10 +3460,11 @@
     "instagram": "@entertainmentmzansidaily",
     "tiktok": "",
     "twitter": "@entertainmentmzansidaily",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "203",
+    "id": "206",
     "person": "Promo Republic ZA",
     "company": "Promo Republic ZA",
     "title": "PR/Marketing",
@@ -3259,10 +3477,11 @@
     "instagram": "@promo_republic_za",
     "tiktok": "@promo_republic_za",
     "twitter": "@PromoRepublicZa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "204",
+    "id": "207",
     "person": "SA Radio Network",
     "company": "SA Radio Network",
     "title": "Radio",
@@ -3275,10 +3494,11 @@
     "instagram": "@sa_radio_network",
     "tiktok": "",
     "twitter": "@sa_radio_network",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "205",
+    "id": "208",
     "person": "Mix Masters SA",
     "company": "Mix Masters SA",
     "title": "DJ",
@@ -3291,10 +3511,11 @@
     "instagram": "@mix.masters.sa",
     "tiktok": "@mix_masters_sa",
     "twitter": "@MixMastersSa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "206",
+    "id": "209",
     "person": "Kwaito Legends ZA",
     "company": "Kwaito Legends ZA",
     "title": "Kwaito",
@@ -3307,10 +3528,11 @@
     "instagram": "@kwaito.legends.za",
     "tiktok": "@kwaito_legends_za",
     "twitter": "@kwaito_legends_za_SA",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "207",
+    "id": "210",
     "person": "SA Hip-Hop Reloaded",
     "company": "SA Hip-Hop Reloaded",
     "title": "Hip-Hop",
@@ -3324,10 +3546,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/35.jpg"
+    "profilePic": "/avatars/210.jpg"
   },
   {
-    "id": "208",
+    "id": "211",
     "person": "Rap Republic SA",
     "company": "Rap Republic SA",
     "title": "Hip-Hop",
@@ -3340,10 +3562,11 @@
     "instagram": "@rap_republic_sa",
     "tiktok": "@rap_republic_sa",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "209",
+    "id": "212",
     "person": "Piano Spotlight ZA",
     "company": "Piano Spotlight ZA",
     "title": "Amapiano",
@@ -3356,10 +3579,11 @@
     "instagram": "@pianospotlightza",
     "tiktok": "",
     "twitter": "@pianospotlightza",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "210",
+    "id": "213",
     "person": "Mzansi Jazz Collective",
     "company": "Mzansi Jazz Collective",
     "title": "Jazz",
@@ -3372,10 +3596,11 @@
     "instagram": "@mzansijazzcollective",
     "tiktok": "",
     "twitter": "@mzansijazzcollective",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "211",
+    "id": "214",
     "person": "Booth Life Mzansi",
     "company": "Booth Life Mzansi",
     "title": "Studio",
@@ -3388,10 +3613,11 @@
     "instagram": "@booth_life_mzansi",
     "tiktok": "",
     "twitter": "@booth_life_mzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "212",
+    "id": "215",
     "person": "Kwaito Legends",
     "company": "Kwaito Legends",
     "title": "Kwaito",
@@ -3405,10 +3631,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/36.jpg"
+    "profilePic": "/avatars/215.jpg"
   },
   {
-    "id": "213",
+    "id": "216",
     "person": "Khekhe Lyrics",
     "company": "Khekhe Lyrics",
     "title": "Lyrics",
@@ -3420,10 +3646,11 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@khekhe_lyrics",
-    "followers": "61.9K"
+    "followers": "61.9K",
+    "profilePic": ""
   },
   {
-    "id": "214",
+    "id": "217",
     "person": "African Music 75",
     "company": "African Music 75",
     "title": "Promo",
@@ -3435,10 +3662,11 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@africanmusic75",
-    "followers": "61.5K"
+    "followers": "61.5K",
+    "profilePic": ""
   },
   {
-    "id": "215",
+    "id": "218",
     "person": "Studio Central SA",
     "company": "Studio Central SA",
     "title": "Studio",
@@ -3451,10 +3679,11 @@
     "instagram": "@studiocentralsa",
     "tiktok": "@studiocentralsa",
     "twitter": "@Studiocentralsa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "216",
+    "id": "219",
     "person": "Hip Hop Corner ZA",
     "company": "Hip Hop Corner ZA",
     "title": "Hip-Hop",
@@ -3467,10 +3696,11 @@
     "instagram": "@hip_hop_corner_za",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "217",
+    "id": "220",
     "person": "SA Rock Scene",
     "company": "SA Rock Scene",
     "title": "Rock",
@@ -3483,10 +3713,11 @@
     "instagram": "@sarockscene",
     "tiktok": "@sarockscene_official",
     "twitter": "@Sarockscene",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "218",
+    "id": "221",
     "person": "Raw Gqom",
     "company": "Raw Gqom",
     "title": "Gqom",
@@ -3499,10 +3730,11 @@
     "instagram": "@raw.gqom",
     "tiktok": "@raw_gqom",
     "twitter": "@RawGqom",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "219",
+    "id": "222",
     "person": "Street Pulse SA",
     "company": "Street Pulse SA",
     "title": "Street Culture",
@@ -3515,10 +3747,11 @@
     "instagram": "@street_pulse_sa",
     "tiktok": "@street_pulse_sa",
     "twitter": "@street_pulse_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "220",
+    "id": "223",
     "person": "UKG Central",
     "company": "UKG Central",
     "title": "Content",
@@ -3530,10 +3763,11 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@ukgcentral",
-    "followers": "57.3K"
+    "followers": "57.3K",
+    "profilePic": ""
   },
   {
-    "id": "221",
+    "id": "224",
     "person": "Urban Streets Mzansi",
     "company": "Urban Streets Mzansi",
     "title": "Street Culture",
@@ -3546,10 +3780,11 @@
     "instagram": "@urbanstreetsmzansi",
     "tiktok": "@urbanstreetsmzansi_official",
     "twitter": "@urbanstreetsmzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "222",
+    "id": "225",
     "person": "Hit Rotation ZA",
     "company": "Hit Rotation ZA",
     "title": "Playlist Curator",
@@ -3562,10 +3797,11 @@
     "instagram": "@hit.rotation.za",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "223",
+    "id": "226",
     "person": "R&B Mzansi",
     "company": "R&B Mzansi",
     "title": "R&B/Soul",
@@ -3578,10 +3814,11 @@
     "instagram": "@randb_mzansi",
     "tiktok": "@randb_mzansi",
     "twitter": "@randb_mzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "224",
+    "id": "227",
     "person": "Sound Education SA",
     "company": "Sound Education SA",
     "title": "Music Education",
@@ -3594,10 +3831,11 @@
     "instagram": "@sound_education_sa",
     "tiktok": "@sound_education_sa",
     "twitter": "@sound_education_sa_ZA",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "225",
+    "id": "228",
     "person": "Piano Session ZA",
     "company": "Piano Session ZA",
     "title": "Amapiano",
@@ -3610,10 +3848,11 @@
     "instagram": "@pianosessionza",
     "tiktok": "@pianosessionza",
     "twitter": "@pianosessionza_SA",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "226",
+    "id": "229",
     "person": "NotJustOk Music",
     "company": "NotJustOk Music",
     "title": "Afrobeats",
@@ -3627,10 +3866,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/38.jpg"
+    "profilePic": "/avatars/229.jpg"
   },
   {
-    "id": "227",
+    "id": "230",
     "person": "Entertainment SA",
     "company": "Entertainment SA",
     "title": "Celeb News",
@@ -3644,10 +3883,10 @@
     "tiktok": "",
     "twitter": "@ESA_CelebNews",
     "status": "Verified",
-    "profilePic": "/avatars/39.jpg"
+    "profilePic": "/avatars/230.jpg"
   },
   {
-    "id": "228",
+    "id": "231",
     "person": "The Official SA Charts",
     "company": "The Official SA Charts",
     "title": "Charts",
@@ -3661,10 +3900,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/40.jpg"
+    "profilePic": "/avatars/231.jpg"
   },
   {
-    "id": "229",
+    "id": "232",
     "person": "Radio Plug SA",
     "company": "Radio Plug SA",
     "title": "Radio",
@@ -3677,10 +3916,11 @@
     "instagram": "@radioplugsa",
     "tiktok": "",
     "twitter": "@radioplugsaSA",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "230",
+    "id": "233",
     "person": "Afrobeats Daily SA",
     "company": "Afrobeats Daily SA",
     "title": "Afrobeats",
@@ -3693,10 +3933,11 @@
     "instagram": "@afrobeats.daily.sa",
     "tiktok": "@afrobeats_daily_sa",
     "twitter": "@afrobeats_daily_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "231",
+    "id": "234",
     "person": "Comedy Central Africa",
     "company": "Comedy Central Africa",
     "title": "Entertainment",
@@ -3708,10 +3949,11 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@comedycentral_africa",
-    "followers": "49.6K"
+    "followers": "49.6K",
+    "profilePic": ""
   },
   {
-    "id": "232",
+    "id": "235",
     "person": "Afro Fusion SA",
     "company": "Afro Fusion SA",
     "title": "Afrobeats",
@@ -3724,10 +3966,11 @@
     "instagram": "@afrofusionsa",
     "tiktok": "@afrofusionsa",
     "twitter": "@afrofusionsa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "233",
+    "id": "236",
     "person": "Electronic Mzansi",
     "company": "Electronic Mzansi",
     "title": "Electronic",
@@ -3740,10 +3983,11 @@
     "instagram": "@electronic.mzansi",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "234",
+    "id": "237",
     "person": "Sunrise Records ZA",
     "company": "Sunrise Records ZA",
     "title": "Record Label",
@@ -3756,10 +4000,11 @@
     "instagram": "@sunrise.records.za",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "235",
+    "id": "238",
     "person": "PopCulture Mzansi",
     "company": "PopCulture Mzansi",
     "title": "Pop Culture",
@@ -3773,10 +4018,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/41.jpg"
+    "profilePic": "/avatars/238.jpg"
   },
   {
-    "id": "236",
+    "id": "239",
     "person": "Gqom Pulse KZN",
     "company": "Gqom Pulse KZN",
     "title": "Gqom",
@@ -3789,10 +4034,11 @@
     "instagram": "@gqom_pulse_kzn",
     "tiktok": "",
     "twitter": "@GqomPulseKzn",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "237",
+    "id": "240",
     "person": "Soweto Sound Records",
     "company": "Soweto Sound Records",
     "title": "Record Label",
@@ -3805,10 +4051,11 @@
     "instagram": "@soweto_sound_records",
     "tiktok": "",
     "twitter": "@soweto_sound_records_ZA",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "238",
+    "id": "241",
     "person": "Mzansi Music Insider",
     "company": "Mzansi Music Insider",
     "title": "Music News",
@@ -3821,10 +4068,11 @@
     "instagram": "@mzansi_music_insider",
     "tiktok": "@mzansi_music_insider_official",
     "twitter": "@mzansi_music_insider",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "239",
+    "id": "242",
     "person": "Mzansi R&B Collective",
     "company": "Mzansi R&B Collective",
     "title": "R&B/Soul",
@@ -3837,10 +4085,11 @@
     "instagram": "@mzansi.randb.collective",
     "tiktok": "",
     "twitter": "@mzansi_randb_collective",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "240",
+    "id": "243",
     "person": "SA Pop Central",
     "company": "SA Pop Central",
     "title": "Pop",
@@ -3853,10 +4102,11 @@
     "instagram": "@sa.pop.central",
     "tiktok": "",
     "twitter": "@SaPopCentral",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "241",
+    "id": "244",
     "person": "Yanos Express",
     "company": "Yanos Express",
     "title": "Amapiano",
@@ -3869,10 +4119,11 @@
     "instagram": "@yanos.express",
     "tiktok": "@yanos_express",
     "twitter": "@yanos_express",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "242",
+    "id": "245",
     "person": "Afrobeats Connect ZA",
     "company": "Afrobeats Connect ZA",
     "title": "Afrobeats",
@@ -3885,10 +4136,11 @@
     "instagram": "@afrobeatsconnectza",
     "tiktok": "@afrobeatsconnectza",
     "twitter": "@Afrobeatsconnectza",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "243",
+    "id": "246",
     "person": "Gqom Central ZA",
     "company": "Gqom Central ZA",
     "title": "Gqom",
@@ -3901,10 +4153,11 @@
     "instagram": "@gqomcentralza",
     "tiktok": "@gqomcentralza",
     "twitter": "@Gqomcentralzasa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "244",
+    "id": "247",
     "person": "Roots Fire SA",
     "company": "Roots Fire SA",
     "title": "Reggae",
@@ -3917,10 +4170,11 @@
     "instagram": "@roots_fire_sa",
     "tiktok": "@roots_fire_sa",
     "twitter": "@roots_fire_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "245",
+    "id": "248",
     "person": "Pop Radar ZA",
     "company": "Pop Radar ZA",
     "title": "Pop",
@@ -3933,10 +4187,11 @@
     "instagram": "@pop_radar_za",
     "tiktok": "",
     "twitter": "@PopRadarZa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "246",
+    "id": "249",
     "person": "Mzansi Entertainment Hub",
     "company": "Mzansi Entertainment Hub",
     "title": "Culture/Entertainment",
@@ -3949,10 +4204,11 @@
     "instagram": "@mzansi_entertainment_hub",
     "tiktok": "@mzansi_entertainment_hub",
     "twitter": "@mzansi_entertainment_hub",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "247",
+    "id": "250",
     "person": "Turntable Mzansi",
     "company": "Turntable Mzansi",
     "title": "DJ",
@@ -3965,10 +4221,11 @@
     "instagram": "@turntable_mzansi",
     "tiktok": "@turntable_mzansi",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "248",
+    "id": "251",
     "person": "Playlist SA",
     "company": "Playlist SA",
     "title": "Playlist Curator",
@@ -3981,10 +4238,11 @@
     "instagram": "@playlist.sa",
     "tiktok": "@playlist_sa",
     "twitter": "@playlist_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "249",
+    "id": "252",
     "person": "Indie Radar Mzansi",
     "company": "Indie Radar Mzansi",
     "title": "Indie",
@@ -3997,10 +4255,11 @@
     "instagram": "@indie.radar.mzansi",
     "tiktok": "@indie_radar_mzansi",
     "twitter": "@indie_radar_mzansiSA",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "250",
+    "id": "253",
     "person": "Verse Culture ZA",
     "company": "Verse Culture ZA",
     "title": "Hip-Hop",
@@ -4013,10 +4272,11 @@
     "instagram": "@verse_culture_za",
     "tiktok": "",
     "twitter": "@verse_culture_za",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "251",
+    "id": "254",
     "person": "Afrobeats Mzansi",
     "company": "Afrobeats Mzansi",
     "title": "Afrobeats",
@@ -4029,10 +4289,11 @@
     "instagram": "@afrobeatsmzansi",
     "tiktok": "",
     "twitter": "@afrobeatsmzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "252",
+    "id": "255",
     "person": "Underground Deep SA",
     "company": "Underground Deep SA",
     "title": "Deep House",
@@ -4045,10 +4306,11 @@
     "instagram": "@underground_deep_sa",
     "tiktok": "@underground_deep_sa",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "253",
+    "id": "256",
     "person": "Soul Kitchen SA",
     "company": "Soul Kitchen SA",
     "title": "R&B/Soul",
@@ -4061,10 +4323,11 @@
     "instagram": "@soul.kitchen.sa",
     "tiktok": "",
     "twitter": "@SoulKitchenSa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "254",
+    "id": "257",
     "person": "SA Dance Network",
     "company": "SA Dance Network",
     "title": "Dance",
@@ -4077,10 +4340,11 @@
     "instagram": "@sa_dance_network",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "255",
+    "id": "258",
     "person": "Swezzy Maven",
     "company": "Swezzy Maven",
     "title": "Entertainment",
@@ -4094,10 +4358,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/42.jpg"
+    "profilePic": "/avatars/258.jpg"
   },
   {
-    "id": "256",
+    "id": "259",
     "person": "Joburg Events",
     "company": "Joburg Events",
     "title": "Events",
@@ -4111,10 +4375,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/43.jpg"
+    "profilePic": "/avatars/259.jpg"
   },
   {
-    "id": "257",
+    "id": "260",
     "person": "Amapiano Radar",
     "company": "Amapiano Radar",
     "title": "Amapiano",
@@ -4127,10 +4391,11 @@
     "instagram": "@amapianoradar",
     "tiktok": "",
     "twitter": "@Amapianoradar",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "258",
+    "id": "261",
     "person": "Satin Soul ZA",
     "company": "Satin Soul ZA",
     "title": "R&B/Soul",
@@ -4143,10 +4408,11 @@
     "instagram": "@satin.soul.za",
     "tiktok": "@satin_soul_za",
     "twitter": "@satin_soul_za",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "259",
+    "id": "262",
     "person": "Star Makers Mzansi",
     "company": "Star Makers Mzansi",
     "title": "Artist Management",
@@ -4159,10 +4425,11 @@
     "instagram": "@starmakersmzansi",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "260",
+    "id": "263",
     "person": "Vykvibe",
     "company": "Vykvibe",
     "title": "Content",
@@ -4174,10 +4441,11 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@vykvibe",
-    "followers": "44.6K"
+    "followers": "44.6K",
+    "profilePic": ""
   },
   {
-    "id": "261",
+    "id": "264",
     "person": "Mzansi Prolific Connect",
     "company": "Mzansi Prolific Connect",
     "title": "Culture",
@@ -4191,10 +4459,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/44.jpg"
+    "profilePic": "/avatars/264.jpg"
   },
   {
-    "id": "262",
+    "id": "265",
     "person": "The Beat Suite SA",
     "company": "The Beat Suite SA",
     "title": "Producer",
@@ -4207,10 +4475,11 @@
     "instagram": "@thebeatsuitesa",
     "tiktok": "",
     "twitter": "@thebeatsuitesa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "263",
+    "id": "266",
     "person": "Frame & Sound SA",
     "company": "Frame & Sound SA",
     "title": "Photography",
@@ -4223,10 +4492,11 @@
     "instagram": "@frame_and_sound_sa",
     "tiktok": "@frame_and_sound_sa",
     "twitter": "@FrameAndSoundSaza",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "264",
+    "id": "267",
     "person": "Music Review ZA",
     "company": "Music Review ZA",
     "title": "Music Blog",
@@ -4239,10 +4509,11 @@
     "instagram": "@music_review_za",
     "tiktok": "@music_review_za",
     "twitter": "@music_review_za",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "265",
+    "id": "268",
     "person": "Afro Groove Republic",
     "company": "Afro Groove Republic",
     "title": "Afrobeats",
@@ -4255,10 +4526,11 @@
     "instagram": "@afrogrooverepublic",
     "tiktok": "",
     "twitter": "@Afrogrooverepublicsa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "266",
+    "id": "269",
     "person": "Visuals SA",
     "company": "Visuals SA",
     "title": "Music Video",
@@ -4271,10 +4543,11 @@
     "instagram": "@visuals.sa",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "267",
+    "id": "270",
     "person": "Velvet Sounds ZA",
     "company": "Velvet Sounds ZA",
     "title": "R&B/Soul",
@@ -4287,10 +4560,11 @@
     "instagram": "@velvet.sounds.za",
     "tiktok": "@velvet_sounds_za",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "268",
+    "id": "271",
     "person": "Deep Horizon SA",
     "company": "Deep Horizon SA",
     "title": "Deep House",
@@ -4303,10 +4577,11 @@
     "instagram": "@deep_horizon_sa",
     "tiktok": "@deep_horizon_sa",
     "twitter": "@deep_horizon_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "269",
+    "id": "272",
     "person": "Pulse Records Mzansi",
     "company": "Pulse Records Mzansi",
     "title": "Record Label",
@@ -4319,10 +4594,11 @@
     "instagram": "@pulse_records_mzansi",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "270",
+    "id": "273",
     "person": "Underground Radio ZA",
     "company": "Underground Radio ZA",
     "title": "Radio",
@@ -4335,10 +4611,11 @@
     "instagram": "@undergroundradioza",
     "tiktok": "@undergroundradioza",
     "twitter": "@undergroundradioza_ZA",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "271",
+    "id": "274",
     "person": "Untitled Basement",
     "company": "Untitled Basement",
     "title": "Live Music",
@@ -4352,10 +4629,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/45.jpg"
+    "profilePic": "/avatars/274.jpg"
   },
   {
-    "id": "272",
+    "id": "275",
     "person": "Mzansi Movers",
     "company": "Mzansi Movers",
     "title": "Dance",
@@ -4368,10 +4645,11 @@
     "instagram": "@mzansi_movers",
     "tiktok": "@mzansi_movers",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "273",
+    "id": "276",
     "person": "Street Culture Mzansi",
     "company": "Street Culture Mzansi",
     "title": "Street Culture",
@@ -4384,10 +4662,11 @@
     "instagram": "@streetculturemzansi",
     "tiktok": "@streetculturemzansi",
     "twitter": "@Streetculturemzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "274",
+    "id": "277",
     "person": "Hip Hop Roundup SA",
     "company": "Hip Hop Roundup SA",
     "title": "Hip-Hop",
@@ -4400,10 +4679,11 @@
     "instagram": "@hiphoproundupsa",
     "tiktok": "@hiphoproundupsa",
     "twitter": "@hiphoproundupsa_ZA",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "275",
+    "id": "278",
     "person": "Blaq Pages",
     "company": "Blaq Pages",
     "title": "Music",
@@ -4417,27 +4697,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/46.jpg"
+    "profilePic": "/avatars/278.jpg"
   },
   {
-    "id": "276",
-    "person": "Culture Collector & Top 3",
-    "company": "Culture Collector & Top 3",
-    "title": "Culture",
-    "email": "",
-    "country": "ZA",
-    "industry": "Culture",
-    "source": "@culturecollector | @culturecollector",
-    "dateAdded": "2026-01-21",
-    "followers": "40K+",
-    "instagram": "@culturecollector",
-    "tiktok": "",
-    "twitter": "@culturecollector",
-    "status": "Verified",
-    "profilePic": "/avatars/47.jpg"
-  },
-  {
-    "id": "277",
+    "id": "279",
     "person": "Piano Pulse SA",
     "company": "Piano Pulse SA",
     "title": "Amapiano",
@@ -4450,10 +4713,11 @@
     "instagram": "@piano.pulse.sa",
     "tiktok": "",
     "twitter": "@piano_pulse_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "278",
+    "id": "280",
     "person": "Deep House Archives SA",
     "company": "Deep House Archives SA",
     "title": "Deep House",
@@ -4466,10 +4730,11 @@
     "instagram": "@deephousearchivessa",
     "tiktok": "@deephousearchivessa",
     "twitter": "@DeephousearchivessaZa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "279",
+    "id": "281",
     "person": "DJ Network Mzansi",
     "company": "DJ Network Mzansi",
     "title": "DJ",
@@ -4482,10 +4747,11 @@
     "instagram": "@dj_network_mzansi",
     "tiktok": "@dj_network_mzansi",
     "twitter": "@dj_network_mzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "280",
+    "id": "282",
     "person": "Visual Stories ZA",
     "company": "Visual Stories ZA",
     "title": "Music Video",
@@ -4498,10 +4764,11 @@
     "instagram": "@visual.stories.za",
     "tiktok": "",
     "twitter": "@visual_stories_za",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "281",
+    "id": "283",
     "person": "Exclusive Hub ZA",
     "company": "Exclusive Hub ZA",
     "title": "Promo",
@@ -4513,10 +4780,11 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@exclusivehub_za",
-    "followers": "39.9K"
+    "followers": "39.9K",
+    "profilePic": ""
   },
   {
-    "id": "282",
+    "id": "284",
     "person": "Maskandi Nation",
     "company": "Maskandi Nation",
     "title": "Traditional/Maskandi",
@@ -4529,10 +4797,11 @@
     "instagram": "@maskandi_nation",
     "tiktok": "@maskandi_nation",
     "twitter": "@maskandi_nation",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "283",
+    "id": "285",
     "person": "What's On Joburg",
     "company": "What's On Joburg",
     "title": "Events",
@@ -4545,10 +4814,11 @@
     "instagram": "@whatsonjoburg",
     "tiktok": "@whatsonjoburg_official",
     "twitter": "@whatsonjoburg",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "284",
+    "id": "286",
     "person": "Sa-HipHop.com",
     "company": "Sa-HipHop.com",
     "title": "Hip-Hop Blog",
@@ -4562,10 +4832,10 @@
     "tiktok": "",
     "twitter": "@SaHipHopCom",
     "status": "Verified",
-    "profilePic": "/avatars/48.jpg"
+    "profilePic": "/avatars/286.jpg"
   },
   {
-    "id": "285",
+    "id": "287",
     "person": "Deep Cuts SA",
     "company": "Deep Cuts SA",
     "title": "Deep House",
@@ -4578,10 +4848,11 @@
     "instagram": "@deep.cuts.sa",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "286",
+    "id": "288",
     "person": "Rock Mzansi",
     "company": "Rock Mzansi",
     "title": "Rock",
@@ -4594,10 +4865,11 @@
     "instagram": "@rock.mzansi",
     "tiktok": "",
     "twitter": "@rock_mzansiZA",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "287",
+    "id": "289",
     "person": "Mood Playlist SA",
     "company": "Mood Playlist SA",
     "title": "Playlist Curator",
@@ -4610,10 +4882,11 @@
     "instagram": "@moodplaylistsa",
     "tiktok": "@moodplaylistsa",
     "twitter": "@moodplaylistsaSA",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "288",
+    "id": "290",
     "person": "The Mzansi Report",
     "company": "The Mzansi Report",
     "title": "Culture/Entertainment",
@@ -4626,10 +4899,11 @@
     "instagram": "@the_mzansi_report",
     "tiktok": "@the_mzansi_report",
     "twitter": "@the_mzansi_report_SA",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "289",
+    "id": "291",
     "person": "SA Music Videos Hub",
     "company": "SA Music Videos Hub",
     "title": "Music Video",
@@ -4642,10 +4916,11 @@
     "instagram": "@sa.music.videos.hub",
     "tiktok": "@sa_music_videos_hub",
     "twitter": "@sa_music_videos_hub",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "290",
+    "id": "292",
     "person": "Indie Sound SA",
     "company": "Indie Sound SA",
     "title": "Indie",
@@ -4658,10 +4933,11 @@
     "instagram": "@indie.sound.sa",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "291",
+    "id": "293",
     "person": "Hey Mzansi",
     "company": "Hey Mzansi",
     "title": "Culture",
@@ -4673,10 +4949,11 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@heymzansi",
-    "followers": "35.7K"
+    "followers": "35.7K",
+    "profilePic": ""
   },
   {
-    "id": "292",
+    "id": "294",
     "person": "Learn Music ZA",
     "company": "Learn Music ZA",
     "title": "Music Education",
@@ -4689,10 +4966,11 @@
     "instagram": "@learn_music_za",
     "tiktok": "@learn_music_za",
     "twitter": "@learn_music_za",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "293",
+    "id": "295",
     "person": "Bars & Beats SA",
     "company": "Bars & Beats SA",
     "title": "Hip-Hop",
@@ -4705,10 +4983,11 @@
     "instagram": "@bars_and_beats_sa",
     "tiktok": "@bars_and_beats_sa",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "294",
+    "id": "296",
     "person": "Soul Republic SA",
     "company": "Soul Republic SA",
     "title": "R&B/Soul",
@@ -4721,10 +5000,11 @@
     "instagram": "@soul_republic_sa",
     "tiktok": "@soul_republic_sa",
     "twitter": "@soul_republic_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "295",
+    "id": "297",
     "person": "SA Lifestyle Buzz",
     "company": "SA Lifestyle Buzz",
     "title": "Culture/Entertainment",
@@ -4737,10 +5017,11 @@
     "instagram": "@sa.lifestyle.buzz",
     "tiktok": "@sa_lifestyle_buzz",
     "twitter": "@SaLifestyleBuzz",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "296",
+    "id": "298",
     "person": "Music Mentors Mzansi",
     "company": "Music Mentors Mzansi",
     "title": "Music Education",
@@ -4753,10 +5034,11 @@
     "instagram": "@musicmentorsmzansi",
     "tiktok": "",
     "twitter": "@Musicmentorsmzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "297",
+    "id": "299",
     "person": "3 Step Afrohouse",
     "company": "3 Step Afrohouse",
     "title": "Promo",
@@ -4768,10 +5050,11 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@3step_afrohouse",
-    "followers": "34.5K"
+    "followers": "34.5K",
+    "profilePic": ""
   },
   {
-    "id": "298",
+    "id": "300",
     "person": "SA Mic Check",
     "company": "SA Mic Check",
     "title": "Hip-Hop",
@@ -4784,10 +5067,11 @@
     "instagram": "@sa_mic_check",
     "tiktok": "@sa_mic_check_official",
     "twitter": "@sa_mic_check",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "299",
+    "id": "301",
     "person": "Afrobeats Nation SA",
     "company": "Afrobeats Nation SA",
     "title": "Afrobeats",
@@ -4800,10 +5084,11 @@
     "instagram": "@afrobeats.nation.sa",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "300",
+    "id": "302",
     "person": "Artist Connect ZA",
     "company": "Artist Connect ZA",
     "title": "Artist Management",
@@ -4816,10 +5101,11 @@
     "instagram": "@artistconnectza",
     "tiktok": "",
     "twitter": "@artistconnectza",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "301",
+    "id": "303",
     "person": "Rhythm Report",
     "company": "Rhythm Report",
     "title": "Promo",
@@ -4831,10 +5117,11 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@rhythm_report",
-    "followers": "33.7K"
+    "followers": "33.7K",
+    "profilePic": ""
   },
   {
-    "id": "302",
+    "id": "304",
     "person": "Smooth Jazz Mzansi",
     "company": "Smooth Jazz Mzansi",
     "title": "Jazz",
@@ -4847,10 +5134,11 @@
     "instagram": "@smooth.jazz.mzansi",
     "tiktok": "",
     "twitter": "@smooth_jazz_mzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "303",
+    "id": "305",
     "person": "Sound Check SA",
     "company": "Sound Check SA",
     "title": "Music News",
@@ -4863,10 +5151,11 @@
     "instagram": "@sound.check.sa",
     "tiktok": "@sound_check_sa",
     "twitter": "@SoundCheckSa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "304",
+    "id": "306",
     "person": "Marketing Beats SA",
     "company": "Marketing Beats SA",
     "title": "PR/Marketing",
@@ -4879,10 +5168,11 @@
     "instagram": "@marketing.beats.sa",
     "tiktok": "@marketing_beats_sa_official",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "305",
+    "id": "307",
     "person": "SA Bars Daily",
     "company": "SA Bars Daily",
     "title": "Hip-Hop",
@@ -4895,10 +5185,11 @@
     "instagram": "@sa.bars.daily",
     "tiktok": "",
     "twitter": "@sa_bars_daily",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "306",
+    "id": "308",
     "person": "Amapiano With Andy",
     "company": "Amapiano With Andy",
     "title": "Amapiano Dance",
@@ -4912,10 +5203,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/49.jpg"
+    "profilePic": "/avatars/308.jpg"
   },
   {
-    "id": "307",
+    "id": "309",
     "person": "Worship Hub ZA",
     "company": "Worship Hub ZA",
     "title": "Gospel",
@@ -4928,10 +5219,11 @@
     "instagram": "@worship.hub.za",
     "tiktok": "@worship_hub_za_official",
     "twitter": "@worship_hub_za",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "308",
+    "id": "310",
     "person": "Festival Republic ZA",
     "company": "Festival Republic ZA",
     "title": "Festivals",
@@ -4944,10 +5236,11 @@
     "instagram": "@festivalrepublicza",
     "tiktok": "@festivalrepublicza",
     "twitter": "@festivalrepublicza",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "309",
+    "id": "311",
     "person": "Live Venue Mzansi",
     "company": "Live Venue Mzansi",
     "title": "Venue",
@@ -4960,10 +5253,11 @@
     "instagram": "@live_venue_mzansi",
     "tiktok": "@live_venue_mzansi",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "310",
+    "id": "312",
     "person": "Tune Report SA",
     "company": "Tune Report SA",
     "title": "Music News",
@@ -4976,10 +5270,11 @@
     "instagram": "@tune_report_sa",
     "tiktok": "",
     "twitter": "@TuneReportSa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "311",
+    "id": "313",
     "person": "Gospel Fire Mzansi",
     "company": "Gospel Fire Mzansi",
     "title": "Gospel",
@@ -4992,10 +5287,11 @@
     "instagram": "@gospel.fire.mzansi",
     "tiktok": "",
     "twitter": "@GospelFireMzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "312",
+    "id": "314",
     "person": "Deep Tech Mzansi",
     "company": "Deep Tech Mzansi",
     "title": "Deep House",
@@ -5008,10 +5304,11 @@
     "instagram": "@deeptechmzansi",
     "tiktok": "",
     "twitter": "@deeptechmzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "313",
+    "id": "315",
     "person": "The Lab Mzansi",
     "company": "The Lab Mzansi",
     "title": "Producer",
@@ -5024,10 +5321,11 @@
     "instagram": "@the.lab.mzansi",
     "tiktok": "@the_lab_mzansi",
     "twitter": "@the_lab_mzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "314",
+    "id": "316",
     "person": "Producer Nation ZA",
     "company": "Producer Nation ZA",
     "title": "Producer",
@@ -5040,10 +5338,11 @@
     "instagram": "@producer.nation.za",
     "tiktok": "",
     "twitter": "@producer_nation_za",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "315",
+    "id": "317",
     "person": "The DJ Hub Mzansi",
     "company": "The DJ Hub Mzansi",
     "title": "DJ",
@@ -5056,10 +5355,11 @@
     "instagram": "@the_dj_hub_mzansi",
     "tiktok": "",
     "twitter": "@the_dj_hub_mzansiSA",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "316",
+    "id": "318",
     "person": "Night Shift SA",
     "company": "Night Shift SA",
     "title": "Nightlife",
@@ -5072,10 +5372,11 @@
     "instagram": "@night.shift.sa",
     "tiktok": "@night_shift_sa",
     "twitter": "@night_shift_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "317",
+    "id": "319",
     "person": "SA Celebrity & Lifestyle",
     "company": "SA Celebrity & Lifestyle",
     "title": "Celeb News",
@@ -5089,28 +5390,11 @@
     "tiktok": "",
     "twitter": "@SACelebTweets",
     "status": "Verified",
-    "profilePic": "/avatars/50.jpg",
+    "profilePic": "/avatars/319.jpg",
     "realInstagram": "@flipmaglondon"
   },
   {
-    "id": "318",
-    "person": "Kreative Kornerr",
-    "company": "Kreative Kornerr",
-    "title": "Culture",
-    "email": "",
-    "country": "ZA",
-    "industry": "Culture",
-    "source": "@kreative.kornerr | @kreative.kornerr | @kreativekornerr",
-    "dateAdded": "2026-01-21",
-    "followers": "30K+",
-    "instagram": "@kreative.kornerr",
-    "tiktok": "@kreative.kornerr",
-    "twitter": "@kreativekornerr",
-    "status": "Verified",
-    "profilePic": "/avatars/51.jpg"
-  },
-  {
-    "id": "319",
+    "id": "320",
     "person": "Street Fame Culture",
     "company": "Street Fame Culture",
     "title": "Hip-Hop/Culture",
@@ -5124,10 +5408,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/52.jpg"
+    "profilePic": "/avatars/320.jpg"
   },
   {
-    "id": "320",
+    "id": "321",
     "person": "Beat Makers Mzansi",
     "company": "Beat Makers Mzansi",
     "title": "Producer",
@@ -5140,10 +5424,11 @@
     "instagram": "@beat_makers_mzansi",
     "tiktok": "@beat_makers_mzansi",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "321",
+    "id": "322",
     "person": "Deep House Culture ZA",
     "company": "Deep House Culture ZA",
     "title": "Deep House",
@@ -5156,10 +5441,11 @@
     "instagram": "@deep_house_culture_za",
     "tiktok": "",
     "twitter": "@DeepHouseCultureZa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "322",
+    "id": "323",
     "person": "Dance Floor SA",
     "company": "Dance Floor SA",
     "title": "Dance",
@@ -5172,10 +5458,11 @@
     "instagram": "@dance.floor.sa",
     "tiktok": "@dance_floor_sa",
     "twitter": "@dance_floor_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "323",
+    "id": "324",
     "person": "Kwaito Forever Mzansi",
     "company": "Kwaito Forever Mzansi",
     "title": "Kwaito",
@@ -5188,10 +5475,11 @@
     "instagram": "@kwaitoforevermzansi",
     "tiktok": "@kwaitoforevermzansi_official",
     "twitter": "@kwaitoforevermzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "324",
+    "id": "325",
     "person": "Fresh Playlist ZA",
     "company": "Fresh Playlist ZA",
     "title": "Playlist Curator",
@@ -5204,10 +5492,11 @@
     "instagram": "@fresh.playlist.za",
     "tiktok": "@fresh_playlist_za",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "325",
+    "id": "326",
     "person": "Amapiano Lifestyle",
     "company": "Amapiano Lifestyle",
     "title": "Amapiano",
@@ -5220,10 +5509,11 @@
     "instagram": "@amapiano_lifestyle",
     "tiktok": "",
     "twitter": "@AmapianoLifestyle",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "326",
+    "id": "327",
     "person": "Gospel Nation Mzansi",
     "company": "Gospel Nation Mzansi",
     "title": "Gospel",
@@ -5236,10 +5526,11 @@
     "instagram": "@gospel.nation.mzansi",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "327",
+    "id": "328",
     "person": "Talent Factory ZA",
     "company": "Talent Factory ZA",
     "title": "Artist Management",
@@ -5252,10 +5543,11 @@
     "instagram": "@talent_factory_za",
     "tiktok": "@talent_factory_za",
     "twitter": "@talent_factory_zaSA",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "328",
+    "id": "329",
     "person": "Hype Machine Mzansi",
     "company": "Hype Machine Mzansi",
     "title": "PR/Marketing",
@@ -5268,10 +5560,11 @@
     "instagram": "@hype_machine_mzansi",
     "tiktok": "@hype_machine_mzansi",
     "twitter": "@hype_machine_mzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "329",
+    "id": "330",
     "person": "Mzansi Rap Culture",
     "company": "Mzansi Rap Culture",
     "title": "Hip-Hop",
@@ -5284,10 +5577,11 @@
     "instagram": "@mzansirapculture",
     "tiktok": "",
     "twitter": "@mzansirapculture",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "330",
+    "id": "331",
     "person": "Afrobeats Express ZA",
     "company": "Afrobeats Express ZA",
     "title": "Afrobeats",
@@ -5300,10 +5594,11 @@
     "instagram": "@afrobeats_express_za",
     "tiktok": "",
     "twitter": "@afrobeats_express_za",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "331",
+    "id": "332",
     "person": "The Culture Page ZA",
     "company": "The Culture Page ZA",
     "title": "Culture/Entertainment",
@@ -5316,10 +5611,11 @@
     "instagram": "@the.culture.page.za",
     "tiktok": "@the_culture_page_za_official",
     "twitter": "@the_culture_page_za",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "332",
+    "id": "333",
     "person": "Beat Factory SA",
     "company": "Beat Factory SA",
     "title": "Producer",
@@ -5332,10 +5628,11 @@
     "instagram": "@beatfactorysa",
     "tiktok": "",
     "twitter": "@beatfactorysa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "333",
+    "id": "334",
     "person": "Rock Republic ZA",
     "company": "Rock Republic ZA",
     "title": "Rock",
@@ -5348,10 +5645,11 @@
     "instagram": "@rockrepublicza",
     "tiktok": "",
     "twitter": "@Rockrepublicza",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "334",
+    "id": "335",
     "person": "Synth Wave SA",
     "company": "Synth Wave SA",
     "title": "Electronic",
@@ -5364,10 +5662,11 @@
     "instagram": "@synth.wave.sa",
     "tiktok": "@synth_wave_sa",
     "twitter": "@SynthWaveSa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "335",
+    "id": "336",
     "person": "Mzansi Bars Network",
     "company": "Mzansi Bars Network",
     "title": "Hip-Hop",
@@ -5380,10 +5679,11 @@
     "instagram": "@mzansi_bars_network",
     "tiktok": "@mzansi_bars_network",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "336",
+    "id": "337",
     "person": "Afro Energy SA",
     "company": "Afro Energy SA",
     "title": "Afrobeats",
@@ -5396,10 +5696,11 @@
     "instagram": "@afroenergysa",
     "tiktok": "",
     "twitter": "@afroenergysa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "337",
+    "id": "338",
     "person": "Radio Culture SA",
     "company": "Radio Culture SA",
     "title": "Radio",
@@ -5412,10 +5713,11 @@
     "instagram": "@radio.culture.sa",
     "tiktok": "",
     "twitter": "@radio_culture_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "338",
+    "id": "339",
     "person": "Management Circle SA",
     "company": "Management Circle SA",
     "title": "Artist Management",
@@ -5428,10 +5730,11 @@
     "instagram": "@managementcirclesa",
     "tiktok": "@managementcirclesa",
     "twitter": "@managementcirclesa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "339",
+    "id": "340",
     "person": "SA Hip Hop Music Blog",
     "company": "SA Hip Hop Music Blog",
     "title": "Hip-Hop Blog",
@@ -5445,10 +5748,10 @@
     "tiktok": "",
     "twitter": "@SA_HipHopBlog",
     "status": "Verified",
-    "profilePic": "/avatars/53.jpg"
+    "profilePic": "/avatars/340.jpg"
   },
   {
-    "id": "340",
+    "id": "341",
     "person": "Pop Waves Mzansi",
     "company": "Pop Waves Mzansi",
     "title": "Pop",
@@ -5461,10 +5764,11 @@
     "instagram": "@popwavesmzansi",
     "tiktok": "",
     "twitter": "@popwavesmzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "341",
+    "id": "342",
     "person": "The Recording Den ZA",
     "company": "The Recording Den ZA",
     "title": "Record Label",
@@ -5477,10 +5781,11 @@
     "instagram": "@therecordingdenza",
     "tiktok": "",
     "twitter": "@therecordingdenza",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "342",
+    "id": "343",
     "person": "Indie Spotlight SA",
     "company": "Indie Spotlight SA",
     "title": "Indie",
@@ -5493,10 +5798,11 @@
     "instagram": "@indie.spotlight.sa",
     "tiktok": "",
     "twitter": "@IndieSpotlightSa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "343",
+    "id": "344",
     "person": "Digital Radio Mzansi",
     "company": "Digital Radio Mzansi",
     "title": "Radio",
@@ -5509,10 +5815,11 @@
     "instagram": "@digital_radio_mzansi",
     "tiktok": "",
     "twitter": "@digital_radio_mzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "344",
+    "id": "345",
     "person": "Nightlife Joburg",
     "company": "Nightlife Joburg",
     "title": "Nightlife",
@@ -5525,10 +5832,11 @@
     "instagram": "@nightlife_joburg",
     "tiktok": "@nightlife_joburg",
     "twitter": "@nightlife_joburg",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "345",
+    "id": "346",
     "person": "Ubuntu Records ZA",
     "company": "Ubuntu Records ZA",
     "title": "Record Label",
@@ -5541,10 +5849,11 @@
     "instagram": "@ubuntu.records.za",
     "tiktok": "@ubuntu_records_za",
     "twitter": "@UbuntuRecordsZa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "346",
+    "id": "347",
     "person": "Click Media SA",
     "company": "Click Media SA",
     "title": "Digital Marketing",
@@ -5558,10 +5867,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/54.jpg"
+    "profilePic": "/avatars/347.jpg"
   },
   {
-    "id": "347",
+    "id": "348",
     "person": "Maskandi Republic ZA",
     "company": "Maskandi Republic ZA",
     "title": "Traditional/Maskandi",
@@ -5574,10 +5883,11 @@
     "instagram": "@maskandi.republic.za",
     "tiktok": "@maskandi_republic_za_official",
     "twitter": "@MaskandiRepublicZa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "348",
+    "id": "349",
     "person": "Fakaza",
     "company": "Fakaza",
     "title": "Music Blog",
@@ -5591,10 +5901,10 @@
     "tiktok": "@fakaza",
     "twitter": "@Fakaza_Music",
     "status": "Verified",
-    "profilePic": "/avatars/55.jpg"
+    "profilePic": "/avatars/349.jpg"
   },
   {
-    "id": "349",
+    "id": "350",
     "person": "Street Radio SA",
     "company": "Street Radio SA",
     "title": "Radio",
@@ -5607,10 +5917,11 @@
     "instagram": "@street.radio.sa",
     "tiktok": "@street_radio_sa",
     "twitter": "@street_radio_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "350",
+    "id": "351",
     "person": "Mzansi Viral",
     "company": "Mzansi Viral",
     "title": "Viral Content",
@@ -5624,10 +5935,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/56.jpg"
+    "profilePic": "/avatars/351.jpg"
   },
   {
-    "id": "351",
+    "id": "352",
     "person": "Visual Sound SA",
     "company": "Visual Sound SA",
     "title": "Music Video",
@@ -5640,10 +5951,11 @@
     "instagram": "@visualsoundsa",
     "tiktok": "@visualsoundsa",
     "twitter": "@visualsoundsa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "352",
+    "id": "353",
     "person": "Midnight Deep ZA",
     "company": "Midnight Deep ZA",
     "title": "Deep House",
@@ -5656,10 +5968,11 @@
     "instagram": "@midnight.deep.za",
     "tiktok": "@midnight_deep_za",
     "twitter": "@midnight_deep_za",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "353",
+    "id": "354",
     "person": "Top Picks Mzansi",
     "company": "Top Picks Mzansi",
     "title": "Playlist Curator",
@@ -5672,10 +5985,11 @@
     "instagram": "@toppicksmzansi",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "354",
+    "id": "355",
     "person": "Gqom Movement SA",
     "company": "Gqom Movement SA",
     "title": "Gqom",
@@ -5688,10 +6002,11 @@
     "instagram": "@gqom.movement.sa",
     "tiktok": "",
     "twitter": "@gqom_movement_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "355",
+    "id": "356",
     "person": "Electronic Pulse ZA",
     "company": "Electronic Pulse ZA",
     "title": "Electronic",
@@ -5704,10 +6019,11 @@
     "instagram": "@electronic_pulse_za",
     "tiktok": "@electronic_pulse_za",
     "twitter": "@electronic_pulse_za_SA",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "356",
+    "id": "357",
     "person": "Matheera03",
     "company": "Matheera03",
     "title": "Content",
@@ -5719,10 +6035,11 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@matheera03",
-    "followers": "17.9K"
+    "followers": "17.9K",
+    "profilePic": ""
   },
   {
-    "id": "357",
+    "id": "358",
     "person": "Music In Africa",
     "company": "Music In Africa",
     "title": "African Music Blog",
@@ -5736,10 +6053,10 @@
     "tiktok": "",
     "twitter": "@MusicInAfrica",
     "status": "Verified",
-    "profilePic": "/avatars/57.jpg"
+    "profilePic": "/avatars/358.jpg"
   },
   {
-    "id": "358",
+    "id": "359",
     "person": "Afro Pulse ZA",
     "company": "Afro Pulse ZA",
     "title": "Afrobeats",
@@ -5752,10 +6069,11 @@
     "instagram": "@afropulseza",
     "tiktok": "@afropulseza",
     "twitter": "@afropulseza",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "359",
+    "id": "360",
     "person": "Texx and the City",
     "company": "Texx and the City",
     "title": "Indie/Underground Blog",
@@ -5769,10 +6087,10 @@
     "tiktok": "",
     "twitter": "@texxandthecity",
     "status": "Verified",
-    "profilePic": "/avatars/58.jpg"
+    "profilePic": "/avatars/360.jpg"
   },
   {
-    "id": "360",
+    "id": "361",
     "person": "Yanos Collective SA",
     "company": "Yanos Collective SA",
     "title": "Amapiano",
@@ -5785,10 +6103,11 @@
     "instagram": "@yanoscollectivesa",
     "tiktok": "",
     "twitter": "@YanoscollectivesaZa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "361",
+    "id": "362",
     "person": "DJ Plug SA",
     "company": "DJ Plug SA",
     "title": "DJ",
@@ -5801,10 +6120,11 @@
     "instagram": "@dj_plug_sa",
     "tiktok": "",
     "twitter": "@dj_plug_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "362",
+    "id": "363",
     "person": "Sho Mag",
     "company": "Sho Mag",
     "title": "Afro House",
@@ -5818,10 +6138,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/59.jpg"
+    "profilePic": "/avatars/363.jpg"
   },
   {
-    "id": "363",
+    "id": "364",
     "person": "Afro Motion ZA",
     "company": "Afro Motion ZA",
     "title": "Afrobeats",
@@ -5834,10 +6154,11 @@
     "instagram": "@afromotionza",
     "tiktok": "@afromotionza",
     "twitter": "@afromotionza",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "364",
+    "id": "365",
     "person": "Independent Music ZA",
     "company": "Independent Music ZA",
     "title": "Indie",
@@ -5850,10 +6171,11 @@
     "instagram": "@independent_music_za",
     "tiktok": "",
     "twitter": "@independent_music_za",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "365",
+    "id": "366",
     "person": "Sound Room ZA",
     "company": "Sound Room ZA",
     "title": "Studio",
@@ -5866,10 +6188,11 @@
     "instagram": "@sound_room_za",
     "tiktok": "@sound_room_za_official",
     "twitter": "@SoundRoomZa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "366",
+    "id": "367",
     "person": "Mzansi After Dark",
     "company": "Mzansi After Dark",
     "title": "Culture/Entertainment",
@@ -5882,10 +6205,11 @@
     "instagram": "@mzansi_after_dark",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "367",
+    "id": "368",
     "person": "Sunday Jazz ZA",
     "company": "Sunday Jazz ZA",
     "title": "Jazz",
@@ -5898,10 +6222,11 @@
     "instagram": "@sunday_jazz_za",
     "tiktok": "@sunday_jazz_za",
     "twitter": "@sunday_jazz_za",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "368",
+    "id": "369",
     "person": "Dance Culture SA",
     "company": "Dance Culture SA",
     "title": "Dance",
@@ -5914,10 +6239,11 @@
     "instagram": "@danceculturesa",
     "tiktok": "@danceculturesa",
     "twitter": "@DanceculturesaSa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "369",
+    "id": "370",
     "person": "Underground Africa",
     "company": "Underground Africa",
     "title": "Underground",
@@ -5931,10 +6257,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/60.jpg"
+    "profilePic": "/avatars/370.jpg"
   },
   {
-    "id": "370",
+    "id": "371",
     "person": "Shot By Mzansi",
     "company": "Shot By Mzansi",
     "title": "Photography",
@@ -5947,10 +6273,11 @@
     "instagram": "@shotbymzansi",
     "tiktok": "",
     "twitter": "@shotbymzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "371",
+    "id": "372",
     "person": "Blog Beats SA",
     "company": "Blog Beats SA",
     "title": "Music Blog",
@@ -5963,10 +6290,11 @@
     "instagram": "@blogbeatssa",
     "tiktok": "@blogbeatssa",
     "twitter": "@blogbeatssa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "372",
+    "id": "373",
     "person": "Festival Hub ZA",
     "company": "Festival Hub ZA",
     "title": "Festivals",
@@ -5979,10 +6307,11 @@
     "instagram": "@festival_hub_za",
     "tiktok": "@festival_hub_za",
     "twitter": "@FestivalHubZa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "373",
+    "id": "374",
     "person": "Old School Kwaito SA",
     "company": "Old School Kwaito SA",
     "title": "Kwaito",
@@ -5995,10 +6324,11 @@
     "instagram": "@oldschoolkwaitosa",
     "tiktok": "@oldschoolkwaitosa",
     "twitter": "@oldschoolkwaitosa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "374",
+    "id": "375",
     "person": "Amapiano Worldwide",
     "company": "Amapiano Worldwide",
     "title": "Amapiano",
@@ -6012,10 +6342,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/61.jpg"
+    "profilePic": "/avatars/375.jpg"
   },
   {
-    "id": "375",
+    "id": "376",
     "person": "SA Hip Hop & AmaPiano",
     "company": "SA Hip Hop & AmaPiano",
     "title": "Hip-Hop/Amapiano",
@@ -6029,10 +6359,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/62.jpg"
+    "profilePic": "/avatars/376.jpg"
   },
   {
-    "id": "376",
+    "id": "377",
     "person": "Spit Fire SA",
     "company": "Spit Fire SA",
     "title": "Hip-Hop",
@@ -6045,10 +6375,11 @@
     "instagram": "@spitfiresa",
     "tiktok": "",
     "twitter": "@spitfiresa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "377",
+    "id": "378",
     "person": "Dub Session ZA",
     "company": "Dub Session ZA",
     "title": "Reggae",
@@ -6061,10 +6392,11 @@
     "instagram": "@dub.session.za",
     "tiktok": "@dub_session_za",
     "twitter": "@DubSessionZa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "378",
+    "id": "379",
     "person": "Music Wire Mzansi",
     "company": "Music Wire Mzansi",
     "title": "Music News",
@@ -6077,10 +6409,11 @@
     "instagram": "@music_wire_mzansi",
     "tiktok": "",
     "twitter": "@music_wire_mzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "379",
+    "id": "380",
     "person": "Deep Therapy SA",
     "company": "Deep Therapy SA",
     "title": "Hip-Hop",
@@ -6093,10 +6426,11 @@
     "instagram": "@deep.therapy.sa",
     "tiktok": "",
     "twitter": "@DeepTherapySa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "380",
+    "id": "381",
     "person": "Indie Rock SA",
     "company": "Indie Rock SA",
     "title": "Rock",
@@ -6109,10 +6443,11 @@
     "instagram": "@indie.rock.sa",
     "tiktok": "",
     "twitter": "@IndieRockSa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "381",
+    "id": "382",
     "person": "Young Tee The Voca",
     "company": "Young Tee The Voca",
     "title": "Content",
@@ -6124,10 +6459,11 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@young.tee.the.voca",
-    "followers": "10.3K"
+    "followers": "10.3K",
+    "profilePic": ""
   },
   {
-    "id": "382",
+    "id": "383",
     "person": "Kwaito Heritage SA",
     "company": "Kwaito Heritage SA",
     "title": "Kwaito",
@@ -6140,10 +6476,11 @@
     "instagram": "@kwaito.heritage.sa",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "383",
+    "id": "384",
     "person": "Yanos Culture",
     "company": "Yanos Culture",
     "title": "Amapiano",
@@ -6156,10 +6493,11 @@
     "instagram": "@yanos.culture",
     "tiktok": "@yanos_culture",
     "twitter": "@YanosCulture",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "384",
+    "id": "385",
     "person": "Sound Select SA",
     "company": "Sound Select SA",
     "title": "Playlist Curator",
@@ -6172,10 +6510,11 @@
     "instagram": "@soundselectsa",
     "tiktok": "@soundselectsa_official",
     "twitter": "@soundselectsa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "385",
+    "id": "386",
     "person": "OkMzansi",
     "company": "OkMzansi",
     "title": "Entertainment",
@@ -6189,10 +6528,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/63.jpg"
+    "profilePic": "/avatars/386.jpg"
   },
   {
-    "id": "386",
+    "id": "387",
     "person": "Fresh Radio SA",
     "company": "Fresh Radio SA",
     "title": "Radio",
@@ -6205,10 +6544,11 @@
     "instagram": "@freshradiosa",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "387",
+    "id": "388",
     "person": "Radio Frequency ZA",
     "company": "Radio Frequency ZA",
     "title": "Radio",
@@ -6221,10 +6561,11 @@
     "instagram": "@radio.frequency.za",
     "tiktok": "@radio_frequency_za",
     "twitter": "@radio_frequency_za",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "388",
+    "id": "389",
     "person": "Spin City ZA",
     "company": "Spin City ZA",
     "title": "DJ",
@@ -6237,10 +6578,11 @@
     "instagram": "@spin_city_za",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "389",
+    "id": "390",
     "person": "Afropop Worldwide",
     "company": "Afropop Worldwide",
     "title": "African Music",
@@ -6253,10 +6595,11 @@
     "instagram": "@afropop",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "390",
+    "id": "391",
     "person": "Afro Rhythm SA",
     "company": "Afro Rhythm SA",
     "title": "Afrobeats",
@@ -6269,10 +6612,11 @@
     "instagram": "@afro.rhythm.sa",
     "tiktok": "",
     "twitter": "@AfroRhythmSa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "391",
+    "id": "392",
     "person": "SAMusic TV",
     "company": "SAMusic TV",
     "title": "Music Videos",
@@ -6285,10 +6629,11 @@
     "instagram": "@samusic.tv",
     "tiktok": "",
     "twitter": "@SAMusicTV",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "392",
+    "id": "393",
     "person": "Africa 2 The World",
     "company": "Africa 2 The World",
     "title": "Afrobeats",
@@ -6302,10 +6647,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/66.jpg"
+    "profilePic": "/avatars/393.jpg"
   },
   {
-    "id": "393",
+    "id": "394",
     "person": "Festival Season ZA",
     "company": "Festival Season ZA",
     "title": "Festivals",
@@ -6318,10 +6663,11 @@
     "instagram": "@festivalseasonza",
     "tiktok": "@festivalseasonza",
     "twitter": "@festivalseasonza",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "394",
+    "id": "395",
     "person": "Golden Soul SA",
     "company": "Golden Soul SA",
     "title": "R&B/Soul",
@@ -6334,10 +6680,11 @@
     "instagram": "@golden_soul_sa",
     "tiktok": "@golden_soul_sa",
     "twitter": "@golden_soul_sa_SA",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "395",
+    "id": "396",
     "person": "Afrobeats Spotlight",
     "company": "Afrobeats Spotlight",
     "title": "Afrobeats",
@@ -6350,10 +6697,11 @@
     "instagram": "@afrobeatsspotlight",
     "tiktok": "@afrobeatsspotlight",
     "twitter": "@afrobeatsspotlight",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "396",
+    "id": "397",
     "person": "Lyrical Mzansi",
     "company": "Lyrical Mzansi",
     "title": "Hip-Hop",
@@ -6366,10 +6714,11 @@
     "instagram": "@lyrical_mzansi",
     "tiktok": "",
     "twitter": "@lyrical_mzansi",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "397",
+    "id": "398",
     "person": "Gqom Republic SA",
     "company": "Gqom Republic SA",
     "title": "Gqom",
@@ -6382,10 +6731,11 @@
     "instagram": "@gqomrepublicsa",
     "tiktok": "",
     "twitter": "@GqomrepublicsaZa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "398",
+    "id": "399",
     "person": "Gospel Praise SA",
     "company": "Gospel Praise SA",
     "title": "Gospel",
@@ -6398,10 +6748,11 @@
     "instagram": "@gospel_praise_sa",
     "tiktok": "@gospel_praise_sa",
     "twitter": "@gospel_praise_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "399",
+    "id": "400",
     "person": "Maskandi Pulse SA",
     "company": "Maskandi Pulse SA",
     "title": "Traditional/Maskandi",
@@ -6414,10 +6765,11 @@
     "instagram": "@maskandi.pulse.sa",
     "tiktok": "@maskandi_pulse_sa",
     "twitter": "@maskandi_pulse_sa",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "400",
+    "id": "401",
     "person": "Luxuria Lifestyle Africa",
     "company": "Luxuria Lifestyle Africa",
     "title": "Lifestyle",
@@ -6431,10 +6783,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/67.jpg"
+    "profilePic": "/avatars/401.jpg"
   },
   {
-    "id": "401",
+    "id": "402",
     "person": "Metal4Africa",
     "company": "Metal4Africa",
     "title": "Metal",
@@ -6447,10 +6799,11 @@
     "instagram": "@metal4africa",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "402",
+    "id": "403",
     "person": "3 Step Culture",
     "company": "3 Step Culture",
     "title": "Culture",
@@ -6462,10 +6815,11 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@3step_culture",
-    "followers": "4.4K"
+    "followers": "4.4K",
+    "profilePic": ""
   },
   {
-    "id": "403",
+    "id": "404",
     "person": "Bluntmagza",
     "company": "Bluntmagza",
     "title": "Alternative",
@@ -6479,10 +6833,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/69.jpg"
+    "profilePic": "/avatars/404.jpg"
   },
   {
-    "id": "404",
+    "id": "405",
     "person": "Indie Music ZA",
     "company": "Indie Music ZA",
     "title": "Indie",
@@ -6495,10 +6849,11 @@
     "instagram": "@indiemusicza",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "405",
+    "id": "406",
     "person": "United Masters Africa",
     "company": "United Masters Africa",
     "title": "Music",
@@ -6512,10 +6867,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/71.jpg"
+    "profilePic": "/avatars/406.jpg"
   },
   {
-    "id": "406",
+    "id": "407",
     "person": "Rap Type Mag",
     "company": "Rap Type Mag",
     "title": "Hip-Hop/Rap",
@@ -6529,10 +6884,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/72.jpg"
+    "profilePic": "/avatars/407.jpg"
   },
   {
-    "id": "407",
+    "id": "408",
     "person": "Amapiano Lyrics RSA",
     "company": "Amapiano Lyrics RSA",
     "title": "Lyrics",
@@ -6544,10 +6899,11 @@
     "dateAdded": "2026-01-21",
     "status": "New",
     "tiktok": "@amapiano_lyrics.rsa",
-    "followers": "2.7K"
+    "followers": "2.7K",
+    "profilePic": ""
   },
   {
-    "id": "408",
+    "id": "409",
     "person": "Skillmusicsa",
     "company": "Skillmusicsa",
     "title": "Hip-Hop/R&B",
@@ -6561,10 +6917,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/73.jpg"
+    "profilePic": "/avatars/409.jpg"
   },
   {
-    "id": "409",
+    "id": "410",
     "person": "Live Mag SA",
     "company": "Live Mag SA",
     "title": "Youth Culture",
@@ -6577,10 +6933,11 @@
     "instagram": "@livemagsa",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "410",
+    "id": "411",
     "person": "All The Best SA",
     "company": "All The Best SA",
     "title": "Music",
@@ -6593,10 +6950,11 @@
     "instagram": "@all_the_best_sa",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "411",
+    "id": "412",
     "person": "SA Music News",
     "company": "SA Music News",
     "title": "Music News",
@@ -6610,11 +6968,11 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/76.jpg",
+    "profilePic": "/avatars/412.jpg",
     "realInstagram": "@blackyouthproject"
   },
   {
-    "id": "412",
+    "id": "413",
     "person": "Summer SA Music News",
     "company": "Summer SA Music News",
     "title": "Music News",
@@ -6628,10 +6986,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/77.jpg"
+    "profilePic": "/avatars/413.jpg"
   },
   {
-    "id": "413",
+    "id": "414",
     "person": "Everything Amapiano Heart",
     "company": "Everything Amapiano Heart",
     "title": "Amapiano",
@@ -6644,10 +7002,11 @@
     "instagram": "@everythingamapiano_",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "414",
+    "id": "415",
     "person": "SA Music Promo",
     "company": "SA Music Promo",
     "title": "Music Promo",
@@ -6662,10 +7021,10 @@
     "twitter": "",
     "status": "Verified",
     "phone": "0636997046",
-    "profilePic": "/avatars/110.jpg"
+    "profilePic": "/avatars/415.jpg"
   },
   {
-    "id": "415",
+    "id": "416",
     "person": "Durban Music Experience",
     "company": "Durban Music Experience",
     "title": "Regional",
@@ -6679,10 +7038,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/79.jpg"
+    "profilePic": "/avatars/416.jpg"
   },
   {
-    "id": "416",
+    "id": "417",
     "person": "Okhype",
     "company": "Okhype",
     "title": "SA Music",
@@ -6696,10 +7055,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/80.jpg"
+    "profilePic": "/avatars/417.jpg"
   },
   {
-    "id": "417",
+    "id": "418",
     "person": "Everything Amapiano",
     "company": "Everything Amapiano",
     "title": "Amapiano",
@@ -6713,10 +7072,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/81.jpg"
+    "profilePic": "/avatars/418.jpg"
   },
   {
-    "id": "418",
+    "id": "419",
     "person": "I Love Amapiano Magazine",
     "company": "I Love Amapiano Magazine",
     "title": "Amapiano",
@@ -6729,10 +7088,11 @@
     "instagram": "@i_love_amapiano_magazine",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
-    "id": "419",
+    "id": "420",
     "person": "Afro Pulse CA",
     "company": "Afro Pulse CA",
     "title": "Events",
@@ -6746,10 +7106,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/84.jpg"
+    "profilePic": "/avatars/420.jpg"
   },
   {
-    "id": "420",
+    "id": "421",
     "person": "Flipside Magazine",
     "company": "Flipside Magazine",
     "title": "Music",
@@ -6763,10 +7123,10 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/83.jpg"
+    "profilePic": "/avatars/421.jpg"
   },
   {
-    "id": "421",
+    "id": "422",
     "person": "Freshmen Amapiano",
     "company": "Freshmen Amapiano",
     "title": "Amapiano",
@@ -6779,23 +7139,8 @@
     "instagram": "@freshmenamapiano",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
-  },
-  {
-    "id": "422",
-    "person": "Culture Collecter",
-    "company": "Culture Collecter",
-    "title": "African Culture",
-    "email": "",
-    "country": "ZA",
-    "industry": "African Culture",
-    "source": "@culturecollecter | @culturecollecter",
-    "dateAdded": "2026-01-21",
-    "followers": "—",
-    "instagram": "@culturecollecter",
-    "tiktok": "@culturecollecter",
-    "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
     "id": "423",
@@ -6812,7 +7157,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/87.jpg"
+    "profilePic": "/avatars/423.jpg"
   },
   {
     "id": "424",
@@ -6829,7 +7174,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/88.jpg"
+    "profilePic": "/avatars/424.jpg"
   },
   {
     "id": "425",
@@ -6846,7 +7191,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/89.jpg"
+    "profilePic": "/avatars/425.jpg"
   },
   {
     "id": "426",
@@ -6863,7 +7208,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/90.jpg"
+    "profilePic": "/avatars/426.jpg"
   },
   {
     "id": "427",
@@ -6880,7 +7225,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/91.jpg"
+    "profilePic": "/avatars/427.jpg"
   },
   {
     "id": "428",
@@ -6896,7 +7241,8 @@
     "instagram": "@thepivotmagazine",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
     "id": "429",
@@ -6913,7 +7259,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/93.jpg"
+    "profilePic": "/avatars/429.jpg"
   },
   {
     "id": "430",
@@ -6930,7 +7276,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/94.jpg",
+    "profilePic": "/avatars/430.jpg",
     "realInstagram": "@i_love_amapiano"
   },
   {
@@ -6948,7 +7294,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/95.jpg"
+    "profilePic": "/avatars/431.jpg"
   },
   {
     "id": "432",
@@ -6965,7 +7311,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/96.jpg",
+    "profilePic": "/avatars/432.jpg",
     "realInstagram": "@everythingsamusic"
   },
   {
@@ -6983,7 +7329,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/97.jpg"
+    "profilePic": "/avatars/433.jpg"
   },
   {
     "id": "434",
@@ -7000,7 +7346,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/98.jpg",
+    "profilePic": "/avatars/434.jpg",
     "realInstagram": "@famous_lifeandstyle_sa"
   },
   {
@@ -7018,7 +7364,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/99.jpg"
+    "profilePic": "/avatars/435.jpg"
   },
   {
     "id": "436",
@@ -7035,7 +7381,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "realInstagram": "@culturecollecter"
+    "realInstagram": "@culturecollecter",
+    "profilePic": "/avatars/436.jpg"
   },
   {
     "id": "437",
@@ -7051,7 +7398,8 @@
     "instagram": "@amapianomusicandclout",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
     "id": "438",
@@ -7068,7 +7416,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/102.jpg",
+    "profilePic": "/avatars/438.jpg",
     "realInstagram": "@sweezyshotit"
   },
   {
@@ -7085,7 +7433,8 @@
     "instagram": "@recentkids",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
     "id": "440",
@@ -7102,7 +7451,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/104.jpg"
+    "profilePic": "/avatars/440.jpg"
   },
   {
     "id": "441",
@@ -7118,7 +7467,8 @@
     "instagram": "@amapiano_dance_rsa",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
     "id": "442",
@@ -7134,7 +7484,8 @@
     "instagram": "@amapiano_dance_sa",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
     "id": "443",
@@ -7150,7 +7501,8 @@
     "instagram": "@mzansientertainment24",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
     "id": "444",
@@ -7167,7 +7519,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/108.jpg"
+    "profilePic": "/avatars/444.jpg"
   },
   {
     "id": "445",
@@ -7183,7 +7535,8 @@
     "instagram": "@spotifyafrica",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
     "id": "446",
@@ -7200,7 +7553,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "realInstagram": "@culturecollecter"
+    "realInstagram": "@culturecollecter",
+    "profilePic": ""
   },
   {
     "id": "447",
@@ -7217,7 +7571,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/112.jpg"
+    "profilePic": "/avatars/447.jpg"
   },
   {
     "id": "448",
@@ -7234,7 +7588,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/113.jpg"
+    "profilePic": "/avatars/448.jpg"
   },
   {
     "id": "449",
@@ -7250,7 +7604,8 @@
     "instagram": "@sowetocreatives",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
     "id": "450",
@@ -7266,7 +7621,8 @@
     "instagram": "@teenmagazine_sa",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
     "id": "451",
@@ -7283,7 +7639,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/116.jpg"
+    "profilePic": "/avatars/451.jpg"
   },
   {
     "id": "452",
@@ -7300,7 +7656,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/117.jpg"
+    "profilePic": "/avatars/452.jpg"
   },
   {
     "id": "453",
@@ -7317,7 +7673,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/118.jpg",
+    "profilePic": "/avatars/453.jpg",
     "realInstagram": "@sahiphop247"
   },
   {
@@ -7334,7 +7690,8 @@
     "instagram": "@mzansireggae",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
     "id": "455",
@@ -7350,7 +7707,8 @@
     "instagram": "@queensoulvibessa",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
     "id": "456",
@@ -7367,7 +7725,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "realInstagram": "@panafricanmusic"
+    "realInstagram": "@panafricanmusic",
+    "profilePic": ""
   },
   {
     "id": "457",
@@ -7384,7 +7743,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/122.jpg"
+    "profilePic": "/avatars/457.jpg"
   },
   {
     "id": "458",
@@ -7400,7 +7759,8 @@
     "instagram": "@africadotcom",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
     "id": "459",
@@ -7417,7 +7777,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/124.jpg"
+    "profilePic": "/avatars/459.jpg"
   },
   {
     "id": "460",
@@ -7434,7 +7794,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/125.jpg"
+    "profilePic": "/avatars/460.jpg"
   },
   {
     "id": "461",
@@ -7451,7 +7811,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/126.jpg"
+    "profilePic": "/avatars/461.jpg"
   },
   {
     "id": "462",
@@ -7468,7 +7828,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/127.jpg"
+    "profilePic": "/avatars/462.jpg"
   },
   {
     "id": "463",
@@ -7485,7 +7845,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/128.jpg",
+    "profilePic": "/avatars/463.jpg",
     "realInstagram": "@sanantoniobarsofficial"
   },
   {
@@ -7503,7 +7863,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/129.jpg",
+    "profilePic": "/avatars/464.jpg",
     "realInstagram": "@amapianosessions.official"
   },
   {
@@ -7521,7 +7881,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "realInstagram": "@hiphopdx"
+    "realInstagram": "@hiphopdx",
+    "profilePic": ""
   },
   {
     "id": "466",
@@ -7538,7 +7899,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/131.jpg"
+    "profilePic": "/avatars/466.jpg"
   },
   {
     "id": "467",
@@ -7554,7 +7915,8 @@
     "instagram": "@afrika.world",
     "tiktok": "",
     "twitter": "@afrikaworld",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
     "id": "468",
@@ -7570,7 +7932,8 @@
     "instagram": "@world.afrika",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
     "id": "469",
@@ -7587,7 +7950,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/134.jpg"
+    "profilePic": "/avatars/469.jpg"
   },
   {
     "id": "470",
@@ -7604,7 +7967,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/135.jpg"
+    "profilePic": "/avatars/470.jpg"
   },
   {
     "id": "471",
@@ -7621,7 +7984,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/136.jpg"
+    "profilePic": "/avatars/471.jpg"
   },
   {
     "id": "472",
@@ -7637,7 +8000,8 @@
     "instagram": "@mzansi_viral",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
     "id": "473",
@@ -7653,7 +8017,8 @@
     "instagram": "@unitedpagesafrica",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
     "id": "474",
@@ -7669,7 +8034,8 @@
     "instagram": "@ente_rtainmentafrica",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
     "id": "475",
@@ -7686,7 +8052,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/140.jpg"
+    "profilePic": "/avatars/475.jpg"
   },
   {
     "id": "476",
@@ -7702,7 +8068,8 @@
     "instagram": "@pulsevibesafrica",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
     "id": "477",
@@ -7719,7 +8086,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/142.jpg"
+    "profilePic": "/avatars/477.jpg"
   },
   {
     "id": "478",
@@ -7735,7 +8102,8 @@
     "instagram": "@letsgetlocal_ct",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
     "id": "479",
@@ -7752,7 +8120,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/144.jpg"
+    "profilePic": "/avatars/479.jpg"
   },
   {
     "id": "480",
@@ -7768,7 +8136,8 @@
     "instagram": "@surgezircsa",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
     "id": "481",
@@ -7785,7 +8154,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/146.jpg"
+    "profilePic": "/avatars/481.jpg"
   },
   {
     "id": "482",
@@ -7802,7 +8171,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/147.jpg"
+    "profilePic": "/avatars/482.jpg"
   },
   {
     "id": "483",
@@ -7818,7 +8187,8 @@
     "instagram": "@soundpulse_africa",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
     "id": "484",
@@ -7835,7 +8205,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/149.jpg"
+    "profilePic": "/avatars/484.jpg"
   },
   {
     "id": "485",
@@ -7852,7 +8222,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/150.jpg"
+    "profilePic": "/avatars/485.jpg"
   },
   {
     "id": "486",
@@ -7868,7 +8238,8 @@
     "instagram": "@proudlymedia_sa",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
     "id": "487",
@@ -7884,7 +8255,8 @@
     "instagram": "@esamnetwork",
     "tiktok": "",
     "twitter": "",
-    "status": "Verified"
+    "status": "Verified",
+    "profilePic": ""
   },
   {
     "id": "488",
@@ -7901,7 +8273,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Verified",
-    "profilePic": "/avatars/153.jpg"
+    "profilePic": "/avatars/488.jpg"
   },
   {
     "id": "489",
@@ -7918,7 +8290,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/154.jpg",
+    "profilePic": "/avatars/489.jpg",
     "realInstagram": "@thepianokings"
   },
   {
@@ -7936,7 +8308,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/155.jpg"
+    "profilePic": "/avatars/490.jpg"
   },
   {
     "id": "491",
@@ -7952,7 +8324,8 @@
     "instagram": "@amapianovibes_",
     "tiktok": "",
     "twitter": "",
-    "status": "Derived"
+    "status": "Derived",
+    "profilePic": ""
   },
   {
     "id": "492",
@@ -7969,7 +8342,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/157.jpg",
+    "profilePic": "/avatars/492.jpg",
     "realInstagram": "@sahiphop247"
   },
   {
@@ -7987,7 +8360,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/158.jpg"
+    "profilePic": "/avatars/493.jpg"
   },
   {
     "id": "494",
@@ -8003,7 +8376,8 @@
     "instagram": "@satrap_",
     "tiktok": "",
     "twitter": "",
-    "status": "Derived"
+    "status": "Derived",
+    "profilePic": ""
   },
   {
     "id": "495",
@@ -8020,7 +8394,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@stundars"
+    "realInstagram": "@stundars",
+    "profilePic": ""
   },
   {
     "id": "496",
@@ -8037,7 +8412,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/161.jpg"
+    "profilePic": "/avatars/496.jpg"
   },
   {
     "id": "497",
@@ -8054,7 +8429,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/162.jpg",
+    "profilePic": "/avatars/497.jpg",
     "realInstagram": "@baseformusic"
   },
   {
@@ -8072,7 +8447,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/163.jpg"
+    "profilePic": "/avatars/498.jpg"
   },
   {
     "id": "499",
@@ -8089,7 +8464,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/164.jpg",
+    "profilePic": "/avatars/499.jpg",
     "realInstagram": "@krogermusic"
   },
   {
@@ -8107,7 +8482,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/165.jpg",
+    "profilePic": "/avatars/500.jpg",
     "realInstagram": "@gqom_nation1"
   },
   {
@@ -8125,7 +8500,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@sa.underground"
+    "realInstagram": "@sa.underground",
+    "profilePic": ""
   },
   {
     "id": "502",
@@ -8142,7 +8518,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@barhousesa"
+    "realInstagram": "@barhousesa",
+    "profilePic": ""
   },
   {
     "id": "503",
@@ -8159,7 +8536,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/168.jpg",
+    "profilePic": "/avatars/503.jpg",
     "realInstagram": "@samsahouse"
   },
   {
@@ -8177,7 +8554,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@deephousesa"
+    "realInstagram": "@deephousesa",
+    "profilePic": ""
   },
   {
     "id": "505",
@@ -8194,7 +8572,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/170.jpg",
+    "profilePic": "/avatars/505.jpg",
     "realInstagram": "@afrohousecommunity"
   },
   {
@@ -8212,7 +8590,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/171.jpg",
+    "profilePic": "/avatars/506.jpg",
     "realInstagram": "@mzanzibar23"
   },
   {
@@ -8230,7 +8608,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/172.jpg",
+    "profilePic": "/avatars/507.jpg",
     "realInstagram": "@undergroundmzansi"
   },
   {
@@ -8248,7 +8626,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/173.jpg",
+    "profilePic": "/avatars/508.jpg",
     "realInstagram": "@undergroundmzansi"
   },
   {
@@ -8266,7 +8644,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/174.jpg",
+    "profilePic": "/avatars/509.jpg",
     "realInstagram": "@gqomtotheworld"
   },
   {
@@ -8284,7 +8662,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@mzansineosoul"
+    "realInstagram": "@mzansineosoul",
+    "profilePic": ""
   },
   {
     "id": "511",
@@ -8301,7 +8680,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/176.jpg",
+    "profilePic": "/avatars/511.jpg",
     "realInstagram": "@kwaito_legends"
   },
   {
@@ -8319,7 +8698,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/177.jpg",
+    "profilePic": "/avatars/512.jpg",
     "realInstagram": "@welovernb.sa"
   },
   {
@@ -8337,7 +8716,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/178.jpg",
+    "profilePic": "/avatars/513.jpg",
     "realInstagram": "@aya_ntanzi"
   },
   {
@@ -8355,7 +8734,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/179.jpg",
+    "profilePic": "/avatars/514.jpg",
     "realInstagram": "@kwaito_legends"
   },
   {
@@ -8373,7 +8752,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/180.jpg",
+    "profilePic": "/avatars/515.jpg",
     "realInstagram": "@gospelconnectsa"
   },
   {
@@ -8391,7 +8770,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/181.jpg",
+    "profilePic": "/avatars/516.jpg",
     "realInstagram": "@jazz.southaustralia"
   },
   {
@@ -8409,7 +8788,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@gqommagazine"
+    "realInstagram": "@gqommagazine",
+    "profilePic": ""
   },
   {
     "id": "518",
@@ -8425,7 +8805,8 @@
     "instagram": "@rnbsa_",
     "tiktok": "",
     "twitter": "",
-    "status": "Derived"
+    "status": "Derived",
+    "profilePic": ""
   },
   {
     "id": "519",
@@ -8442,7 +8823,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/184.jpg",
+    "profilePic": "/avatars/519.jpg",
     "realInstagram": "@sa_gospel_productions"
   },
   {
@@ -8460,7 +8841,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@mkhma21"
+    "realInstagram": "@mkhma21",
+    "profilePic": ""
   },
   {
     "id": "521",
@@ -8477,7 +8859,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/186.jpg",
+    "profilePic": "/avatars/521.jpg",
     "realInstagram": "@roots_sa_reggae"
   },
   {
@@ -8495,7 +8877,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@sa_indieauthors_assoc"
+    "realInstagram": "@sa_indieauthors_assoc",
+    "profilePic": ""
   },
   {
     "id": "523",
@@ -8512,7 +8895,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/188.jpg",
+    "profilePic": "/avatars/523.jpg",
     "realInstagram": "@sametalroofingllc"
   },
   {
@@ -8530,7 +8913,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/189.jpg",
+    "profilePic": "/avatars/524.jpg",
     "realInstagram": "@sa_electronic"
   },
   {
@@ -8548,7 +8931,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/190.jpg",
+    "profilePic": "/avatars/525.jpg",
     "realInstagram": "@mzansi_jazz"
   },
   {
@@ -8566,7 +8949,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/191.jpg",
+    "profilePic": "/avatars/526.jpg",
     "realInstagram": "@roots_sa_reggae"
   },
   {
@@ -8583,7 +8966,8 @@
     "instagram": "@sarock_official",
     "tiktok": "",
     "twitter": "",
-    "status": "Derived"
+    "status": "Derived",
+    "profilePic": ""
   },
   {
     "id": "528",
@@ -8599,7 +8983,8 @@
     "instagram": "@rocksa_",
     "tiktok": "",
     "twitter": "",
-    "status": "Derived"
+    "status": "Derived",
+    "profilePic": ""
   },
   {
     "id": "529",
@@ -8616,7 +9001,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@cowboysdancehallsa"
+    "realInstagram": "@cowboysdancehallsa",
+    "profilePic": ""
   },
   {
     "id": "530",
@@ -8633,7 +9019,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/195.jpg",
+    "profilePic": "/avatars/530.jpg",
     "realInstagram": "@jazz.southaustralia"
   },
   {
@@ -8651,7 +9037,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/196.jpg",
+    "profilePic": "/avatars/531.jpg",
     "realInstagram": "@indiecomicssa"
   },
   {
@@ -8669,7 +9055,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@soundsbysa"
+    "realInstagram": "@soundsbysa",
+    "profilePic": ""
   },
   {
     "id": "533",
@@ -8686,7 +9073,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/198.jpg",
+    "profilePic": "/avatars/533.jpg",
     "realInstagram": "@edmsouthafrica"
   },
   {
@@ -8704,7 +9091,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/199.jpg",
+    "profilePic": "/avatars/534.jpg",
     "realInstagram": "@saelectronicss"
   },
   {
@@ -8721,7 +9108,8 @@
     "instagram": "@urbanstreetculture_za",
     "tiktok": "",
     "twitter": "",
-    "status": "Derived"
+    "status": "Derived",
+    "profilePic": ""
   },
   {
     "id": "536",
@@ -8738,7 +9126,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/201.jpg"
+    "profilePic": "/avatars/536.jpg"
   },
   {
     "id": "537",
@@ -8755,7 +9143,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@kasia.music_"
+    "realInstagram": "@kasia.music_",
+    "profilePic": ""
   },
   {
     "id": "538",
@@ -8772,7 +9161,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/203.jpg",
+    "profilePic": "/avatars/538.jpg",
     "realInstagram": "@durbanmusicfestival"
   },
   {
@@ -8790,7 +9179,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@sowetomea"
+    "realInstagram": "@sowetomea",
+    "profilePic": ""
   },
   {
     "id": "540",
@@ -8806,7 +9196,8 @@
     "instagram": "@pretoriamusic_sa",
     "tiktok": "",
     "twitter": "",
-    "status": "Derived"
+    "status": "Derived",
+    "profilePic": ""
   },
   {
     "id": "541",
@@ -8822,7 +9213,8 @@
     "instagram": "@sowetomusic_",
     "tiktok": "",
     "twitter": "",
-    "status": "Derived"
+    "status": "Derived",
+    "profilePic": ""
   },
   {
     "id": "542",
@@ -8839,7 +9231,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@townshiptheband"
+    "realInstagram": "@townshiptheband",
+    "profilePic": ""
   },
   {
     "id": "543",
@@ -8856,7 +9249,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@pretoriamusic"
+    "realInstagram": "@pretoriamusic",
+    "profilePic": ""
   },
   {
     "id": "544",
@@ -8873,7 +9267,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/209.jpg"
+    "profilePic": "/avatars/544.jpg"
   },
   {
     "id": "545",
@@ -8890,7 +9284,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/210.jpg",
+    "profilePic": "/avatars/545.jpg",
     "realInstagram": "@sabeats_family"
   },
   {
@@ -8908,7 +9302,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@mzansi.nostalgia"
+    "realInstagram": "@mzansi.nostalgia",
+    "profilePic": ""
   },
   {
     "id": "547",
@@ -8925,7 +9320,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/212.jpg",
+    "profilePic": "/avatars/547.jpg",
     "realInstagram": "@motionhub_experience"
   },
   {
@@ -8943,7 +9338,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/213.jpg"
+    "profilePic": "/avatars/548.jpg"
   },
   {
     "id": "549",
@@ -8960,7 +9355,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/214.jpg"
+    "profilePic": "/avatars/549.jpg"
   },
   {
     "id": "550",
@@ -8977,7 +9372,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/215.jpg",
+    "profilePic": "/avatars/550.jpg",
     "realInstagram": "@mzansigram"
   },
   {
@@ -8995,7 +9390,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/216.jpg",
+    "profilePic": "/avatars/551.jpg",
     "realInstagram": "@hiphophub.tv"
   },
   {
@@ -9013,7 +9408,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/217.jpg",
+    "profilePic": "/avatars/552.jpg",
     "realInstagram": "@theafricanbeats"
   },
   {
@@ -9031,7 +9426,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/218.jpg",
+    "profilePic": "/avatars/553.jpg",
     "realInstagram": "@hubhousesa"
   },
   {
@@ -9048,7 +9443,8 @@
     "instagram": "@samusiccentral",
     "tiktok": "",
     "twitter": "",
-    "status": "Derived"
+    "status": "Derived",
+    "profilePic": ""
   },
   {
     "id": "555",
@@ -9065,7 +9461,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/220.jpg",
+    "profilePic": "/avatars/555.jpg",
     "realInstagram": "@piano__hub"
   },
   {
@@ -9083,7 +9479,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/221.jpg",
+    "profilePic": "/avatars/556.jpg",
     "realInstagram": "@soft_life_music"
   },
   {
@@ -9101,7 +9497,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@afrobeatscntrl"
+    "realInstagram": "@afrobeatscntrl",
+    "profilePic": ""
   },
   {
     "id": "558",
@@ -9118,7 +9515,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@sa_rappers_daily"
+    "realInstagram": "@sa_rappers_daily",
+    "profilePic": ""
   },
   {
     "id": "559",
@@ -9135,7 +9533,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/224.jpg",
+    "profilePic": "/avatars/559.jpg",
     "realInstagram": "@africa.music.updates"
   },
   {
@@ -9153,7 +9551,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@samusic.tv"
+    "realInstagram": "@samusic.tv",
+    "profilePic": ""
   },
   {
     "id": "561",
@@ -9170,7 +9569,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/226.jpg"
+    "profilePic": "/avatars/561.jpg"
   },
   {
     "id": "562",
@@ -9187,7 +9586,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/227.jpg",
+    "profilePic": "/avatars/562.jpg",
     "realInstagram": "@rapnation"
   },
   {
@@ -9205,7 +9604,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/228.jpg",
+    "profilePic": "/avatars/563.jpg",
     "realInstagram": "@afbdaily"
   },
   {
@@ -9223,7 +9622,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@amapiano_nation_tv"
+    "realInstagram": "@amapiano_nation_tv",
+    "profilePic": ""
   },
   {
     "id": "565",
@@ -9240,7 +9640,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/230.jpg",
+    "profilePic": "/avatars/565.jpg",
     "realInstagram": "@thisisgqom_"
   },
   {
@@ -9258,7 +9658,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/231.jpg",
+    "profilePic": "/avatars/566.jpg",
     "realInstagram": "@everythingsamusic"
   },
   {
@@ -9276,7 +9676,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/232.jpg"
+    "profilePic": "/avatars/567.jpg"
   },
   {
     "id": "568",
@@ -9293,7 +9693,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/233.jpg"
+    "profilePic": "/avatars/568.jpg"
   },
   {
     "id": "569",
@@ -9310,7 +9710,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/234.jpg",
+    "profilePic": "/avatars/569.jpg",
     "realInstagram": "@theofficialsacharts"
   },
   {
@@ -9328,7 +9728,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/235.jpg"
+    "profilePic": "/avatars/570.jpg"
   },
   {
     "id": "571",
@@ -9345,7 +9745,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@african_music_trends"
+    "realInstagram": "@african_music_trends",
+    "profilePic": ""
   },
   {
     "id": "572",
@@ -9362,7 +9763,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/237.jpg"
+    "profilePic": "/avatars/572.jpg"
   },
   {
     "id": "573",
@@ -9378,7 +9779,8 @@
     "instagram": "@gqomnationsa",
     "tiktok": "",
     "twitter": "",
-    "status": "Derived"
+    "status": "Derived",
+    "profilePic": ""
   },
   {
     "id": "574",
@@ -9395,7 +9797,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/239.jpg",
+    "profilePic": "/avatars/574.jpg",
     "realInstagram": "@electronicnation"
   },
   {
@@ -9412,7 +9814,8 @@
     "instagram": "@gospelnationsa",
     "tiktok": "",
     "twitter": "",
-    "status": "Derived"
+    "status": "Derived",
+    "profilePic": ""
   },
   {
     "id": "576",
@@ -9429,7 +9832,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/241.jpg",
+    "profilePic": "/avatars/576.jpg",
     "realInstagram": "@jazznationtx"
   },
   {
@@ -9447,7 +9850,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/242.jpg",
+    "profilePic": "/avatars/577.jpg",
     "realInstagram": "@gospel.nation"
   },
   {
@@ -9465,7 +9868,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/243.jpg"
+    "profilePic": "/avatars/578.jpg"
   },
   {
     "id": "579",
@@ -9482,7 +9885,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/244.jpg",
+    "profilePic": "/avatars/579.jpg",
     "realInstagram": "@summer_samusicnews"
   },
   {
@@ -9500,7 +9903,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@rnbnationevents"
+    "realInstagram": "@rnbnationevents",
+    "profilePic": ""
   },
   {
     "id": "581",
@@ -9517,7 +9921,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/246.jpg",
+    "profilePic": "/avatars/581.jpg",
     "realInstagram": "@indienation_za"
   },
   {
@@ -9535,7 +9939,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/247.jpg",
+    "profilePic": "/avatars/582.jpg",
     "realInstagram": "@reggaenation"
   },
   {
@@ -9553,7 +9957,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@sandybworld"
+    "realInstagram": "@sandybworld",
+    "profilePic": ""
   },
   {
     "id": "584",
@@ -9570,7 +9975,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@afrobeatsintel"
+    "realInstagram": "@afrobeatsintel",
+    "profilePic": ""
   },
   {
     "id": "585",
@@ -9587,7 +9993,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@mzansi.spotlight"
+    "realInstagram": "@mzansi.spotlight",
+    "profilePic": ""
   },
   {
     "id": "586",
@@ -9604,7 +10011,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/251.jpg"
+    "profilePic": "/avatars/586.jpg"
   },
   {
     "id": "587",
@@ -9621,7 +10028,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/252.jpg",
+    "profilePic": "/avatars/587.jpg",
     "realInstagram": "@amapianoworldwide"
   },
   {
@@ -9638,7 +10045,8 @@
     "instagram": "@africansounds_",
     "tiktok": "",
     "twitter": "",
-    "status": "Derived"
+    "status": "Derived",
+    "profilePic": ""
   },
   {
     "id": "589",
@@ -9655,7 +10063,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/254.jpg",
+    "profilePic": "/avatars/589.jpg",
     "realInstagram": "@sa_artist_spotlight"
   },
   {
@@ -9673,7 +10081,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/255.jpg",
+    "profilePic": "/avatars/590.jpg",
     "realInstagram": "@hiphopreposts"
   },
   {
@@ -9691,7 +10099,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/256.jpg",
+    "profilePic": "/avatars/591.jpg",
     "realInstagram": "@mzansi_sounds_"
   },
   {
@@ -9709,7 +10117,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@sounds_of_africa"
+    "realInstagram": "@sounds_of_africa",
+    "profilePic": ""
   },
   {
     "id": "593",
@@ -9725,7 +10134,8 @@
     "instagram": "@samusicspotlight",
     "tiktok": "",
     "twitter": "",
-    "status": "Derived"
+    "status": "Derived",
+    "profilePic": ""
   },
   {
     "id": "594",
@@ -9741,7 +10151,8 @@
     "instagram": "@mzansispotlight",
     "tiktok": "",
     "twitter": "",
-    "status": "Derived"
+    "status": "Derived",
+    "profilePic": ""
   },
   {
     "id": "595",
@@ -9758,7 +10169,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@mzwaamusic"
+    "realInstagram": "@mzwaamusic",
+    "profilePic": ""
   },
   {
     "id": "596",
@@ -9775,7 +10187,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@sahiphoptv"
+    "realInstagram": "@sahiphoptv",
+    "profilePic": ""
   },
   {
     "id": "597",
@@ -9791,7 +10204,8 @@
     "instagram": "@samusicbuzz",
     "tiktok": "",
     "twitter": "",
-    "status": "Derived"
+    "status": "Derived",
+    "profilePic": ""
   },
   {
     "id": "598",
@@ -9807,7 +10221,8 @@
     "instagram": "@mzansibuzz",
     "tiktok": "",
     "twitter": "",
-    "status": "Derived"
+    "status": "Derived",
+    "profilePic": ""
   },
   {
     "id": "599",
@@ -9823,7 +10238,8 @@
     "instagram": "@amapianobuzz",
     "tiktok": "",
     "twitter": "",
-    "status": "Derived"
+    "status": "Derived",
+    "profilePic": ""
   },
   {
     "id": "600",
@@ -9840,7 +10256,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@hiphopbuzztv"
+    "realInstagram": "@hiphopbuzztv",
+    "profilePic": ""
   },
   {
     "id": "601",
@@ -9856,7 +10273,8 @@
     "instagram": "@samusiczone",
     "tiktok": "",
     "twitter": "",
-    "status": "Derived"
+    "status": "Derived",
+    "profilePic": ""
   },
   {
     "id": "602",
@@ -9872,7 +10290,8 @@
     "instagram": "@mzansizone",
     "tiktok": "",
     "twitter": "",
-    "status": "Derived"
+    "status": "Derived",
+    "profilePic": ""
   },
   {
     "id": "603",
@@ -9889,7 +10308,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@amapiano_network"
+    "realInstagram": "@amapiano_network",
+    "profilePic": ""
   },
   {
     "id": "604",
@@ -9906,7 +10326,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@hip_hop_connect"
+    "realInstagram": "@hip_hop_connect",
+    "profilePic": ""
   },
   {
     "id": "605",
@@ -9922,7 +10343,8 @@
     "instagram": "@samusicconnect",
     "tiktok": "",
     "twitter": "",
-    "status": "Derived"
+    "status": "Derived",
+    "profilePic": ""
   },
   {
     "id": "606",
@@ -9938,7 +10360,8 @@
     "instagram": "@mzansiconnect",
     "tiktok": "",
     "twitter": "",
-    "status": "Derived"
+    "status": "Derived",
+    "profilePic": ""
   },
   {
     "id": "607",
@@ -9955,7 +10378,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/272.jpg",
+    "profilePic": "/avatars/607.jpg",
     "realInstagram": "@sahiphopmusicblog"
   },
   {
@@ -9973,7 +10396,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@samusic.tv"
+    "realInstagram": "@samusic.tv",
+    "profilePic": ""
   },
   {
     "id": "609",
@@ -9990,7 +10414,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/274.jpg",
+    "profilePic": "/avatars/609.jpg",
     "realInstagram": "@amapianoworldwide"
   },
   {
@@ -10007,7 +10431,8 @@
     "instagram": "@mzansinetwork",
     "tiktok": "",
     "twitter": "",
-    "status": "Derived"
+    "status": "Derived",
+    "profilePic": ""
   },
   {
     "id": "611",
@@ -10024,7 +10449,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/276.jpg",
+    "profilePic": "/avatars/611.jpg",
     "realInstagram": "@amapianoworldwide"
   },
   {
@@ -10042,7 +10467,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@rapspotlights"
+    "realInstagram": "@rapspotlights",
+    "profilePic": ""
   },
   {
     "id": "613",
@@ -10059,7 +10485,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@the.hiphopzone"
+    "realInstagram": "@the.hiphopzone",
+    "profilePic": ""
   },
   {
     "id": "614",
@@ -10076,7 +10503,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/279.jpg",
+    "profilePic": "/avatars/614.jpg",
     "realInstagram": "@everythingsamusic"
   },
   {
@@ -10094,7 +10521,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/280.jpg",
+    "profilePic": "/avatars/615.jpg",
     "realInstagram": "@sahiphopmusicblog"
   },
   {
@@ -10112,7 +10539,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/281.jpg",
+    "profilePic": "/avatars/616.jpg",
     "realInstagram": "@sahiphop247"
   },
   {
@@ -10130,7 +10557,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/282.jpg",
+    "profilePic": "/avatars/617.jpg",
     "realInstagram": "@sahiphopmusicblog"
   },
   {
@@ -10148,7 +10575,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@samusic.tv"
+    "realInstagram": "@samusic.tv",
+    "profilePic": ""
   },
   {
     "id": "619",
@@ -10165,7 +10593,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@amapianomusicblog"
+    "realInstagram": "@amapianomusicblog",
+    "profilePic": ""
   },
   {
     "id": "620",
@@ -10181,7 +10610,8 @@
     "instagram": "@hiphopdigestsa",
     "tiktok": "",
     "twitter": "",
-    "status": "Derived"
+    "status": "Derived",
+    "profilePic": ""
   },
   {
     "id": "621",
@@ -10198,7 +10628,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/286.jpg",
+    "profilePic": "/avatars/621.jpg",
     "realInstagram": "@sahiphopreloaded"
   },
   {
@@ -10215,7 +10645,8 @@
     "instagram": "@mzansifeed",
     "tiktok": "",
     "twitter": "",
-    "status": "Derived"
+    "status": "Derived",
+    "profilePic": ""
   },
   {
     "id": "623",
@@ -10232,7 +10663,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/288.jpg",
+    "profilePic": "/avatars/623.jpg",
     "realInstagram": "@amapiano.tv"
   },
   {
@@ -10250,7 +10681,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/289.jpg",
+    "profilePic": "/avatars/624.jpg",
     "realInstagram": "@amapiano.tv"
   },
   {
@@ -10268,7 +10699,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/290.jpg",
+    "profilePic": "/avatars/625.jpg",
     "realInstagram": "@amapiano.tv"
   },
   {
@@ -10285,7 +10716,8 @@
     "instagram": "@mzansipost",
     "tiktok": "",
     "twitter": "",
-    "status": "Derived"
+    "status": "Derived",
+    "profilePic": ""
   },
   {
     "id": "627",
@@ -10302,7 +10734,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@hiphopwired"
+    "realInstagram": "@hiphopwired",
+    "profilePic": ""
   },
   {
     "id": "628",
@@ -10319,7 +10752,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/293.jpg",
+    "profilePic": "/avatars/628.jpg",
     "realInstagram": "@amapiano.tv"
   },
   {
@@ -10337,7 +10770,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/294.jpg",
+    "profilePic": "/avatars/629.jpg",
     "realInstagram": "@amapiano.tv"
   },
   {
@@ -10355,7 +10788,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/295.jpg",
+    "profilePic": "/avatars/630.jpg",
     "realInstagram": "@sahiphop247"
   },
   {
@@ -10373,7 +10806,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@soundsbysa"
+    "realInstagram": "@soundsbysa",
+    "profilePic": ""
   },
   {
     "id": "632",
@@ -10390,7 +10824,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@samusic.tv"
+    "realInstagram": "@samusic.tv",
+    "profilePic": ""
   },
   {
     "id": "633",
@@ -10407,7 +10842,8 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "realInstagram": "@jay_lelo"
+    "realInstagram": "@jay_lelo",
+    "profilePic": ""
   },
   {
     "id": "634",
@@ -10424,7 +10860,7 @@
     "tiktok": "",
     "twitter": "",
     "status": "Derived",
-    "profilePic": "/avatars/299.jpg",
+    "profilePic": "/avatars/634.jpg",
     "realInstagram": "@everythingsamusic"
   },
   {
@@ -10441,6 +10877,7 @@
     "instagram": "@amapianosource",
     "tiktok": "",
     "twitter": "",
-    "status": "Derived"
+    "status": "Derived",
+    "profilePic": ""
   }
 ]
