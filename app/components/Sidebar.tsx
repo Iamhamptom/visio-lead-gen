@@ -33,6 +33,7 @@ interface SessionItemProps {
     onDelete: (id: string) => void;
     onMove: (id: string, folderId: string | null) => void;
     onShare: (id: string) => void;
+    hasUnread?: boolean;
 }
 
 const SessionItem: React.FC<SessionItemProps> = ({
@@ -43,7 +44,8 @@ const SessionItem: React.FC<SessionItemProps> = ({
     campaigns,
     onDelete,
     onMove,
-    onShare
+    onShare,
+    hasUnread = false,
 }) => {
     const [showMenu, setShowMenu] = useState(false);
     const [showMoveSubmenu, setShowMoveSubmenu] = useState(false);
@@ -71,6 +73,9 @@ const SessionItem: React.FC<SessionItemProps> = ({
             <div className="flex items-center gap-2 overflow-hidden">
                 <MessageSquare size={14} className={isActive ? 'text-visio-accent' : 'opacity-50'} />
                 <span className="truncate text-sm">{session.title}</span>
+                {hasUnread && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />
+                )}
             </div>
 
             {/* Options Trigger */}
@@ -185,6 +190,8 @@ interface SidebarProps {
     isAdmin?: boolean;
     creditsBalance?: number | null;
     creditsAllocation?: number | string | null;
+    unreadLeadSessions?: Set<string>;
+    onClearUnread?: (sessionId: string) => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -207,6 +214,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     isAdmin = false,
     creditsBalance = null,
     creditsAllocation = null,
+    unreadLeadSessions,
+    onClearUnread,
 }) => {
 
     // State for collapsible folders
@@ -296,7 +305,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         className={`transition-colors rounded-xl ${activeView === 'dashboard' ? '' : ''}`}
                     >
                         <div className="px-4 py-2 flex items-center justify-between text-white/40 text-xs font-semibold uppercase tracking-wider mt-4 mb-2">
-                            <span>Drafts / Inbox</span>
+                            <span className="flex items-center gap-2">
+                                Drafts / Inbox
+                                {(unreadLeadSessions?.size || 0) > 0 && (
+                                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
+                                )}
+                            </span>
                             <Inbox size={12} />
                         </div>
                         {unfiledSessions.map(session => (
@@ -304,12 +318,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 key={session.id}
                                 session={session}
                                 isActive={activeSessionId === session.id && activeView === 'dashboard'}
-                                onClick={() => onSelectSession(session.id)}
+                                onClick={() => {
+                                    onSelectSession(session.id);
+                                    if (unreadLeadSessions?.has(session.id) && onClearUnread) {
+                                        onClearUnread(session.id);
+                                    }
+                                }}
                                 onDragStart={handleDragStart}
                                 campaigns={campaigns}
                                 onDelete={onDeleteSession}
                                 onMove={onMoveSession}
                                 onShare={onShareSession}
+                                hasUnread={unreadLeadSessions?.has(session.id) || false}
                             />
                         ))}
                         {unfiledSessions.length === 0 && (
@@ -369,12 +389,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                                     key={session.id}
                                                     session={session}
                                                     isActive={activeSessionId === session.id && activeView === 'dashboard'}
-                                                    onClick={() => onSelectSession(session.id)}
+                                                    onClick={() => {
+                                                        onSelectSession(session.id);
+                                                        if (unreadLeadSessions?.has(session.id) && onClearUnread) {
+                                                            onClearUnread(session.id);
+                                                        }
+                                                    }}
                                                     onDragStart={handleDragStart}
                                                     campaigns={campaigns}
                                                     onDelete={onDeleteSession}
                                                     onMove={onMoveSession}
                                                     onShare={onShareSession}
+                                                    hasUnread={unreadLeadSessions?.has(session.id) || false}
                                                 />
                                             ))
                                         )}

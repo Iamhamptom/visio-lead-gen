@@ -1,15 +1,16 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Message, Role, Lead, WebResult } from '../types';
-import { LeadCard } from './LeadCard';
 import { VisioOrb } from './VisioOrb';
-import { Bot, User, Brain, Search, Target, Sparkles, BarChart3 } from 'lucide-react';
+import { Bot, User, Brain, Search, Target, Sparkles, BarChart3, Download, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { generateLeadListCSV, downloadCSV } from '@/lib/csv-export';
 
 interface ChatMessageProps {
     message: Message;
     onSaveLead?: (lead: Lead) => void;
+    onLoadMore?: (messageId: string, query: string, offset: number) => void;
 }
 
 // Reasoning steps for different tiers
@@ -32,9 +33,10 @@ const REASONING_STEPS = {
     ]
 };
 
-export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSaveLead }) => {
+export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSaveLead, onLoadMore }) => {
     const isUser = message.role === Role.USER;
     const [reasoningStep, setReasoningStep] = useState(0);
+    const [showAllLeads, setShowAllLeads] = useState(false);
 
     const tier = (message as any).tier || 'instant';
     const mode = message.mode || 'chat'; // Get mode (default to chat if missing)
@@ -94,9 +96,24 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSaveLead })
     const currentStep = steps[reasoningStep];
     const ReasoningIcon = currentStep?.icon || Search;
 
+    // Handle CSV download
+    const handleDownloadCSV = () => {
+        const csv = generateLeadListCSV({
+            id: message.id,
+            sessionId: '',
+            title: 'Lead Export',
+            brief: null,
+            leads: parsedContent.leads,
+            createdAt: message.timestamp,
+        });
+        downloadCSV(csv, `visio-leads-${new Date().toISOString().split('T')[0]}.csv`);
+    };
+
+    const displayedLeads = showAllLeads ? parsedContent.leads : parsedContent.leads.slice(0, 10);
+
     return (
         <div className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'} mb-8 animate-in fade-in slide-in-from-bottom-2 duration-300`}>
-            <div className={`flex max-w-3xl gap-4 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
+            <div className={`flex max-w-3xl gap-4 ${isUser ? 'flex-row-reverse' : 'flex-row'} w-full`}>
 
                 {/* Avatar */}
                 <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center border ${isUser
@@ -125,8 +142,29 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSaveLead })
                         </div>
                     )}
 
-                    {/* Bubble or Orb for Thinking State */}
-                    {message.isThinking ? (
+                    {/* Research In Progress State (Green Ball) */}
+                    {message.isResearching ? (
+                        <div className="p-6 bg-white/5 border border-white/10 rounded-2xl rounded-tl-none w-full max-w-lg shadow-lg backdrop-blur-md">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse shadow-[0_0_12px_rgba(34,197,94,0.6)]" />
+                                <span className="text-sm text-white/80 font-medium">Researching...</span>
+                                <Loader2 size={14} className="animate-spin text-green-400/60 ml-auto" />
+                            </div>
+                            <div className="markdown-content !select-text">
+                                <ReactMarkdown
+                                    remarkPlugins={[remarkGfm]}
+                                    components={{
+                                        p: ({ node, ...props }) => <p className="mb-2 last:mb-0 text-white/70 leading-relaxed text-sm" {...props} />,
+                                        strong: ({ node, ...props }) => <strong className="font-bold text-white" {...props} />,
+                                        h2: ({ node, ...props }) => <h2 className="mb-2 text-base font-bold text-white/95" {...props} />,
+                                    }}
+                                >
+                                    {parsedContent.text}
+                                </ReactMarkdown>
+                            </div>
+                        </div>
+
+                    ) : message.isThinking ? (
                         <div className="p-6 bg-white/5 border border-white/10 rounded-2xl rounded-tl-none w-full max-w-md flex flex-col gap-4 shadow-lg backdrop-blur-md">
 
                             {/* Top: Orb + Current Step */}
@@ -231,24 +269,97 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSaveLead })
                                 )}
                             </div>
 
-                            {/* Render Leads if they exist */}
+                            {/* Render Leads as Interactive Table */}
                             {!isUser && parsedContent.leads.length > 0 && (
-                                <div className="mt-2 w-full">
-                                    {parsedContent.leads.map((lead) => (
-                                        <div key={lead.id} className="flex justify-center">
-                                            <LeadCard lead={lead} onSave={onSaveLead} />
-                                        </div>
-                                    ))}
-                                    {parsedContent.leads.length > 1 && onSaveLead && (
-                                        <div className="flex justify-center mt-3">
+                                <div className="mt-3 w-full">
+                                    {/* Header with count + download */}
+                                    <div className="flex items-center justify-between mb-2 px-1">
+                                        <span className="text-[10px] uppercase tracking-widest text-white/40 font-semibold">
+                                            {parsedContent.leads.length} contacts found
+                                        </span>
+                                        <button
+                                            onClick={handleDownloadCSV}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-visio-teal/10 border border-visio-teal/20 text-visio-teal text-xs hover:bg-visio-teal/20 transition-colors"
+                                        >
+                                            <Download size={12} />
+                                            Download CSV
+                                        </button>
+                                    </div>
+
+                                    {/* Inline Clickable Table */}
+                                    <div className="overflow-x-auto rounded-xl border border-white/10 bg-black/20">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="border-b border-white/10 text-left">
+                                                    <th className="px-3 py-2.5 text-white/40 font-medium text-[11px] uppercase tracking-wider">#</th>
+                                                    <th className="px-3 py-2.5 text-white/40 font-medium text-[11px] uppercase tracking-wider">Name</th>
+                                                    <th className="px-3 py-2.5 text-white/40 font-medium text-[11px] uppercase tracking-wider">Title</th>
+                                                    <th className="px-3 py-2.5 text-white/40 font-medium text-[11px] uppercase tracking-wider">Company</th>
+                                                    <th className="px-3 py-2.5 text-white/40 font-medium text-[11px] uppercase tracking-wider">Email</th>
+                                                    <th className="px-3 py-2.5 text-white/40 font-medium text-[11px] uppercase tracking-wider">Followers</th>
+                                                    <th className="px-3 py-2.5 text-white/40 font-medium text-[11px] uppercase tracking-wider">Source</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {displayedLeads.map((lead, i) => (
+                                                    <tr
+                                                        key={lead.id || i}
+                                                        className="border-b border-white/5 hover:bg-white/5 transition-colors cursor-default"
+                                                    >
+                                                        <td className="px-3 py-2 text-white/30 text-xs">{i + 1}</td>
+                                                        <td className="px-3 py-2 text-white font-medium text-xs">
+                                                            {lead.url ? (
+                                                                <a href={lead.url} target="_blank" rel="noopener noreferrer" className="text-white hover:text-visio-teal transition-colors">
+                                                                    {lead.name}
+                                                                </a>
+                                                            ) : lead.name}
+                                                        </td>
+                                                        <td className="px-3 py-2 text-white/60 text-xs">{lead.title || '---'}</td>
+                                                        <td className="px-3 py-2 text-white/60 text-xs">{lead.company || '---'}</td>
+                                                        <td className="px-3 py-2 text-xs">
+                                                            {lead.email ? (
+                                                                <a href={`mailto:${lead.email}`} className="text-visio-teal hover:underline">
+                                                                    {lead.email}
+                                                                </a>
+                                                            ) : <span className="text-white/30">---</span>}
+                                                        </td>
+                                                        <td className="px-3 py-2 text-white/50 text-xs">{lead.followers || '---'}</td>
+                                                        <td className="px-3 py-2 text-white/40 text-[10px]">{lead.source || '---'}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    {/* Show More / Load More controls */}
+                                    <div className="flex items-center gap-3 mt-2 px-1 flex-wrap">
+                                        {parsedContent.leads.length > 10 && (
+                                            <button
+                                                onClick={() => setShowAllLeads(!showAllLeads)}
+                                                className="flex items-center gap-1 text-xs text-visio-teal hover:text-white transition-colors"
+                                            >
+                                                {showAllLeads ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                                                {showAllLeads ? 'Show less' : `Show all ${parsedContent.leads.length}`}
+                                            </button>
+                                        )}
+                                        {message.canLoadMore && onLoadMore && (
+                                            <button
+                                                onClick={() => onLoadMore(message.id, message.leadSearchQuery || '', message.leadSearchOffset || 0)}
+                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white/70 text-xs hover:bg-white/10 hover:text-white transition-colors"
+                                            >
+                                                <Search size={12} />
+                                                Load another 100
+                                            </button>
+                                        )}
+                                        {onSaveLead && parsedContent.leads.length > 0 && (
                                             <button
                                                 onClick={() => parsedContent.leads.forEach(lead => onSaveLead(lead))}
-                                                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-visio-teal/10 border border-visio-teal/20 text-visio-teal text-xs font-medium hover:bg-visio-teal/20 transition-colors"
+                                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-visio-teal/10 border border-visio-teal/20 text-visio-teal text-xs font-medium hover:bg-visio-teal/20 transition-colors ml-auto"
                                             >
                                                 Save All {parsedContent.leads.length} Leads
                                             </button>
-                                        </div>
-                                    )}
+                                        )}
+                                    </div>
                                 </div>
                             )}
 

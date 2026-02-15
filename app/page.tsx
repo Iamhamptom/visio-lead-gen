@@ -138,6 +138,13 @@ export default function Home() {
   const [isChatScrollable, setIsChatScrollable] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [buildInfo, setBuildInfo] = useState<{ commit?: string | null; branch?: string | null } | null>(null);
+  const [unreadLeadSessions, setUnreadLeadSessions] = useState<Set<string>>(new Set());
+  const notificationSoundRef = useRef<HTMLAudioElement | null>(null);
+
+  // Initialize notification sound on client
+  useEffect(() => {
+    notificationSoundRef.current = new Audio('/sounds/ting.mp3');
+  }, []);
 
   // Lightweight build marker so we can confirm the live site is running the latest deployment.
   useEffect(() => {
@@ -942,36 +949,198 @@ export default function Home() {
         return;
       }
 
-      // 4. Update Final
-      const finalMessages = sessionWithThinking.messages.map(msg => {
-        if (msg.id === tempId) {
-          return {
-            ...msg,
-            content: data.message || "Done.",
-            leads: data.leads || [],
-            webResults: data.webResults || [],
-            toolUsed: data.toolUsed || (Array.isArray(data.toolsUsed) ? data.toolsUsed[data.toolsUsed.length - 1] : undefined),
-            isThinking: false
-          };
-        }
-        return msg;
-      });
+      // 4. Check if this was a lead generation request
+      const isLeadGen = data.toolsUsed?.includes('find_leads') && data.leads?.length > 0;
 
-      const finalSession = { ...sessionWithThinking, messages: finalMessages };
-      updatedSessions[activeSessionIndex] = finalSession;
-      setSessions([...updatedSessions]);
+      if (isLeadGen) {
+        // Show "Research has started" with green ball + initial results
+        const researchMessages = sessionWithThinking.messages.map(msg => {
+          if (msg.id === tempId) {
+            return {
+              ...msg,
+              content: `## Research has started\n\nI'm searching across all available databases and sources to find your contacts. Here are the first **${data.leads.length}** results while I continue searching...`,
+              leads: data.leads || [],
+              webResults: data.webResults || [],
+              toolUsed: 'generate_leads' as ToolId,
+              isThinking: false,
+              isResearching: true,
+              canLoadMore: data.canLoadMore || false,
+              leadSearchQuery: text,
+              leadSearchOffset: data.leads?.length || 0,
+            };
+          }
+          return msg;
+        });
+
+        const researchSession = { ...sessionWithThinking, messages: researchMessages };
+        updatedSessions[activeSessionIndex] = researchSession;
+        setSessions([...updatedSessions]);
+
+        // Start SSE lead-stream for the full pipeline in the background
+        setIsGeneratingLeads(true);
+        setLeadGenProgress({ tier: 'Tier 1', status: 'searching', found: data.leads?.length || 0, target: 100, currentSource: 'Initializing full pipeline...', logs: [] });
+
+        const searchParams = new URLSearchParams({
+          contactTypes: 'curators,journalists,bloggers,DJs,A&R',
+          markets: data.intent?.filters?.country || 'ZA',
+          genre: artistProfile?.genre || '',
+          searchDepth: 'full',
+          targetCount: '100',
+        });
+
+        try {
+          const accessToken = session?.access_token;
+          const streamRes = await fetch(`/api/agent/lead-stream?${searchParams.toString()}`, {
+            headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+          });
+
+          if (streamRes.ok && streamRes.body) {
+            const reader = streamRes.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split('\n\n');
+              buffer = lines.pop() || '';
+
+              for (const line of lines) {
+                if (!line.startsWith('data: ')) continue;
+                try {
+                  const event = JSON.parse(line.slice(6));
+                  if (event.type === 'progress') {
+                    setLeadGenProgress({
+                      tier: event.tier || 'Searching',
+                      status: event.status || 'searching',
+                      found: event.found || 0,
+                      target: event.target || 100,
+                      currentSource: event.currentSource || '',
+                      logs: event.logs || [],
+                    });
+                  } else if (event.type === 'complete' && event.contacts?.length > 0) {
+                    // Play notification sound
+                    try { notificationSoundRef.current?.play().catch(() => {}); } catch {}
+
+                    setToastMessage('Your leads are ready!');
+
+                    // Add red badge to sidebar
+                    const currentSessionId = activeSessionId;
+                    setUnreadLeadSessions(prev => new Set(prev).add(currentSessionId));
+
+                    // Map SSE contacts to Lead format
+                    const sseLeads: Lead[] = event.contacts.map((c: any, i: number) => ({
+                      id: c.email || `lead-${i}`,
+                      name: c.name || 'Unknown',
+                      title: c.title || '',
+                      company: c.company || '',
+                      email: c.email || '',
+                      matchScore: 0,
+                      socials: { instagram: c.instagram, tiktok: c.tiktok, twitter: c.twitter, linkedin: c.linkedin },
+                      source: c.source || 'Pipeline',
+                      followers: c.followers || '',
+                      country: c.country || '',
+                      url: c.url || '',
+                      snippet: c.url || '',
+                    }));
+
+                    // Merge initial leads with SSE leads, deduplicate
+                    const existingLeads = data.leads || [];
+                    const seenNames = new Set<string>();
+                    const mergedLeads: Lead[] = [];
+                    for (const lead of [...existingLeads, ...sseLeads]) {
+                      const key = (lead.name || '').toLowerCase().trim();
+                      if (key && !seenNames.has(key)) {
+                        seenNames.add(key);
+                        mergedLeads.push(lead);
+                      }
+                    }
+
+                    // Replace research message with final completed results
+                    setSessions(prevSessions => {
+                      const idx = prevSessions.findIndex(s => s.id === currentSessionId);
+                      if (idx === -1) return prevSessions;
+                      const updatedMsgs = prevSessions[idx].messages.map(msg => {
+                        if (msg.id === tempId) {
+                          return {
+                            ...msg,
+                            content: `## Lead Generation Complete\n\nFound **${mergedLeads.length}** contacts across all sources.\n\n**Query:** ${text}`,
+                            leads: mergedLeads,
+                            isResearching: false,
+                            canLoadMore: (event.total || 0) > mergedLeads.length,
+                            leadSearchQuery: text,
+                            leadSearchOffset: mergedLeads.length,
+                            toolUsed: 'generate_leads' as ToolId,
+                          };
+                        }
+                        return msg;
+                      });
+                      const next = [...prevSessions];
+                      next[idx] = { ...prevSessions[idx], messages: updatedMsgs, lastUpdated: Date.now() };
+                      return next;
+                    });
+                  }
+                } catch {
+                  // Skip malformed SSE lines
+                }
+              }
+            }
+          }
+        } catch (streamError) {
+          console.error('Lead gen stream error:', streamError);
+          // On stream error, just finalize with initial results (remove isResearching)
+          setSessions(prevSessions => {
+            const idx = prevSessions.findIndex(s => s.id === activeSessionId);
+            if (idx === -1) return prevSessions;
+            const updatedMsgs = prevSessions[idx].messages.map(msg => {
+              if (msg.id === tempId) {
+                return { ...msg, isResearching: false };
+              }
+              return msg;
+            });
+            const next = [...prevSessions];
+            next[idx] = { ...prevSessions[idx], messages: updatedMsgs };
+            return next;
+          });
+        } finally {
+          setIsGeneratingLeads(false);
+          setLeadGenProgress(null);
+        }
+      } else {
+        // 4. Non-lead response: Update Final (original flow)
+        const finalMessages = sessionWithThinking.messages.map(msg => {
+          if (msg.id === tempId) {
+            return {
+              ...msg,
+              content: data.message || "Done.",
+              leads: data.leads || [],
+              webResults: data.webResults || [],
+              toolUsed: data.toolUsed || (Array.isArray(data.toolsUsed) ? data.toolsUsed[data.toolsUsed.length - 1] : undefined),
+              isThinking: false
+            };
+          }
+          return msg;
+        });
+
+        const finalSession = { ...sessionWithThinking, messages: finalMessages };
+        updatedSessions[activeSessionIndex] = finalSession;
+        setSessions([...updatedSessions]);
+      }
 
       // Generate strategy brief if leads were returned
       if (data.leads && data.leads.length > 0) {
+        const currentSess = sessions.find(s => s.id === activeSessionId) || { id: activeSessionId, messages: [] };
         fetch('/api/generate-brief', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId: finalSession.id, messages: finalSession.messages.slice(-20).map(m => ({ role: m.role, content: m.content })) })
+          body: JSON.stringify({ sessionId: currentSess.id, messages: (currentSess.messages || []).slice(-20).map(m => ({ role: m.role, content: m.content })) })
         })
           .then(r => r.json())
           .then(brief => {
             if (brief && brief.summary) {
-              setStrategyBriefs(prev => new Map(prev).set(finalSession.id, brief));
+              setStrategyBriefs(prev => new Map(prev).set(currentSess.id, brief));
               saveStrategyBrief(brief).catch(() => { });
             }
           })
@@ -1016,6 +1185,118 @@ export default function Home() {
     } catch {
       setToastMessage('Failed to save lead');
     }
+  };
+
+  // Handle "Load another 100" from ChatMessage
+  const handleLoadMore = async (messageId: string, query: string, offset: number) => {
+    setIsGeneratingLeads(true);
+    setLeadGenProgress({ tier: 'Tier 1', status: 'searching', found: offset, target: offset + 100, currentSource: 'Loading more contacts...', logs: [] });
+
+    const searchParams = new URLSearchParams({
+      contactTypes: 'curators,journalists,bloggers,DJs,A&R',
+      markets: artistProfile?.location?.country || 'ZA',
+      genre: artistProfile?.genre || '',
+      searchDepth: 'full',
+      targetCount: '100',
+    });
+
+    try {
+      const accessToken = session?.access_token;
+      const res = await fetch(`/api/agent/lead-stream?${searchParams.toString()}`, {
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+      });
+
+      if (!res.ok || !res.body) {
+        setToastMessage('Failed to load more contacts.');
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          try {
+            const event = JSON.parse(line.slice(6));
+            if (event.type === 'progress') {
+              setLeadGenProgress({
+                tier: event.tier || 'Searching',
+                status: event.status || 'searching',
+                found: offset + (event.found || 0),
+                target: offset + (event.target || 100),
+                currentSource: event.currentSource || '',
+                logs: event.logs || [],
+              });
+            } else if (event.type === 'complete' && event.contacts?.length > 0) {
+              try { notificationSoundRef.current?.play().catch(() => {}); } catch {}
+              setToastMessage(`Found ${event.contacts.length} more contacts!`);
+
+              const newLeads: Lead[] = event.contacts.map((c: any, i: number) => ({
+                id: c.email || `lead-more-${offset + i}`,
+                name: c.name || 'Unknown',
+                title: c.title || '',
+                company: c.company || '',
+                email: c.email || '',
+                matchScore: 0,
+                socials: { instagram: c.instagram, tiktok: c.tiktok, twitter: c.twitter, linkedin: c.linkedin },
+                source: c.source || 'Pipeline',
+                followers: c.followers || '',
+                country: c.country || '',
+                url: c.url || '',
+                snippet: c.url || '',
+              }));
+
+              // Append new leads to the existing message
+              setSessions(prevSessions => {
+                const sessionIdx = prevSessions.findIndex(s => s.id === activeSessionId);
+                if (sessionIdx === -1) return prevSessions;
+                const updatedMsgs = prevSessions[sessionIdx].messages.map(msg => {
+                  if (msg.id === messageId) {
+                    const existingLeads = msg.leads || [];
+                    const merged = [...existingLeads, ...newLeads];
+                    return {
+                      ...msg,
+                      leads: merged,
+                      content: `## Lead Generation Complete\n\nFound **${merged.length}** contacts across all sources.\n\n**Query:** ${query}`,
+                      canLoadMore: (event.total || 0) > newLeads.length,
+                      leadSearchOffset: merged.length,
+                    };
+                  }
+                  return msg;
+                });
+                const next = [...prevSessions];
+                next[sessionIdx] = { ...prevSessions[sessionIdx], messages: updatedMsgs, lastUpdated: Date.now() };
+                return next;
+              });
+            }
+          } catch { /* skip malformed */ }
+        }
+      }
+    } catch (error) {
+      console.error('Load more error:', error);
+      setToastMessage('Error loading more contacts.');
+    } finally {
+      setIsGeneratingLeads(false);
+      setLeadGenProgress(null);
+    }
+  };
+
+  // Clear unread notification badge
+  const handleClearUnread = (sessionId: string) => {
+    setUnreadLeadSessions(prev => {
+      const next = new Set(prev);
+      next.delete(sessionId);
+      return next;
+    });
   };
 
   // Handle tool selection — open wizard for generate_leads
@@ -1308,6 +1589,8 @@ export default function Home() {
             isAdmin={isAdmin}
             creditsBalance={creditsBalance}
             creditsAllocation={creditsAllocation}
+            unreadLeadSessions={unreadLeadSessions}
+            onClearUnread={handleClearUnread}
           />
 
           {/* Mobile Sidebar Overlay Backdrop - Fixed z-index */}
@@ -1411,7 +1694,7 @@ export default function Home() {
                         {activeMessages.length > 0 ? (
                           <>
                             {activeMessages.map((msg) => (
-                              <ChatMessage key={msg.id} message={msg} onSaveLead={handleSaveLead} />
+                              <ChatMessage key={msg.id} message={msg} onSaveLead={handleSaveLead} onLoadMore={handleLoadMore} />
                             ))}
                             {isGeneratingLeads && (
                               <LeadGenProgress isActive={isGeneratingLeads} progress={leadGenProgress} />

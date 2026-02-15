@@ -115,6 +115,10 @@ export interface Message {
     isThinking?: boolean;
     mode?: AgentMode;
     thinkingBlocks?: ThinkingBlock[];
+    isResearching?: boolean;
+    canLoadMore?: boolean;
+    leadSearchQuery?: string;
+    leadSearchOffset?: number;
 }
 
 export interface WebResult {
