@@ -42,6 +42,7 @@ interface MarketplaceContact {
     tiktok: string;
     twitter: string;
     status: string;
+    profilePic?: string;
 }
 
 interface MarketplaceProps {
@@ -448,7 +449,23 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                                         >
                                             {/* Profile Avatar Bubble */}
                                             <div className={`relative mb-3 ${isExpanded ? 'w-20 h-20' : 'w-14 h-14'} transition-all duration-200`}>
-                                                <div className={`w-full h-full rounded-full ${getGradient(contact.person)} flex items-center justify-center text-white font-bold shadow-lg ${isExpanded ? 'text-xl' : 'text-sm'}`}>
+                                                {contact.profilePic ? (
+                                                    <img
+                                                        src={contact.profilePic}
+                                                        alt={contact.person}
+                                                        className={`w-full h-full rounded-full object-cover shadow-lg ring-2 ring-white/10`}
+                                                        onError={(e) => {
+                                                            const target = e.currentTarget;
+                                                            target.style.display = 'none';
+                                                            const fallback = target.nextElementSibling as HTMLElement;
+                                                            if (fallback) fallback.style.display = 'flex';
+                                                        }}
+                                                    />
+                                                ) : null}
+                                                <div
+                                                    className={`w-full h-full rounded-full ${getGradient(contact.person)} items-center justify-center text-white font-bold shadow-lg ${isExpanded ? 'text-xl' : 'text-sm'}`}
+                                                    style={{ display: contact.profilePic ? 'none' : 'flex' }}
+                                                >
                                                     {getInitials(contact.person)}
                                                 </div>
                                                 {/* Verified badge */}
