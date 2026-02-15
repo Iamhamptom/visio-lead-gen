@@ -24,6 +24,11 @@ import {
     X,
     Music,
     Instagram,
+    Upload,
+    Send,
+    Loader2,
+    Zap,
+    ArrowRight,
 } from 'lucide-react';
 import { SubscriptionTier } from '../types';
 
@@ -43,6 +48,7 @@ interface MarketplaceContact {
     twitter: string;
     status: string;
     profilePic?: string;
+    realInstagram?: string;
 }
 
 interface MarketplaceProps {
@@ -59,6 +65,11 @@ const AI_TOOLS = [
     { icon: TrendingUp, name: 'Viral Research', description: 'Discover trending content & viral patterns', credits: 3, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
     { icon: Sparkles, name: 'Social Pack', description: 'Full social media content kit for releases', credits: 1, color: 'text-cyan-400', bg: 'bg-cyan-500/10' },
     { icon: Globe, name: 'Market Research', description: 'Deep market analysis for your genre & region', credits: 3, color: 'text-amber-400', bg: 'bg-amber-500/10' },
+];
+
+const SA_GENRES = [
+    'Amapiano', 'Afrobeats', 'Hip Hop', 'R&B', 'Gqom', 'House', 'Kwaito',
+    'Maskandi', 'Gospel', 'Jazz', 'Pop', 'Rock', 'Afro-Soul', 'Dance', 'Other'
 ];
 
 const ITEMS_PER_PAGE = 30;
@@ -113,6 +124,225 @@ function csvEscape(value: string): string {
     return value;
 }
 
+// ─── Music Submission Modal ────────────────────────────────────────────
+interface SubmissionForm {
+    artistName: string;
+    email: string;
+    genre: string;
+    songLink: string;
+    epkLink: string;
+    message: string;
+}
+
+const MusicSubmissionModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
+    const [form, setForm] = useState<SubmissionForm>({
+        artistName: '', email: '', genre: '', songLink: '', epkLink: '', message: ''
+    });
+    const [submitting, setSubmitting] = useState(false);
+    const [submitted, setSubmitted] = useState(false);
+    const [error, setError] = useState('');
+
+    const handleSubmit = async () => {
+        setError('');
+        if (!form.artistName.trim()) return setError('Artist name is required');
+        if (!form.email.trim() || !form.email.includes('@')) return setError('Valid email is required');
+        if (!form.genre) return setError('Please select a genre');
+        if (!form.songLink.trim()) return setError('Song link is required');
+
+        setSubmitting(true);
+        try {
+            const res = await fetch('/api/submissions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(form),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Submission failed');
+
+            if (data.checkoutUrl) {
+                // Redirect to payment
+                window.location.href = data.checkoutUrl;
+            } else {
+                setSubmitted(true);
+            }
+        } catch (e: any) {
+            setError(e.message || 'Something went wrong. Please try again.');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative w-full max-w-lg bg-[#0d0d0d] border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
+            >
+                {/* Header */}
+                <div className="relative p-6 pb-4 border-b border-white/5">
+                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-visio-teal via-purple-500 to-pink-500" />
+                    <button onClick={onClose} className="absolute top-4 right-4 text-white/40 hover:text-white transition-colors">
+                        <X size={20} />
+                    </button>
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 rounded-xl bg-gradient-to-br from-visio-teal/20 to-purple-500/20 border border-visio-teal/20">
+                            <Send size={20} className="text-visio-teal" />
+                        </div>
+                        <div>
+                            <h2 className="text-lg font-bold text-white">Send Your Music</h2>
+                            <p className="text-xs text-white/40">to 100+ SA media pages & curators</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2 mt-3">
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">South Africa Only</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">$10 / R180</span>
+                    </div>
+                </div>
+
+                {submitted ? (
+                    /* Success State */
+                    <div className="p-8 text-center space-y-4">
+                        <div className="w-16 h-16 mx-auto rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                            <Check size={32} className="text-emerald-400" />
+                        </div>
+                        <h3 className="text-xl font-bold text-white">Submission Received!</h3>
+                        <p className="text-sm text-white/50">
+                            Our team will review your submission and distribute it to 100+ curators and media pages.
+                            You&apos;ll receive a confirmation email shortly.
+                        </p>
+                        <button
+                            onClick={() => { setSubmitted(false); setForm({ artistName: '', email: '', genre: '', songLink: '', epkLink: '', message: '' }); onClose(); }}
+                            className="px-6 py-2.5 bg-visio-teal/10 text-visio-teal border border-visio-teal/20 rounded-xl text-sm hover:bg-visio-teal/20 transition-colors"
+                        >
+                            Done
+                        </button>
+                    </div>
+                ) : (
+                    /* Form */
+                    <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+                        {/* Artist Name */}
+                        <div>
+                            <label className="block text-xs text-white/50 mb-1.5">Artist / Band Name *</label>
+                            <input
+                                type="text"
+                                value={form.artistName}
+                                onChange={e => setForm(f => ({ ...f, artistName: e.target.value }))}
+                                placeholder="e.g. DJ Maphorisa"
+                                className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder-white/25 focus:outline-none focus:border-visio-teal/50"
+                            />
+                        </div>
+
+                        {/* Email */}
+                        <div>
+                            <label className="block text-xs text-white/50 mb-1.5">Email Address *</label>
+                            <input
+                                type="email"
+                                value={form.email}
+                                onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                                placeholder="your@email.com"
+                                className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder-white/25 focus:outline-none focus:border-visio-teal/50"
+                            />
+                        </div>
+
+                        {/* Genre */}
+                        <div>
+                            <label className="block text-xs text-white/50 mb-1.5">Genre *</label>
+                            <select
+                                value={form.genre}
+                                onChange={e => setForm(f => ({ ...f, genre: e.target.value }))}
+                                className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-visio-teal/50 appearance-none"
+                            >
+                                <option value="" className="bg-[#111]">Select genre...</option>
+                                {SA_GENRES.map(g => (
+                                    <option key={g} value={g} className="bg-[#111]">{g}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Song Link */}
+                        <div>
+                            <label className="block text-xs text-white/50 mb-1.5">Song Link * <span className="text-white/25">(SoundCloud, Spotify, YouTube, Drive)</span></label>
+                            <input
+                                type="url"
+                                value={form.songLink}
+                                onChange={e => setForm(f => ({ ...f, songLink: e.target.value }))}
+                                placeholder="https://soundcloud.com/your-track"
+                                className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder-white/25 focus:outline-none focus:border-visio-teal/50"
+                            />
+                        </div>
+
+                        {/* EPK Link */}
+                        <div>
+                            <label className="block text-xs text-white/50 mb-1.5">EPK / Press Kit <span className="text-white/25">(PDF link or Drive folder - optional)</span></label>
+                            <input
+                                type="url"
+                                value={form.epkLink}
+                                onChange={e => setForm(f => ({ ...f, epkLink: e.target.value }))}
+                                placeholder="https://drive.google.com/your-epk"
+                                className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder-white/25 focus:outline-none focus:border-visio-teal/50"
+                            />
+                        </div>
+
+                        {/* Message */}
+                        <div>
+                            <label className="block text-xs text-white/50 mb-1.5">Short Message <span className="text-white/25">(optional - tell us about your release)</span></label>
+                            <textarea
+                                value={form.message}
+                                onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
+                                rows={3}
+                                placeholder="Tell us about your track, release date, etc..."
+                                className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white text-sm placeholder-white/25 focus:outline-none focus:border-visio-teal/50 resize-none"
+                            />
+                        </div>
+
+                        {error && (
+                            <p className="text-xs text-red-400 bg-red-500/10 px-3 py-2 rounded-lg border border-red-500/20">{error}</p>
+                        )}
+
+                        {/* What you get */}
+                        <div className="bg-white/[0.02] border border-white/5 rounded-xl p-4 space-y-2">
+                            <p className="text-xs font-medium text-white/60">What you get:</p>
+                            <ul className="space-y-1.5">
+                                {[
+                                    'Your music sent to 100+ SA media pages & curators',
+                                    'Targeted by genre for maximum relevance',
+                                    'Professional pitch crafted by our team',
+                                    'Delivery report within 48 hours',
+                                ].map((item, i) => (
+                                    <li key={i} className="flex items-start gap-2 text-xs text-white/40">
+                                        <Check size={12} className="text-visio-teal mt-0.5 shrink-0" />
+                                        <span>{item}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+
+                        {/* Submit Button */}
+                        <button
+                            onClick={handleSubmit}
+                            disabled={submitting}
+                            className="w-full py-3 bg-gradient-to-r from-visio-teal to-emerald-500 text-black font-bold rounded-xl text-sm hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                            {submitting ? (
+                                <><Loader2 size={16} className="animate-spin" /> Processing...</>
+                            ) : (
+                                <><Zap size={16} /> Submit & Pay $10 (R180)</>
+                            )}
+                        </button>
+                        <p className="text-[10px] text-white/20 text-center">Secure payment via Yoco. South African artists only.</p>
+                    </div>
+                )}
+            </motion.div>
+        </div>
+    );
+};
+
+// ─── Main Marketplace Component ────────────────────────────────────────
 export const Marketplace: React.FC<MarketplaceProps> = ({
     onNewChat,
     subscriptionTier = 'artist',
@@ -126,6 +356,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
     const [activeTab, setActiveTab] = useState<'pages' | 'tools'>('pages');
     const [copied, setCopied] = useState(false);
     const [expandedId, setExpandedId] = useState<string | null>(null);
+    const [showSubmissionModal, setShowSubmissionModal] = useState(false);
 
     // Load contacts from API on mount
     React.useEffect(() => {
@@ -270,6 +501,13 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
 
     return (
         <div className="flex-1 h-full overflow-y-auto p-8 space-y-6">
+            {/* Submission Modal */}
+            <AnimatePresence>
+                {showSubmissionModal && (
+                    <MusicSubmissionModal isOpen={showSubmissionModal} onClose={() => setShowSubmissionModal(false)} />
+                )}
+            </AnimatePresence>
+
             {/* Header */}
             <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-3">
@@ -405,6 +643,40 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                         </div>
                     </div>
 
+                    {/* CTA: Send Your Music */}
+                    <motion.button
+                        onClick={() => setShowSubmissionModal(true)}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 0.99 }}
+                        className="w-full relative overflow-hidden rounded-2xl border border-visio-teal/20 bg-gradient-to-r from-visio-teal/5 via-purple-500/5 to-pink-500/5 hover:from-visio-teal/10 hover:via-purple-500/10 hover:to-pink-500/10 transition-all group"
+                    >
+                        <div className="flex items-center justify-between px-6 py-4">
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 rounded-xl bg-gradient-to-br from-visio-teal/20 to-purple-500/20 border border-visio-teal/20 group-hover:scale-110 transition-transform">
+                                    <Music size={22} className="text-visio-teal" />
+                                </div>
+                                <div className="text-left">
+                                    <h3 className="text-sm font-bold text-white group-hover:text-visio-teal transition-colors">
+                                        Wanna send your music to 100+ influential media pages?
+                                    </h3>
+                                    <p className="text-xs text-white/40 mt-0.5">
+                                        We&apos;ll pitch your track to curators, bloggers & DJs across South Africa — <span className="text-amber-400">only $10</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                                <span className="hidden sm:inline text-xs font-medium text-visio-teal bg-visio-teal/10 px-3 py-1.5 rounded-full border border-visio-teal/20">
+                                    Click Here
+                                </span>
+                                <ArrowRight size={18} className="text-visio-teal group-hover:translate-x-1 transition-transform" />
+                            </div>
+                        </div>
+                        {/* Animated gradient line */}
+                        <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-visio-teal via-purple-500 to-pink-500 opacity-50 group-hover:opacity-100 transition-opacity" />
+                    </motion.button>
+
                     {/* Results count */}
                     <div className="flex items-center justify-between">
                         <p className="text-xs text-white/30">{filtered.length} results</p>
@@ -496,7 +768,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                                             {hasSocials(contact) && (
                                                 <div className="flex items-center gap-1.5">
                                                     {contact.instagram && (
-                                                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center" title={contact.instagram}>
+                                                        <div className="w-5 h-5 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center" title={contact.realInstagram || contact.instagram}>
                                                             <Instagram size={10} className="text-white" />
                                                         </div>
                                                     )}
@@ -537,7 +809,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
                                                         {contact.instagram && (
                                                             <div className="flex items-center gap-2 text-xs text-pink-400/80">
                                                                 <Instagram size={12} className="shrink-0" />
-                                                                <span className="truncate">{contact.instagram}</span>
+                                                                <span className="truncate">{contact.realInstagram || contact.instagram}</span>
                                                             </div>
                                                         )}
                                                         {contact.tiktok && (
