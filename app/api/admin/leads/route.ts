@@ -11,36 +11,61 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: admin.error }, { status: admin.status });
         }
 
-        // 3. Fetch Lead Gen Intents
-        // we look for messages where the assistant responded with "Agents deployed"
-        // and then get the PREVIOUS message from the user in that session.
-        // OR simpler: Fetch all messages from 'user' role that contain "lead" or "find" 
-        // AND are followed by an "Agents deployed" response.
-
-        // Let's try a broader search first: 
-        // Get sessions where messages contain the specific agent response.
-
-        const { data: messages, error: msgError } = await supabaseAdmin
-            .from('messages')
-            .select('*, session:sessions(user_id)')
-            .eq('role', 'user')
-            .or('content.ilike.%lead%,content.ilike.%find%') // Basic keyword filter for now
+        // Read from lead_requests table (structured logging, replaces keyword matching)
+        const { data: requests, error: reqError } = await supabaseAdmin
+            .from('lead_requests')
+            .select('*')
             .order('created_at', { ascending: false })
-            .limit(50);
+            .limit(100);
 
-        if (msgError) throw msgError;
+        if (reqError) {
+            // Fallback to legacy keyword matching if lead_requests table doesn't exist yet
+            const { data: messages, error: msgError } = await supabaseAdmin
+                .from('messages')
+                .select('*, session:sessions(user_id)')
+                .eq('role', 'user')
+                .or('content.ilike.%lead%,content.ilike.%find%')
+                .order('created_at', { ascending: false })
+                .limit(50);
 
-        // Enhance with user details
-        const enhancedMessages = await Promise.all(messages.map(async (msg) => {
-            const { data: { user } } = await supabaseAdmin.auth.admin.getUserById(msg.session.user_id);
-            return {
-                ...msg,
-                user_email: user?.email,
-                user_name: user?.user_metadata?.full_name
-            };
-        }));
+            if (msgError) throw msgError;
 
-        return NextResponse.json({ leads: enhancedMessages });
+            const enhancedMessages = await Promise.all((messages || []).map(async (msg) => {
+                const { data: { user } } = await supabaseAdmin.auth.admin.getUserById(msg.session.user_id);
+                return {
+                    ...msg,
+                    user_email: user?.email,
+                    user_name: user?.user_metadata?.full_name
+                };
+            }));
+
+            return NextResponse.json({ leads: enhancedMessages });
+        }
+
+        // Enhance lead_requests with user details
+        const enhancedRequests = await Promise.all(
+            (requests || []).map(async (r) => {
+                const { data: { user } } = await supabaseAdmin.auth.admin.getUserById(r.user_id);
+                return {
+                    id: r.id,
+                    content: r.query,
+                    query: r.query,
+                    status: r.status,
+                    results_count: r.results_count,
+                    target_count: r.target_count,
+                    contact_types: r.contact_types,
+                    markets: r.markets,
+                    genre: r.genre,
+                    session_id: r.session_id,
+                    created_at: r.created_at,
+                    completed_at: r.completed_at,
+                    user_email: user?.email,
+                    user_name: user?.user_metadata?.full_name,
+                };
+            })
+        );
+
+        return NextResponse.json({ leads: enhancedRequests });
 
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });

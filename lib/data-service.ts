@@ -164,7 +164,7 @@ export async function saveSessions(sessions: Session[]): Promise<SaveSessionsRes
     // Batch upsert all messages across all sessions in one call
     const allMessages = sessions.flatMap(session =>
         session.messages
-            .filter(msg => !msg.isThinking)
+            .filter(msg => !msg.isThinking && !msg.isResearching)
             .filter(msg => isUuid(msg.id))
             .map(msg => ({
                 id: msg.id,
@@ -478,4 +478,60 @@ export async function renameFolder(id: string, name: string): Promise<boolean> {
 export async function deleteFolder(id: string): Promise<boolean> {
     const { error } = await supabase.from('campaign_folders').delete().eq('id', id);
     return !error;
+}
+
+// ============ LEAD REQUESTS (Admin Logging) ============
+
+export async function logLeadRequest(params: {
+    sessionId?: string;
+    query: string;
+    contactTypes?: string[];
+    markets?: string[];
+    genre?: string;
+    targetCount?: number;
+}): Promise<string | null> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const { data, error } = await supabase
+        .from('lead_requests')
+        .insert({
+            user_id: user.id,
+            session_id: params.sessionId || null,
+            query: params.query,
+            contact_types: params.contactTypes || [],
+            markets: params.markets || [],
+            genre: params.genre || '',
+            target_count: params.targetCount || 100,
+            status: 'in_progress',
+        })
+        .select('id')
+        .single();
+
+    if (error) {
+        console.error('Error logging lead request:', error);
+        return null;
+    }
+    return data?.id || null;
+}
+
+export async function updateLeadRequestStatus(
+    requestId: string,
+    status: 'in_progress' | 'completed' | 'failed',
+    resultsCount?: number
+): Promise<boolean> {
+    const { error } = await supabase
+        .from('lead_requests')
+        .update({
+            status,
+            results_count: resultsCount ?? 0,
+            completed_at: status === 'completed' || status === 'failed' ? new Date().toISOString() : undefined,
+        })
+        .eq('id', requestId);
+
+    if (error) {
+        console.error('Error updating lead request status:', error);
+        return false;
+    }
+    return true;
 }

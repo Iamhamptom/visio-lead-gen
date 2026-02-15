@@ -15,6 +15,7 @@ import { requireUser, isAdminUser } from '@/lib/api-auth';
 import { getUserCredits, deductCredits, getCreditCost } from '@/lib/credits';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 // Maps subscription tiers to allowed AI tiers
 const TIER_TO_AI_TIER: Record<string, string[]> = {
@@ -430,86 +431,111 @@ export async function POST(request: NextRequest) {
                         toolsUsed.push('find_leads');
                         const leadQuery = intentResult.searchQuery || userMessage;
                         const country = normalizeCountry(intentResult.filters?.country || artistContext?.location?.country);
-                        logs.push(`🎯 Lead Finder activated: "${leadQuery}"`);
+                        const targetCount = 100;
+                        logs.push(`🎯 Lead Finder activated: "${leadQuery}" (target: ${targetCount})`);
 
                         if (!webSearchEnabled) {
                             intent = { action: 'clarify', filters: {}, message: `I'd love to find those contacts for you, but web search is currently off. Toggle it on and I'll start searching!` };
                             break;
                         }
 
-                        // Search local DB first
+                        // Log lead request to admin dashboard
+                        let leadRequestId: string | null = null;
+                        try {
+                            const { data: reqData } = await supabaseAdmin
+                                .from('lead_requests')
+                                .insert({
+                                    user_id: auth.user.id,
+                                    query: leadQuery,
+                                    contact_types: intentResult.filters?.category ? [intentResult.filters.category] : [],
+                                    markets: [country],
+                                    genre: artistContext?.identity?.genre || '',
+                                    target_count: targetCount,
+                                    status: 'in_progress',
+                                })
+                                .select('id')
+                                .single();
+                            leadRequestId = reqData?.id || null;
+                            logs.push('📋 Lead request logged to admin');
+                        } catch (e) {
+                            console.error('Failed to log lead request:', e);
+                        }
+
+                        // Run full deep search pipeline for 100 contacts
+                        const pipelineStatus = getPipelineStatus();
+                        logs.push(`📡 Pipelines: Apollo=${pipelineStatus.apollo ? '🟢' : '⚪'} LinkedIn=${pipelineStatus.linkedin ? '🟢' : '⚪'} ZoomInfo=${pipelineStatus.zoominfo ? '🟢' : '⚪'}`);
+
+                        // Also search local DB
                         if (country === 'ZA') {
                             const dbLeads = getLeadsByCountry('ZA');
                             const filtered = filterLeads(dbLeads, { searchTerm: leadQuery, category: intentResult.filters?.category || undefined });
                             if (filtered.results.length > 0) {
-                                leads = mapLeadsToResponse(filtered.results.slice(0, 20), 'South Africa');
+                                leads = mapLeadsToResponse(filtered.results.slice(0, 50), 'South Africa');
                                 logs.push(`📂 Found ${leads.length} in local database`);
                             }
                         }
 
-                        // Web lead search
-                        const webLeads = await performLeadSearch(leadQuery, country);
-                        webResults = webLeads.map(r => ({ title: r.name, url: r.url, snippet: r.snippet, source: r.source, date: r.date }));
-                        logs.push(`🌐 Found ${webLeads.length} web results`);
+                        // Deep search across all pipelines
+                        const deepResult = await performDeepSearch(leadQuery, country);
+                        logs.push(...deepResult.logs);
 
-                        // Scrape top URLs for real contact data (emails, socials)
-                        const urlsToScrape = webLeads
-                            .filter(r => r.url && !r.url.includes('google.com') && !r.url.includes('youtube.com/watch'))
-                            .slice(0, 5)
-                            .map(r => r.url);
+                        const deepLeads: LeadResponse[] = deepResult.contacts.slice(0, targetCount).map((c, i) => ({
+                            id: -(i + 1),
+                            name: c.name,
+                            company: c.company,
+                            title: c.title,
+                            email: c.email,
+                            url: c.url || '',
+                            snippet: `${c.source} | Confidence: ${c.confidence}`,
+                            source: c.source,
+                            instagram: c.instagram,
+                            tiktok: c.tiktok,
+                            twitter: c.twitter,
+                            followers: c.followers,
+                            country
+                        }));
 
-                        if (urlsToScrape.length > 0) {
-                            logs.push(`🔍 Scraping ${urlsToScrape.length} pages for real contacts...`);
-                            const scrapeResult = await scrapeMultipleUrls(urlsToScrape, 3);
-                            if (scrapeResult.success) {
-                                const scrapedLeads: LeadResponse[] = scrapeResult.contacts
-                                    .filter(c => c.name || c.email)
-                                    .map((c, i) => ({
-                                        id: -(1000 + i),
-                                        name: c.name || c.email || 'Unknown',
-                                        company: c.company || '',
-                                        title: c.title || '',
-                                        email: c.email || '',
-                                        url: c.url || '',
-                                        snippet: c.source || 'Scraped Contact',
-                                        source: 'Verified (Scraped)',
-                                        instagram: c.instagram || '',
-                                        tiktok: c.tiktok || '',
-                                        twitter: c.twitter || '',
-                                        followers: '',
-                                        country,
-                                    }));
-                                if (scrapedLeads.length > 0) {
-                                    leads = [...leads, ...scrapedLeads];
-                                    logs.push(`✅ Scraped ${scrapedLeads.length} verified contacts + ${scrapeResult.emails.length} emails`);
-                                }
-                                // Add loose emails that weren't tied to a named contact
-                                const existingEmails = new Set(leads.map(l => l.email).filter(Boolean));
-                                for (const email of scrapeResult.emails) {
-                                    if (!existingEmails.has(email)) {
-                                        leads.push({
-                                            id: -(2000 + leads.length),
-                                            name: email.split('@')[0].replace(/[._-]/g, ' '),
-                                            email,
-                                            url: '',
-                                            snippet: 'Email found on page',
-                                            source: 'Verified (Scraped Email)',
-                                            country,
-                                        });
-                                        existingEmails.add(email);
-                                    }
-                                }
+                        // Merge DB leads + deep search leads, deduplicate by name
+                        const seenNames = new Set<string>();
+                        const mergedLeads: LeadResponse[] = [];
+                        for (const lead of [...leads, ...deepLeads]) {
+                            const key = (lead.name || '').toLowerCase().trim();
+                            if (key && !seenNames.has(key)) {
+                                seenNames.add(key);
+                                mergedLeads.push(lead);
+                            }
+                        }
+                        leads = mergedLeads.slice(0, targetCount);
+
+                        logs.push(`✅ Total: ${leads.length} unique contacts (${deepResult.total} found across all sources)`);
+
+                        // Update admin log with completion status
+                        if (leadRequestId) {
+                            try {
+                                await supabaseAdmin
+                                    .from('lead_requests')
+                                    .update({
+                                        status: 'completed',
+                                        results_count: leads.length,
+                                        completed_at: new Date().toISOString(),
+                                    })
+                                    .eq('id', leadRequestId);
+                            } catch (e) {
+                                console.error('Failed to update lead request status:', e);
                             }
                         }
 
-                        // Claude synthesizes results — pass scraped data so it doesn't fabricate
-                        const allResultsForSynthesis = [
-                            ...leads.map(l => ({ name: l.name, url: l.url, snippet: l.snippet, source: l.source, email: l.email, instagram: l.instagram, twitter: l.twitter, tiktok: l.tiktok })),
-                            ...webLeads.filter(w => !leads.some(l => l.url === w.url)),
-                        ];
+                        // Claude synthesizes results
+                        const allResultsForSynthesis = leads.map(l => ({ name: l.name, url: l.url, snippet: l.snippet, source: l.source, email: l.email, instagram: l.instagram, twitter: l.twitter, tiktok: l.tiktok }));
                         const enrichedMsg = await generateWithSearchResults(userMessage, allResultsForSynthesis, validatedTier as any, artistContext);
-                        intent = { action: 'find_leads', filters: { country }, message: enrichedMsg || `Found ${leads.length + webLeads.length} potential contacts.` };
-                        suggestedNextSteps = ['Draft a pitch to these contacts', 'Search for more in a different market', 'Create an email outreach sequence'];
+                        intent = {
+                            action: 'find_leads',
+                            filters: { country },
+                            message: enrichedMsg || `Found ${leads.length} contacts across all sources.`
+                        };
+                        // Store totalAvailable for canLoadMore calculation (not in ParsedIntent type)
+                        (intent as any)._totalAvailable = deepResult.total;
+                        suggestedNextSteps = ['Draft a pitch to these contacts', 'Load more contacts', 'Export to CSV', 'Search for more in a different market'];
                         break;
                     }
 
@@ -764,7 +790,7 @@ Format with markdown tables for top content, bullet points for insights. End wit
         // ─── CREDIT CHECK ─────────────────────────────
         // Map intent action to credit cost category
         const creditCategoryMap: Record<string, string> = {
-            'find_leads': 'lead_search',
+            'find_leads': 'deep_search',
             'search': 'web_search',
             'deep_search': 'deep_search',
             'smart_scrape': 'smart_scrape',
@@ -873,8 +899,10 @@ Format with markdown tables for top content, bullet points for insights. End wit
             suggestedNextSteps,
             logs,
             intent,
+            canLoadMore: ((intent as any)?._totalAvailable || 0) > leads.length,
             meta: {
                 total: leads.length + webResults.length,
+                totalAvailable: (intent as any)?._totalAvailable || leads.length,
                 source: leads.some(l => l.source?.includes('Lead Search'))
                     ? 'Lead Search'
                     : leads.some(l => l.source?.includes('Database'))
