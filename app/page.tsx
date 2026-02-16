@@ -472,6 +472,30 @@ export default function Home() {
     }
   }, [user, authLoading]);
 
+  // Keep plan state fresh when users return to the tab/window (important after admin-side plan changes).
+  useEffect(() => {
+    if (!user || authLoading) return;
+
+    const refreshSubscription = async () => {
+      const savedSub = await loadSubscription();
+      if (savedSub) {
+        setSubscription(savedSub);
+      }
+    };
+
+    const onFocusOrVisible = () => {
+      if (document.visibilityState === 'hidden') return;
+      refreshSubscription();
+    };
+
+    window.addEventListener('focus', onFocusOrVisible);
+    document.addEventListener('visibilitychange', onFocusOrVisible);
+    return () => {
+      window.removeEventListener('focus', onFocusOrVisible);
+      document.removeEventListener('visibilitychange', onFocusOrVisible);
+    };
+  }, [user, authLoading]);
+
   // Fetch credits from API
   useEffect(() => {
     if (!user || authLoading || !session?.access_token) return;

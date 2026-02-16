@@ -238,6 +238,22 @@ export async function POST(request: NextRequest) {
         let validatedTier = 'instant';
         if (!isAdminUser(auth.user)) {
             let userSubTier = 'artist';
+            const resolvePaidTier = async (client: any): Promise<string | null> => {
+                try {
+                    const { data } = await client
+                        .from('invoices')
+                        .select('tier')
+                        .eq('user_id', auth.user.id)
+                        .eq('status', 'paid')
+                        .order('paid_at', { ascending: false })
+                        .order('created_at', { ascending: false })
+                        .limit(1)
+                        .maybeSingle();
+                    return typeof data?.tier === 'string' ? data.tier : null;
+                } catch {
+                    return null;
+                }
+            };
 
             // Use user-scoped RLS reads (anon key + user access token or cookie session).
             // This avoids taking a hard dependency on SUPABASE_SERVICE_ROLE_KEY for the core chat flow.
@@ -251,6 +267,21 @@ export async function POST(request: NextRequest) {
                             .eq('id', auth.user.id)
                             .maybeSingle();
                         if (data?.subscription_tier) userSubTier = data.subscription_tier;
+
+                        if (userSubTier === 'artist') {
+                            const paidTier = await resolvePaidTier(supabaseRls);
+                            if (paidTier) {
+                                userSubTier = paidTier;
+                                await supabaseRls
+                                    .from('profiles')
+                                    .update({
+                                        subscription_tier: paidTier,
+                                        subscription_status: 'active',
+                                        updated_at: new Date().toISOString()
+                                    })
+                                    .eq('id', auth.user.id);
+                            }
+                        }
                     }
                 } else {
                     const supabase = await createSupabaseServerClient();
@@ -260,6 +291,21 @@ export async function POST(request: NextRequest) {
                         .eq('id', auth.user.id)
                         .maybeSingle();
                     if (data?.subscription_tier) userSubTier = data.subscription_tier as string;
+
+                    if (userSubTier === 'artist') {
+                        const paidTier = await resolvePaidTier(supabase);
+                        if (paidTier) {
+                            userSubTier = paidTier;
+                            await supabase
+                                .from('profiles')
+                                .update({
+                                    subscription_tier: paidTier,
+                                    subscription_status: 'active',
+                                    updated_at: new Date().toISOString()
+                                })
+                                .eq('id', auth.user.id);
+                        }
+                    }
                 }
             } catch {
                 // Fall back to default tier if the profile read fails for any reason.

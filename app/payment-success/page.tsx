@@ -14,7 +14,10 @@ function PaymentSuccessContent() {
     const tier = searchParams.get('tier') as PlanTier | null;
     const [countdown, setCountdown] = useState(5);
 
-    const checkoutId = searchParams.get('checkoutId');
+    const checkoutId =
+        searchParams.get('checkoutId') ||
+        searchParams.get('checkout_id') ||
+        searchParams.get('id');
 
     // Update Supabase with new subscription via secure server route
     useEffect(() => {

@@ -107,9 +107,39 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
 
+        // Ensure the profile row exists before subscription updates.
+        const { data: existingProfile } = await supabaseAdmin
+            .from('profiles')
+            .select('id')
+            .eq('id', targetUserId)
+            .maybeSingle();
+
+        if (!existingProfile) {
+            let emailForProfile = email || '';
+            if (!emailForProfile) {
+                const { data: authUserData } = await supabaseAdmin.auth.admin.getUserById(targetUserId);
+                emailForProfile = (authUserData?.user?.email || '').trim().toLowerCase();
+            }
+
+            if (emailForProfile) {
+                const { error: createProfileError } = await supabaseAdmin
+                    .from('profiles')
+                    .insert({
+                        id: targetUserId,
+                        email: emailForProfile,
+                        subscription_tier: 'artist',
+                        subscription_status: 'active',
+                        updated_at: new Date().toISOString()
+                    });
+                if (createProfileError) {
+                    console.error('[Yoco Webhook] Failed to create missing profile:', createProfileError);
+                }
+            }
+        }
+
         // Update subscription (source of truth)
         const periodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-        const { error: profileError } = await supabaseAdmin
+        const { data: updatedRows, error: profileError } = await supabaseAdmin
             .from('profiles')
             .update({
                 subscription_tier: tier,
@@ -117,11 +147,15 @@ export async function POST(req: NextRequest) {
                 subscription_period_end: periodEnd,
                 updated_at: new Date().toISOString()
             })
-            .eq('id', targetUserId);
+            .eq('id', targetUserId)
+            .select('id');
 
         if (profileError) {
             console.error('[Yoco Webhook] Profile update failed:', profileError);
             return NextResponse.json({ error: 'DB update failed' }, { status: 500 });
+        }
+        if (!updatedRows || updatedRows.length === 0) {
+            return NextResponse.json({ error: 'Profile row not found for payment user' }, { status: 404 });
         }
 
         // Create invoice record (best-effort; do not fail webhook if invoice insert fails).
@@ -130,22 +164,46 @@ export async function POST(req: NextRequest) {
         const amount = typeof payload?.amount === 'number' ? payload.amount : PLAN_PRICING[tier] || 0;
 
         if (amount > 0) {
-            const { error: invoiceError } = await supabaseAdmin
-                .from('invoices')
-                .insert({
-                    user_id: targetUserId,
-                    invoice_number: makeInvoiceNumber(),
-                    tier,
-                    amount,
-                    currency: 'ZAR',
-                    status: 'paid',
-                    yoco_checkout_id: checkoutId,
-                    yoco_payment_id: paymentId,
-                    paid_at: new Date().toISOString()
-                });
+            let exists = false;
+            if (checkoutId) {
+                const { data: byCheckout } = await supabaseAdmin
+                    .from('invoices')
+                    .select('id')
+                    .eq('user_id', targetUserId)
+                    .eq('yoco_checkout_id', checkoutId)
+                    .limit(1)
+                    .maybeSingle();
+                exists = !!byCheckout;
+            }
+            if (!exists && paymentId) {
+                const { data: byPayment } = await supabaseAdmin
+                    .from('invoices')
+                    .select('id')
+                    .eq('user_id', targetUserId)
+                    .eq('yoco_payment_id', paymentId)
+                    .limit(1)
+                    .maybeSingle();
+                exists = !!byPayment;
+            }
 
-            if (invoiceError) {
-                console.error('[Yoco Webhook] Invoice insert failed:', invoiceError);
+            if (!exists) {
+                const { error: invoiceError } = await supabaseAdmin
+                    .from('invoices')
+                    .insert({
+                        user_id: targetUserId,
+                        invoice_number: makeInvoiceNumber(),
+                        tier,
+                        amount,
+                        currency: 'ZAR',
+                        status: 'paid',
+                        yoco_checkout_id: checkoutId,
+                        yoco_payment_id: paymentId,
+                        paid_at: new Date().toISOString()
+                    });
+
+                if (invoiceError) {
+                    console.error('[Yoco Webhook] Invoice insert failed:', invoiceError);
+                }
             }
         }
 

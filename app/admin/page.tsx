@@ -26,6 +26,12 @@ interface AdminUser {
         subscription_tier: string;
         subscription_status: string;
     } | null;
+    billing?: {
+        paidInvoices: number;
+        totalPaid: number;
+        lastPaidAt: string | null;
+        lastPaidTier: string | null;
+    } | null;
 }
 
 interface LeadRequest {
@@ -48,6 +54,9 @@ interface PendingChange {
 }
 
 type AdminView = 'users' | 'approved' | 'analytics' | 'leads';
+
+const formatZar = (amountInCents: number) =>
+    `R${(amountInCents / 100).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export default function AdminPage() {
     const [view, setView] = useState<AdminView>('users');
@@ -276,10 +285,12 @@ export default function AdminPage() {
         }
     };
 
-    const filteredUsers = users.filter(u =>
-        u.email?.toLowerCase().includes(search.toLowerCase()) ||
-        u.user_metadata?.full_name?.toLowerCase().includes(search.toLowerCase())
-    );
+    const filteredUsers = users.filter((u) => {
+        const q = search.toLowerCase();
+        const email = (u.email || '').toLowerCase();
+        const name = (u.user_metadata?.full_name || '').toLowerCase();
+        return email.includes(q) || name.includes(q);
+    });
 
     // Computed analytics
     const analytics = useMemo(() => {
@@ -323,11 +334,15 @@ export default function AdminPage() {
             providerCounts[provider] = (providerCounts[provider] || 0) + 1;
         });
 
+        const totalPaidCents = users.reduce((sum, u) => sum + (u.billing?.totalPaid || 0), 0);
+        const payingCustomers = users.filter(u => (u.billing?.paidInvoices || 0) > 0).length;
+
         return {
             totalUsers, approvedUsers, pendingUsers, premiumUsers,
             signupsToday, signupsThisWeek, signupsThisMonth,
             activeToday, activeThisWeek,
             tierCounts, statusCounts, providerCounts,
+            totalPaidCents, payingCustomers,
             leadRequests: leads.length,
         };
     }, [users, leads]);
@@ -535,6 +550,7 @@ export default function AdminPage() {
                                             <th className="p-4">Plan</th>
                                             <th className="p-4">Sub Status</th>
                                             <th className="p-4">Last Active</th>
+                                            <th className="p-4">Paid History</th>
                                             <th className="p-4 text-center">Approval</th>
                                             <th className="p-4 text-right pr-6">Access</th>
                                         </tr>
@@ -546,6 +562,11 @@ export default function AdminPage() {
                                             const currentTier = user.subscription?.subscription_tier || 'artist';
                                             const currentStatus = user.subscription?.subscription_status || 'active';
                                             const hasPendingChange = pendingChanges.some(c => c.userId === user.id);
+                                            const totalPaid = user.billing?.totalPaid || 0;
+                                            const paidInvoices = user.billing?.paidInvoices || 0;
+                                            const lastPaidAt = user.billing?.lastPaidAt
+                                                ? new Date(user.billing.lastPaidAt).toLocaleDateString()
+                                                : null;
 
                                             return (
                                                 <tr key={user.id} className={`hover:bg-white/5 transition-colors ${hasPendingChange ? 'bg-yellow-500/5' : ''}`}>
@@ -583,6 +604,16 @@ export default function AdminPage() {
                                                         <span className="text-xs text-white/40">
                                                             {user.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleDateString() : 'Never'}
                                                         </span>
+                                                    </td>
+                                                    <td className="p-4">
+                                                        <div className={`text-xs font-medium ${paidInvoices > 0 ? 'text-visio-teal' : 'text-white/60'}`}>
+                                                            {formatZar(totalPaid)}
+                                                        </div>
+                                                        <div className="text-[11px] text-white/35">
+                                                            {paidInvoices > 0
+                                                                ? `${paidInvoices} paid • ${lastPaidAt || 'date n/a'}`
+                                                                : 'No paid invoices'}
+                                                        </div>
                                                     </td>
                                                     <td className="p-4 text-center">
                                                         <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${isApproved ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'}`}>

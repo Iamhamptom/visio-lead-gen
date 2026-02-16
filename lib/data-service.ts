@@ -317,24 +317,69 @@ export async function loadSubscription(): Promise<Subscription | null> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
 
-    // Only select columns that definitely exist
     const { data, error } = await supabase
         .from('profiles')
         .select('subscription_tier, subscription_status, subscription_period_end')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
     if (error || !data) {
         console.error('Error loading subscription:', error);
         return null;
     }
 
-    // Payment method info is currently not in profiles table
-    // If we need it, we should add the columns or fetch from Stripe/Payment Provider
+    let tier = (data.subscription_tier || 'artist') as SubscriptionTier;
+    let status = (data.subscription_status || 'active') as 'active' | 'trialing' | 'past_due' | 'canceled';
+    let currentPeriodEnd = data.subscription_period_end ? new Date(data.subscription_period_end).getTime() : 0;
+
+    // Auto-reconcile from paid invoice history so paid customers are never stuck on free tier.
+    try {
+        const { data: latestPaid } = await supabase
+            .from('invoices')
+            .select('tier, paid_at, created_at')
+            .eq('user_id', user.id)
+            .eq('status', 'paid')
+            .order('paid_at', { ascending: false })
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        const paidTier = latestPaid?.tier as SubscriptionTier | undefined;
+        const shouldPromoteFromInvoice =
+            !!paidTier &&
+            (tier === 'artist' || status === 'past_due' || status === 'canceled');
+
+        if (shouldPromoteFromInvoice && paidTier) {
+            tier = paidTier;
+            status = 'active';
+
+            const paidAtMs = latestPaid?.paid_at
+                ? new Date(latestPaid.paid_at).getTime()
+                : latestPaid?.created_at
+                    ? new Date(latestPaid.created_at).getTime()
+                    : Date.now();
+            const inferredPeriodEnd = paidAtMs + (30 * 24 * 60 * 60 * 1000);
+            currentPeriodEnd = currentPeriodEnd > 0 ? currentPeriodEnd : inferredPeriodEnd;
+
+            await supabase
+                .from('profiles')
+                .update({
+                    subscription_tier: tier,
+                    subscription_status: 'active',
+                    subscription_period_end: new Date(currentPeriodEnd).toISOString(),
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', user.id);
+        }
+    } catch (reconcileError) {
+        // Best effort. Never block app load on invoice-history reconciliation.
+        console.warn('Subscription invoice reconciliation skipped:', reconcileError);
+    }
+
     return {
-        tier: data.subscription_tier as SubscriptionTier,
-        status: data.subscription_status as 'active' | 'trialing' | 'past_due' | 'canceled',
-        currentPeriodEnd: data.subscription_period_end ? new Date(data.subscription_period_end).getTime() : 0,
+        tier,
+        status,
+        currentPeriodEnd,
         interval: 'month',
         paymentMethod: undefined
     };

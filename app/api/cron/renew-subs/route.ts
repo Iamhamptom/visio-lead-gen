@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 import { createSupabaseAdminClient } from '@/lib/supabase/server';
 import { chargeYocoToken, PLAN_PRICING, PlanTier } from '@/lib/yoco';
 
@@ -15,6 +16,12 @@ function verifyCronRequest(request: NextRequest) {
         return false;
     }
     return true;
+}
+
+function makeInvoiceNumber() {
+    const year = new Date().getFullYear();
+    const suffix = crypto.randomUUID ? crypto.randomUUID().split('-')[0] : crypto.randomBytes(6).toString('hex');
+    return `INV-${year}-${suffix}`;
 }
 
 export async function GET(request: NextRequest) {
@@ -60,7 +67,7 @@ export async function GET(request: NextRequest) {
 
             try {
                 // Attempt charge
-                await chargeYocoToken(profile.payment_token, amount);
+                const chargeResult = await chargeYocoToken(profile.payment_token, amount);
 
                 // Calculate new period end (1 month from OLD end date, or from NOW if it lapsed long ago?)
                 // Usually from OLD end to keep billing cycle anchors.
@@ -77,8 +84,44 @@ export async function GET(request: NextRequest) {
                     })
                     .eq('id', profile.id);
 
-                // Log Transaction (Optional but good practice)
-                // await createTransaction(...) 
+                // Create paid invoice entry for recurring renewals.
+                const renewalPaymentId =
+                    typeof chargeResult?.id === 'string'
+                        ? chargeResult.id
+                        : typeof chargeResult?.paymentId === 'string'
+                            ? chargeResult.paymentId
+                            : null;
+
+                let alreadyRecorded = false;
+                if (renewalPaymentId) {
+                    const { data: existingRenewalInvoice } = await supabase
+                        .from('invoices')
+                        .select('id')
+                        .eq('user_id', profile.id)
+                        .eq('yoco_payment_id', renewalPaymentId)
+                        .limit(1)
+                        .maybeSingle();
+                    alreadyRecorded = !!existingRenewalInvoice;
+                }
+
+                if (!alreadyRecorded) {
+                    const { error: invoiceError } = await supabase
+                        .from('invoices')
+                        .insert({
+                            user_id: profile.id,
+                            invoice_number: makeInvoiceNumber(),
+                            tier,
+                            amount,
+                            currency: 'ZAR',
+                            status: 'paid',
+                            yoco_checkout_id: null,
+                            yoco_payment_id: renewalPaymentId,
+                            paid_at: new Date().toISOString()
+                        });
+                    if (invoiceError) {
+                        console.error(`Renewal invoice insert failed for user ${profile.id}:`, invoiceError);
+                    }
+                }
 
                 results.success++;
 

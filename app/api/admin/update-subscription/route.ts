@@ -33,6 +33,51 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: `Invalid status: ${String(status)}` }, { status: 400 });
         }
 
+        // Ensure profile row exists (admin users can exist in auth without a profiles row).
+        const { data: existingProfile, error: existingProfileError } = await supabaseAdmin
+            .from('profiles')
+            .select('id')
+            .eq('id', userId)
+            .maybeSingle();
+
+        if (existingProfileError) {
+            console.error('Profile lookup error:', existingProfileError);
+            return NextResponse.json({ error: 'Failed to verify profile' }, { status: 500 });
+        }
+
+        let createdProfile = false;
+        if (!existingProfile) {
+            const { data: authUserData, error: authUserError } = await supabaseAdmin.auth.admin.getUserById(userId);
+            if (authUserError || !authUserData?.user) {
+                return NextResponse.json({ error: 'User not found in auth records' }, { status: 404 });
+            }
+
+            const authEmail = (authUserData.user.email || '').trim().toLowerCase() || `${userId}@no-email.local`;
+            const authName =
+                typeof authUserData.user.user_metadata?.name === 'string'
+                    ? authUserData.user.user_metadata.name
+                    : typeof authUserData.user.user_metadata?.full_name === 'string'
+                        ? authUserData.user.user_metadata.full_name
+                        : null;
+
+            const { error: createProfileError } = await supabaseAdmin
+                .from('profiles')
+                .insert({
+                    id: userId,
+                    email: authEmail,
+                    name: authName,
+                    subscription_tier: 'artist',
+                    subscription_status: 'active',
+                    updated_at: new Date().toISOString()
+                });
+
+            if (createProfileError) {
+                console.error('Profile create error during subscription update:', createProfileError);
+                return NextResponse.json({ error: 'Failed to create profile for user' }, { status: 500 });
+            }
+            createdProfile = true;
+        }
+
         // 4. Update Profile with credits allocation for the new tier
         const allocation = PLAN_CREDITS[tier as SubscriptionTier];
         const newCredits = allocation === Infinity ? 99999 : allocation;
@@ -51,17 +96,21 @@ export async function POST(req: Request) {
             updates.subscription_period_end = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
         }
 
-        const { error: updateError } = await supabaseAdmin
+        const { data: updatedRows, error: updateError } = await supabaseAdmin
             .from('profiles')
             .update(updates)
-            .eq('id', userId);
+            .eq('id', userId)
+            .select('id');
 
         if (updateError) {
             console.error('Update subscription error:', updateError);
             return NextResponse.json({ error: 'Failed to update subscription' }, { status: 500 });
         }
+        if (!updatedRows || updatedRows.length === 0) {
+            return NextResponse.json({ error: 'No profile row was updated' }, { status: 500 });
+        }
 
-        return NextResponse.json({ success: true, updates });
+        return NextResponse.json({ success: true, updates, createdProfile });
 
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });

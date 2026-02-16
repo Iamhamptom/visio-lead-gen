@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getYocoCheckout, PlanTier } from '@/lib/yoco';
+import crypto from 'crypto';
+import { getYocoCheckout, PlanTier, PLAN_PRICING } from '@/lib/yoco';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { requireUser } from '@/lib/api-auth';
+
+function makeInvoiceNumber() {
+    const year = new Date().getFullYear();
+    const suffix = crypto.randomUUID ? crypto.randomUUID().split('-')[0] : crypto.randomBytes(6).toString('hex');
+    return `INV-${year}-${suffix}`;
+}
 
 export async function POST(request: NextRequest) {
     try {
@@ -48,19 +55,99 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // 3. Update Profile (Bypassing RLS)
-        const { error: updateError } = await supabaseAdmin
+        const periodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        const normalizedEmail = (auth.user.email || '').trim().toLowerCase();
+        const nameFromMeta =
+            typeof auth.user.user_metadata?.name === 'string'
+                ? auth.user.user_metadata.name
+                : typeof auth.user.user_metadata?.full_name === 'string'
+                    ? auth.user.user_metadata.full_name
+                    : null;
+
+        // 3. Upsert profile so paid users are always assigned to the paid tier.
+        const { data: existingProfile, error: profileLookupError } = await supabaseAdmin
             .from('profiles')
-            .update({
-                subscription_tier: tier,
-                subscription_status: 'active',
-                subscription_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-            })
-            .eq('id', auth.user.id);
+            .select('id')
+            .eq('id', auth.user.id)
+            .maybeSingle();
 
-        if (updateError) throw updateError;
+        if (profileLookupError) throw profileLookupError;
 
-        return NextResponse.json({ success: true, tier });
+        if (!existingProfile) {
+            const { error: insertProfileError } = await supabaseAdmin
+                .from('profiles')
+                .insert({
+                    id: auth.user.id,
+                    email: normalizedEmail,
+                    name: nameFromMeta,
+                    subscription_tier: tier,
+                    subscription_status: 'active',
+                    subscription_period_end: periodEnd,
+                    updated_at: new Date().toISOString()
+                });
+            if (insertProfileError) throw insertProfileError;
+        } else {
+            const { error: updateError } = await supabaseAdmin
+                .from('profiles')
+                .update({
+                    subscription_tier: tier,
+                    subscription_status: 'active',
+                    subscription_period_end: periodEnd,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', auth.user.id);
+
+            if (updateError) throw updateError;
+        }
+
+        // 4. Create a paid invoice if this checkout hasn't been recorded yet.
+        let invoiceCreated = false;
+        const paymentId = typeof checkout.paymentId === 'string' ? checkout.paymentId : null;
+
+        const { data: byCheckout } = await supabaseAdmin
+            .from('invoices')
+            .select('id')
+            .eq('user_id', auth.user.id)
+            .eq('yoco_checkout_id', checkoutId)
+            .limit(1)
+            .maybeSingle();
+
+        let alreadyExists = !!byCheckout;
+        if (!alreadyExists && paymentId) {
+            const { data: byPayment } = await supabaseAdmin
+                .from('invoices')
+                .select('id')
+                .eq('user_id', auth.user.id)
+                .eq('yoco_payment_id', paymentId)
+                .limit(1)
+                .maybeSingle();
+            alreadyExists = !!byPayment;
+        }
+
+        if (!alreadyExists) {
+            const amount = typeof checkout.amount === 'number' ? checkout.amount : PLAN_PRICING[tier] || 0;
+            const { error: invoiceError } = await supabaseAdmin
+                .from('invoices')
+                .insert({
+                    user_id: auth.user.id,
+                    invoice_number: makeInvoiceNumber(),
+                    tier,
+                    amount,
+                    currency: 'ZAR',
+                    status: 'paid',
+                    yoco_checkout_id: checkoutId,
+                    yoco_payment_id: paymentId,
+                    paid_at: new Date().toISOString()
+                });
+
+            if (!invoiceError) {
+                invoiceCreated = true;
+            } else {
+                console.error('Invoice create failed in confirm route:', invoiceError);
+            }
+        }
+
+        return NextResponse.json({ success: true, tier, invoiceCreated });
 
     } catch (error: any) {
         console.error('Payment confirm error:', error);
