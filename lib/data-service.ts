@@ -317,25 +317,26 @@ export async function loadSubscription(): Promise<Subscription | null> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
 
+    // Only select columns that definitely exist
     const { data, error } = await supabase
         .from('profiles')
-        .select('subscription_tier, subscription_status, subscription_period_end, payment_token, card_brand, card_last4, card_expiry')
+        .select('subscription_tier, subscription_status, subscription_period_end')
         .eq('id', user.id)
         .single();
 
-    if (error || !data) return null;
+    if (error || !data) {
+        console.error('Error loading subscription:', error);
+        return null;
+    }
 
+    // Payment method info is currently not in profiles table
+    // If we need it, we should add the columns or fetch from Stripe/Payment Provider
     return {
         tier: data.subscription_tier as SubscriptionTier,
         status: data.subscription_status as 'active' | 'trialing' | 'past_due' | 'canceled',
         currentPeriodEnd: data.subscription_period_end ? new Date(data.subscription_period_end).getTime() : 0,
         interval: 'month',
-        paymentMethod: data.payment_token ? {
-            token: data.payment_token,
-            brand: data.card_brand || 'Card',
-            last4: data.card_last4 || '****',
-            expiry: data.card_expiry || ''
-        } : undefined
+        paymentMethod: undefined
     };
 }
 
