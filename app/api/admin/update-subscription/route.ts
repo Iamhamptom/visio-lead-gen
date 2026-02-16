@@ -1,10 +1,18 @@
 import { NextResponse } from 'next/server';
+import crypto from 'crypto';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/api-auth';
 import { PLAN_CREDITS } from '@/lib/credits';
 import { SubscriptionTier } from '@/app/types';
+import { PLAN_PRICING, PlanTier } from '@/lib/yoco';
 
 export const dynamic = 'force-dynamic';
+
+function makeInvoiceNumber() {
+    const year = new Date().getFullYear();
+    const suffix = crypto.randomUUID ? crypto.randomUUID().split('-')[0] : crypto.randomBytes(6).toString('hex');
+    return `INV-${year}-${suffix}`;
+}
 
 export async function POST(req: Request) {
     try {
@@ -110,7 +118,50 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'No profile row was updated' }, { status: 500 });
         }
 
-        return NextResponse.json({ success: true, updates, createdProfile });
+        // Optionally record manual billing history so admin-granted paid access is traceable.
+        const effectiveStatus = (status || 'active') as string;
+        const isPaidTier = tier !== 'artist' && tier !== 'enterprise';
+        let manualInvoiceCreated = false;
+
+        if (isPaidTier && effectiveStatus === 'active') {
+            const planAmount = PLAN_PRICING[tier as PlanTier] || 0;
+            if (planAmount > 0) {
+                const recentCutoff = new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString();
+                const { data: recentMatchingInvoice } = await supabaseAdmin
+                    .from('invoices')
+                    .select('id')
+                    .eq('user_id', userId)
+                    .eq('status', 'paid')
+                    .eq('tier', tier)
+                    .gte('created_at', recentCutoff)
+                    .limit(1)
+                    .maybeSingle();
+
+                if (!recentMatchingInvoice) {
+                    const { error: invoiceError } = await supabaseAdmin
+                        .from('invoices')
+                        .insert({
+                            user_id: userId,
+                            invoice_number: makeInvoiceNumber(),
+                            tier,
+                            amount: planAmount,
+                            currency: 'ZAR',
+                            status: 'paid',
+                            yoco_checkout_id: `manual-admin-${Date.now()}`,
+                            yoco_payment_id: null,
+                            paid_at: new Date().toISOString()
+                        });
+
+                    if (!invoiceError) {
+                        manualInvoiceCreated = true;
+                    } else {
+                        console.error('Manual invoice insert failed during admin plan update:', invoiceError);
+                    }
+                }
+            }
+        }
+
+        return NextResponse.json({ success: true, updates, createdProfile, manualInvoiceCreated });
 
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
