@@ -7,6 +7,7 @@ import { getContextPack } from '@/lib/god-mode';
 import { searchKnowledgeBase } from '@/lib/rag';
 import { getToolInstruction, TOOL_REGISTRY } from '@/lib/tools';
 import { performDeepSearch, searchApollo, searchLinkedInPipeline, getPipelineStatus, PipelineContact } from '@/lib/pipelines';
+import { performCascadingSearch, PipelineBrief } from '@/lib/lead-pipeline';
 import { scrapeContactsFromUrl, scrapeMultipleUrls } from '@/lib/scraper';
 import { searchAllSocials, flattenSocialResults } from '@/lib/social-search';
 import { performSmartScrape, formatScrapeForContext } from '@/lib/smart-scrape';
@@ -216,6 +217,8 @@ export async function POST(request: NextRequest) {
         let toolsUsed: string[] = [];
         let suggestedNextSteps: string[] = [];
         let intent: ParsedIntent;
+        let leadRequestId: string | null = null;
+        let leadMeta: { contactTypes: string[]; genre: string; markets: string[] } | null = null;
 
         // Require auth for all agent calls to prevent paid-key abuse.
         const auth = await requireUser(request);
@@ -486,7 +489,6 @@ export async function POST(request: NextRequest) {
                         }
 
                         // Log lead request to admin dashboard
-                        let leadRequestId: string | null = null;
                         try {
                             const { data: reqData } = await supabaseAdmin
                                 .from('lead_requests')
@@ -507,25 +509,31 @@ export async function POST(request: NextRequest) {
                             console.error('Failed to log lead request:', e);
                         }
 
-                        // Run full deep search pipeline for 100 contacts
+                        // Build contact types from intent, with sensible defaults
+                        const leadContactTypes = intentResult.filters?.category
+                            ? [intentResult.filters.category]
+                            : ['curators', 'journalists', 'bloggers', 'DJs', 'A&R'];
+                        const leadGenre = artistContext?.identity?.genre || '';
+                        const leadMarkets = [country];
+                        leadMeta = { contactTypes: leadContactTypes, genre: leadGenre, markets: leadMarkets };
+
                         const pipelineStatus = getPipelineStatus();
                         logs.push(`📡 Pipelines: Apollo=${pipelineStatus.apollo ? '🟢' : '⚪'} LinkedIn=${pipelineStatus.linkedin ? '🟢' : '⚪'} ZoomInfo=${pipelineStatus.zoominfo ? '🟢' : '⚪'}`);
 
-                        // Also search local DB
-                        if (country === 'ZA') {
-                            const dbLeads = getLeadsByCountry('ZA');
-                            const filtered = filterLeads(dbLeads, { searchTerm: leadQuery, category: intentResult.filters?.category || undefined });
-                            if (filtered.results.length > 0) {
-                                leads = mapLeadsToResponse(filtered.results.slice(0, 50), 'South Africa');
-                                logs.push(`📂 Found ${leads.length} in local database`);
-                            }
-                        }
+                        // Use cascading search (Tier 1 quick pass for fast initial results)
+                        const brief: PipelineBrief = {
+                            contactTypes: leadContactTypes,
+                            markets: leadMarkets,
+                            genre: leadGenre,
+                            query: leadQuery,
+                            targetCount,
+                            searchDepth: 'quick',
+                        };
 
-                        // Deep search across all pipelines
-                        const deepResult = await performDeepSearch(leadQuery, country);
-                        logs.push(...deepResult.logs);
+                        const cascadeResult = await performCascadingSearch(brief);
+                        logs.push(...cascadeResult.logs);
 
-                        const deepLeads: LeadResponse[] = deepResult.contacts.slice(0, targetCount).map((c, i) => ({
+                        leads = cascadeResult.contacts.slice(0, targetCount).map((c, i) => ({
                             id: -(i + 1),
                             name: c.name,
                             company: c.company,
@@ -541,21 +549,9 @@ export async function POST(request: NextRequest) {
                             country
                         }));
 
-                        // Merge DB leads + deep search leads, deduplicate by name
-                        const seenNames = new Set<string>();
-                        const mergedLeads: LeadResponse[] = [];
-                        for (const lead of [...leads, ...deepLeads]) {
-                            const key = (lead.name || '').toLowerCase().trim();
-                            if (key && !seenNames.has(key)) {
-                                seenNames.add(key);
-                                mergedLeads.push(lead);
-                            }
-                        }
-                        leads = mergedLeads.slice(0, targetCount);
+                        logs.push(`✅ Total: ${leads.length} unique contacts (${cascadeResult.total} found across all sources)`);
 
-                        logs.push(`✅ Total: ${leads.length} unique contacts (${deepResult.total} found across all sources)`);
-
-                        // Update admin log with completion status
+                        // Update admin log with completion status + persist results
                         if (leadRequestId) {
                             try {
                                 await supabaseAdmin
@@ -563,6 +559,7 @@ export async function POST(request: NextRequest) {
                                     .update({
                                         status: 'completed',
                                         results_count: leads.length,
+                                        results: leads,
                                         completed_at: new Date().toISOString(),
                                     })
                                     .eq('id', leadRequestId);
@@ -580,7 +577,7 @@ export async function POST(request: NextRequest) {
                             message: enrichedMsg || `Found ${leads.length} contacts across all sources.`
                         };
                         // Store totalAvailable for canLoadMore calculation (not in ParsedIntent type)
-                        (intent as any)._totalAvailable = deepResult.total;
+                        (intent as any)._totalAvailable = cascadeResult.total;
                         suggestedNextSteps = ['Draft a pitch to these contacts', 'Load more contacts', 'Export to CSV', 'Search for more in a different market'];
                         break;
                     }
@@ -946,6 +943,8 @@ Format with markdown tables for top content, bullet points for insights. End wit
             logs,
             intent,
             canLoadMore: ((intent as any)?._totalAvailable || 0) > leads.length,
+            leadRequestId,
+            leadMeta,
             meta: {
                 total: leads.length + webResults.length,
                 totalAvailable: (intent as any)?._totalAvailable || leads.length,

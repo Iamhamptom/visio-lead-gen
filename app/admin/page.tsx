@@ -38,7 +38,12 @@ interface LeadRequest {
     id: string;
     content: string;
     created_at: string;
-    session: {
+    status?: string;
+    results_count?: number;
+    results?: any[];
+    user_id?: string;
+    session_id?: string;
+    session?: {
         user_id: string;
     };
     user_email?: string;
@@ -73,6 +78,8 @@ export default function AdminPage() {
     const [pendingChanges, setPendingChanges] = useState<PendingChange[]>([]);
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [toast, setToast] = useState<string | null>(null);
+    const [processingLeads, setProcessingLeads] = useState<Set<string>>(new Set());
+    const [sendingLeads, setSendingLeads] = useState<Set<string>>(new Set());
 
     // Show toast briefly
     const showToast = (msg: string) => {
@@ -169,6 +176,13 @@ export default function AdminPage() {
         fetchData();
     }, []);
 
+    // Auto-refresh leads tab every 15 seconds
+    useEffect(() => {
+        if (view !== 'leads') return;
+        const interval = setInterval(() => fetchData(), 15000);
+        return () => clearInterval(interval);
+    }, [view]);
+
     // Queue a change for batch saving
     const queueChange = (change: PendingChange) => {
         setPendingChanges(prev => {
@@ -223,6 +237,86 @@ export default function AdminPage() {
             value: newStatus,
             label: `${user?.email || userId}: Status -> ${newStatus}`
         });
+    };
+
+    // ── Lead Actions ────────────────────────────────────────
+    const handleArchiveLead = async (leadId: string) => {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        if (!token) return;
+
+        try {
+            await fetch('/api/admin/leads', {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ leadRequestId: leadId, action: 'archive' }),
+            });
+            setLeads(prev => prev.filter(l => l.id !== leadId));
+            showToast('Lead request archived');
+        } catch {
+            showToast('Failed to archive lead');
+        }
+    };
+
+    const handleProcessLead = async (leadId: string) => {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        if (!token) return;
+
+        setProcessingLeads(prev => new Set(prev).add(leadId));
+
+        try {
+            const res = await fetch('/api/admin/leads', {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ leadRequestId: leadId, action: 'process' }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast(`Lead processed: ${data.resultsCount} contacts found`);
+                fetchData();
+            } else {
+                showToast(`Error: ${data.error}`);
+            }
+        } catch {
+            showToast('Failed to process lead');
+        } finally {
+            setProcessingLeads(prev => {
+                const next = new Set(prev);
+                next.delete(leadId);
+                return next;
+            });
+        }
+    };
+
+    const handleSendToUser = async (leadId: string) => {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        if (!token) return;
+
+        setSendingLeads(prev => new Set(prev).add(leadId));
+
+        try {
+            const res = await fetch('/api/admin/leads', {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ leadRequestId: leadId, action: 'send' }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                showToast('Leads sent to user! They will see them on next load.');
+            } else {
+                showToast(`Error: ${data.error}`);
+            }
+        } catch {
+            showToast('Failed to send leads to user');
+        } finally {
+            setSendingLeads(prev => {
+                const next = new Set(prev);
+                next.delete(leadId);
+                return next;
+            });
+        }
     };
 
     // Save all pending changes
@@ -862,7 +956,7 @@ export default function AdminPage() {
                     {view === 'leads' && (
                         <motion.div key="leads" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-4">
                             <div className="grid grid-cols-1 gap-4">
-                                {leads.map((lead) => (
+                                {leads.filter(l => l.status !== 'archived').map((lead) => (
                                     <div key={lead.id} className="bg-white/5 border border-white/10 p-6 rounded-2xl hover:border-visio-teal/30 transition-colors group">
                                         <div className="flex justify-between items-start mb-4">
                                             <div className="flex items-center gap-3">
@@ -874,21 +968,56 @@ export default function AdminPage() {
                                                     <p className="text-xs text-white/50">{lead.user_email}</p>
                                                 </div>
                                             </div>
-                                            <span className="text-xs text-white/30 font-mono">
-                                                {new Date(lead.created_at).toLocaleString()}
-                                            </span>
+                                            <div className="flex items-center gap-3">
+                                                {lead.status && (
+                                                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                                                        lead.status === 'completed' ? 'bg-green-500/20 text-green-400' :
+                                                        lead.status === 'in_progress' || lead.status === 'admin_processing' ? 'bg-yellow-500/20 text-yellow-400' :
+                                                        lead.status === 'failed' ? 'bg-red-500/20 text-red-400' :
+                                                        'bg-white/10 text-white/50'
+                                                    }`}>
+                                                        {lead.status === 'admin_processing' ? 'Processing...' : lead.status?.replace('_', ' ')}
+                                                        {lead.results_count ? ` (${lead.results_count})` : ''}
+                                                    </span>
+                                                )}
+                                                <span className="text-xs text-white/30 font-mono">
+                                                    {new Date(lead.created_at).toLocaleString()}
+                                                </span>
+                                            </div>
                                         </div>
                                         <div className="bg-black/30 p-4 rounded-xl border border-white/5 relative">
                                             <MessageSquare size={16} className="absolute top-4 right-4 text-visio-teal opacity-50" />
                                             <p className="text-white/80 italic">&quot;{lead.content}&quot;</p>
                                         </div>
                                         <div className="mt-4 flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button className="text-xs text-white/40 hover:text-white px-3 py-2">Archive</button>
-                                            <button className="bg-visio-teal text-black text-xs font-bold px-4 py-2 rounded-lg hover:brightness-110">Process Lead</button>
+                                            <button
+                                                onClick={() => handleArchiveLead(lead.id)}
+                                                className="text-xs text-white/40 hover:text-white px-3 py-2"
+                                            >
+                                                Archive
+                                            </button>
+                                            {lead.status === 'completed' && (lead.results_count || 0) > 0 && (
+                                                <button
+                                                    onClick={() => handleSendToUser(lead.id)}
+                                                    disabled={sendingLeads.has(lead.id)}
+                                                    className="bg-purple-500 text-white text-xs font-bold px-4 py-2 rounded-lg hover:brightness-110 disabled:opacity-50"
+                                                >
+                                                    {sendingLeads.has(lead.id) ? 'Sending...' : 'Send to User'}
+                                                </button>
+                                            )}
+                                            <button
+                                                onClick={() => handleProcessLead(lead.id)}
+                                                disabled={processingLeads.has(lead.id) || lead.status === 'admin_processing'}
+                                                className="bg-visio-teal text-black text-xs font-bold px-4 py-2 rounded-lg hover:brightness-110 disabled:opacity-50"
+                                            >
+                                                {processingLeads.has(lead.id) || lead.status === 'admin_processing' ? (
+                                                    <span className="flex items-center gap-2"><Loader2 size={12} className="animate-spin" /> Processing...</span>
+                                                ) : 'Process Lead'}
+                                            </button>
                                         </div>
                                     </div>
                                 ))}
-                                {leads.length === 0 && (
+                                {leads.filter(l => l.status !== 'archived').length === 0 && (
                                     <div className="p-12 text-center border-2 border-dashed border-white/10 rounded-3xl">
                                         <p className="text-white/40 mb-2">No active lead requests.</p>
                                         <p className="text-xs text-white/20">Requests will appear here when users ask for leads.</p>

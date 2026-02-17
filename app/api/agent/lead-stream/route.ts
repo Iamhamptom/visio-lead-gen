@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { requireUser } from '@/lib/api-auth';
 import { performCascadingSearch } from '@/lib/lead-pipeline';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -23,6 +24,7 @@ export async function GET(request: NextRequest) {
     const genre = searchParams.get('genre') ?? '';
     const searchDepth = (searchParams.get('searchDepth') ?? 'deep') as 'quick' | 'deep' | 'full';
     const targetCount = parseInt(searchParams.get('targetCount') ?? '50', 10);
+    const leadRequestId = searchParams.get('leadRequestId') || null;
 
     if (contactTypes.length === 0 || markets.length === 0) {
         return new Response(
@@ -63,6 +65,23 @@ export async function GET(request: NextRequest) {
                         logs: progress.logs ?? [],
                     });
                 });
+
+                // Persist results to lead_requests if we have a request ID
+                if (leadRequestId && result.contacts.length > 0) {
+                    try {
+                        await supabaseAdmin
+                            .from('lead_requests')
+                            .update({
+                                status: 'completed',
+                                results_count: result.contacts.length,
+                                results: result.contacts,
+                                completed_at: new Date().toISOString(),
+                            })
+                            .eq('id', leadRequestId);
+                    } catch (e) {
+                        console.error('Failed to persist SSE lead results:', e);
+                    }
+                }
 
                 // ── Final complete event ─────────────────────────────────
                 sendEvent({
