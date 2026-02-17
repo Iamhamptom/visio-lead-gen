@@ -100,6 +100,16 @@ export async function POST(request: NextRequest) {
             if (updateError) throw updateError;
         }
 
+        // 3b. Mark user as approved so the UI restriction gate is lifted for paid users.
+        try {
+            await supabaseAdmin.auth.admin.updateUserById(auth.user.id, {
+                app_metadata: { approved: true }
+            });
+        } catch (approveErr) {
+            console.error('Failed to set approved flag after payment:', approveErr);
+            // Non-fatal: the client-side isRestricted check also considers paid tier
+        }
+
         // 4. Create a paid invoice if this checkout hasn't been recorded yet.
         let invoiceCreated = false;
         const paymentId = typeof checkout.paymentId === 'string' ? checkout.paymentId : null;
