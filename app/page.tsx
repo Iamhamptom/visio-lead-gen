@@ -977,6 +977,11 @@ export default function Home() {
       const isLeadGen = data.toolsUsed?.includes('find_leads') && data.leads?.length > 0;
 
       if (isLeadGen) {
+        // Build dynamic search metadata from agent response
+        const parsedContactTypes = data.leadMeta?.contactTypes?.join(',') || 'curators,journalists,bloggers,DJs,A&R';
+        const parsedMarkets = data.leadMeta?.markets?.join(',') || data.intent?.filters?.country || 'ZA';
+        const parsedGenre = data.leadMeta?.genre || artistProfile?.genre || '';
+
         // Show "Research has started" with green ball + initial results
         const researchMessages = sessionWithThinking.messages.map(msg => {
           if (msg.id === tempId) {
@@ -991,6 +996,10 @@ export default function Home() {
               canLoadMore: data.canLoadMore || false,
               leadSearchQuery: text,
               leadSearchOffset: data.leads?.length || 0,
+              leadContactTypes: parsedContactTypes,
+              leadMarkets: parsedMarkets,
+              leadGenre: parsedGenre,
+              leadRequestId: data.leadRequestId || undefined,
             };
           }
           return msg;
@@ -1005,12 +1014,15 @@ export default function Home() {
         setLeadGenProgress({ tier: 'Tier 1', status: 'searching', found: data.leads?.length || 0, target: 100, currentSource: 'Initializing full pipeline...', logs: [] });
 
         const searchParams = new URLSearchParams({
-          contactTypes: 'curators,journalists,bloggers,DJs,A&R',
-          markets: data.intent?.filters?.country || 'ZA',
-          genre: artistProfile?.genre || '',
+          contactTypes: parsedContactTypes,
+          markets: parsedMarkets,
+          genre: parsedGenre,
           searchDepth: 'full',
           targetCount: '100',
         });
+        if (data.leadRequestId) {
+          searchParams.set('leadRequestId', data.leadRequestId);
+        }
 
         try {
           const accessToken = session?.access_token;
@@ -1216,13 +1228,19 @@ export default function Home() {
     setIsGeneratingLeads(true);
     setLeadGenProgress({ tier: 'Tier 1', status: 'searching', found: offset, target: offset + 100, currentSource: 'Loading more contacts...', logs: [] });
 
+    // Look up the source message for stored search metadata
+    const sourceMsg = sessions.flatMap(s => s.messages).find(m => m.id === messageId);
+
     const searchParams = new URLSearchParams({
-      contactTypes: 'curators,journalists,bloggers,DJs,A&R',
-      markets: artistProfile?.location?.country || 'ZA',
-      genre: artistProfile?.genre || '',
+      contactTypes: sourceMsg?.leadContactTypes || 'curators,journalists,bloggers,DJs,A&R',
+      markets: sourceMsg?.leadMarkets || artistProfile?.location?.country || 'ZA',
+      genre: sourceMsg?.leadGenre || artistProfile?.genre || '',
       searchDepth: 'full',
       targetCount: '100',
     });
+    if (sourceMsg?.leadRequestId) {
+      searchParams.set('leadRequestId', sourceMsg.leadRequestId);
+    }
 
     try {
       const accessToken = session?.access_token;

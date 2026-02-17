@@ -119,6 +119,10 @@ export interface Message {
     canLoadMore?: boolean;
     leadSearchQuery?: string;
     leadSearchOffset?: number;
+    leadContactTypes?: string;
+    leadMarkets?: string;
+    leadGenre?: string;
+    leadRequestId?: string;
 }
 
 export interface WebResult {
