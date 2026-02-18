@@ -307,7 +307,10 @@ export async function POST(request: NextRequest) {
         const artistContextEnabled = typeof body.artistContextEnabled === 'boolean' ? body.artistContextEnabled : true;
         const activeTool = typeof body.activeTool === 'string' ? body.activeTool : 'none';
 
-        const userMessage = message || (typeof body.query === 'string' ? body.query : '');
+        // Strip [Voice Mode] prefix so classifiers and search see clean text
+        const rawMessage = message || (typeof body.query === 'string' ? body.query : '');
+        const isVoiceMode = rawMessage.startsWith('[Voice Mode] ');
+        const userMessage = isVoiceMode ? rawMessage.slice('[Voice Mode] '.length) : rawMessage;
 
         if (!userMessage) {
             return NextResponse.json({
@@ -576,7 +579,8 @@ export async function POST(request: NextRequest) {
                             artistContext,
                             validatedTier as 'instant' | 'business' | 'enterprise',
                             knowledgeContext,
-                            toolInstruction || undefined
+                            toolInstruction || undefined,
+                            isVoiceMode
                         );
                         intent = { action: 'clarify', filters: {}, message: chatResponse };
                         break;
@@ -771,7 +775,8 @@ export async function POST(request: NextRequest) {
                             enrichedMsg = await synthesizeQualifiedResults(
                                 userMessage, qualifiedContext,
                                 validatedTier as any, artistContext,
-                                { total: leads.length, verified: verifiedCount, active: activeCount, avgScore: qualifiedLeads.length > 0 ? Math.round(qualifiedLeads.reduce((s, q) => s + q.qualityScore, 0) / qualifiedLeads.length) : 0 }
+                                { total: leads.length, verified: verifiedCount, active: activeCount, avgScore: qualifiedLeads.length > 0 ? Math.round(qualifiedLeads.reduce((s, q) => s + q.qualityScore, 0) / qualifiedLeads.length) : 0 },
+                                isVoiceMode
                             );
                         } else {
                             const allResultsForSynthesis = leads.map(l => ({
@@ -779,7 +784,7 @@ export async function POST(request: NextRequest) {
                                 source: l.source, email: l.email,
                                 instagram: l.instagram, twitter: l.twitter, tiktok: l.tiktok
                             }));
-                            enrichedMsg = await generateWithSearchResults(userMessage, allResultsForSynthesis, validatedTier as any, artistContext);
+                            enrichedMsg = await generateWithSearchResults(userMessage, allResultsForSynthesis, validatedTier as any, artistContext, isVoiceMode);
                         }
 
                         // If self-review says poor quality, prepend an honest note
@@ -821,7 +826,7 @@ export async function POST(request: NextRequest) {
                             instagram: c.instagram, tiktok: c.tiktok, twitter: c.twitter, followers: c.followers, country
                         }));
 
-                        const deepMsg = await generateWithSearchResults(userMessage, leads, validatedTier as any, artistContext);
+                        const deepMsg = await generateWithSearchResults(userMessage, leads, validatedTier as any, artistContext, isVoiceMode);
                         intent = { action: 'find_leads', filters: { country }, message: deepMsg || `Deep Search found ${deepResult.total} unique contacts.` };
                         suggestedNextSteps = ['Draft a pitch to the top contacts', 'Scrape a specific result', 'Search social media profiles'];
                         break;
@@ -831,9 +836,9 @@ export async function POST(request: NextRequest) {
                         if (!webSearchEnabled) {
                             const offlineResponse = await generateChatResponse(
                                 userMessage, conversationHistory, artistContext,
-                                validatedTier as any, knowledgeContext
+                                validatedTier as any, knowledgeContext, undefined, isVoiceMode
                             );
-                            intent = { action: 'clarify', filters: {}, message: offlineResponse + `\n\n> *Toggle Web Search on for fresh sources from the web.*` };
+                            intent = { action: 'clarify', filters: {}, message: offlineResponse + (isVoiceMode ? '' : `\n\n> *Toggle Web Search on for fresh sources from the web.*`) };
                             break;
                         }
 
@@ -846,7 +851,7 @@ export async function POST(request: NextRequest) {
                         webResults = searchResults.map(r => ({ title: r.name, url: r.url, snippet: r.snippet, source: r.source, date: r.date }));
                         logs.push(`✅ Found ${searchResults.length} results. Analyzing...`);
 
-                        const searchMsg = await generateWithSearchResults(userMessage, searchResults, validatedTier as any, artistContext);
+                        const searchMsg = await generateWithSearchResults(userMessage, searchResults, validatedTier as any, artistContext, isVoiceMode);
                         intent = { action: 'search', filters: { country }, message: searchMsg || `Here's what I found for "${searchQuery}".` };
                         break;
                     }
@@ -860,7 +865,7 @@ export async function POST(request: NextRequest) {
                         const contentResponse = await generateChatResponse(
                             userMessage, conversationHistory, artistContext,
                             validatedTier as 'instant' | 'business' | 'enterprise',
-                            knowledgeContext, contentToolPrompt || undefined
+                            knowledgeContext, contentToolPrompt || undefined, isVoiceMode
                         );
                         intent = { action: 'clarify', filters: {}, message: contentResponse };
                         suggestedNextSteps = intentResult.category === 'content_creation'
@@ -907,7 +912,8 @@ Your job:
 4. Note audience sentiment from comments
 5. Recommend specific next steps
 
-Format with markdown tables for top content, bullet points for insights. End with yes/no action suggestions.`
+Format with markdown tables for top content, bullet points for insights. End with yes/no action suggestions.`,
+                            isVoiceMode
                         );
 
                         intent = { action: 'search', filters: {}, message: scrapeResponse };
@@ -994,7 +1000,7 @@ Format with markdown tables for top content, bullet points for insights. End wit
                             const fallbackResponse = await generateChatResponse(
                                 userMessage, conversationHistory, artistContext,
                                 validatedTier as 'instant' | 'business' | 'enterprise',
-                                knowledgeContext
+                                knowledgeContext, undefined, isVoiceMode
                             );
                             intent = { action: 'clarify', filters: {}, message: fallbackResponse };
                         }
@@ -1007,7 +1013,7 @@ Format with markdown tables for top content, bullet points for insights. End wit
                         const clarifyResponse = await generateChatResponse(
                             userMessage, conversationHistory, artistContext,
                             validatedTier as 'instant' | 'business' | 'enterprise',
-                            knowledgeContext
+                            knowledgeContext, undefined, isVoiceMode
                         );
                         intent = { action: 'clarify', filters: {}, message: clarifyResponse };
                         break;

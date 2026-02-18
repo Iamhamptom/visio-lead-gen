@@ -504,34 +504,36 @@ Do NOT list external portals (Spotify for Artists, Apple for Artists, etc.) as t
 6. When missing artist context, proactively suggest Artist Portal Mini (Add+)`;
 }
 
+// Shared voice mode instruction appended to any system prompt when the user is on a voice call
+const VOICE_MODE_INSTRUCTION = `
+
+## VOICE MODE ACTIVE
+The user is speaking to you via voice call. You MUST adjust your response for spoken delivery:
+- Keep responses to 2-3 short, natural spoken sentences. Be concise.
+- Be conversational like you're on a phone call, not writing a document.
+- ABSOLUTELY NO markdown: no headers (#), no bold (**), no bullet points (-), no tables, no code blocks.
+- No asterisks, no hashes, no dashes for formatting. Just plain conversational text.
+- Sound smart but approachable. You're their strategist on a call.
+- If they ask you to do something (find leads, draft a pitch), confirm briefly what you'll do.
+- Speak numbers naturally: "First... Second... Third..." not "1. 2. 3."
+- If you found results, summarize the key ones by name and offer next steps conversationally.`;
+
 export async function generateChatResponse(
     message: string,
     history: { role: string; content: string }[] = [],
     context: ContextPack | null = null,
     tier: 'instant' | 'business' | 'enterprise' = 'instant',
     knowledgeContext?: string,
-    toolInstruction?: string
+    toolInstruction?: string,
+    isVoiceMode: boolean = false
 ): Promise<string> {
     try {
         const client = getClient();
         let systemPrompt = buildChatSystemPrompt(context, knowledgeContext, toolInstruction);
 
-        // Detect voice mode — the client prefixes voice messages with [Voice Mode]
-        const isVoiceMode = message.startsWith('[Voice Mode]');
         if (isVoiceMode) {
-            systemPrompt += `\n\n## VOICE MODE ACTIVE
-The user is speaking to you via voice call. Adjust your responses:
-- Keep responses concise — 2-3 sentences unless they explicitly ask for more detail
-- Be conversational and natural, like you're speaking to someone on a phone call
-- Do NOT use markdown formatting: no headers, no bold, no bullet points, no tables, no code blocks
-- Do NOT use asterisks, hashes, dashes for formatting — just plain conversational text
-- Sound smart but approachable — you're their strategist on a call, not writing a document
-- If they ask you to do something (find leads, draft a pitch), confirm what you'll do briefly, then do it
-- Numbers and lists should be spoken naturally: "First... Second... Third..." not "1. 2. 3."`;
+            systemPrompt += VOICE_MODE_INSTRUCTION;
         }
-
-        // Strip [Voice Mode] prefix before sending to Claude so it doesn't echo it
-        const cleanMessage = isVoiceMode ? message.replace('[Voice Mode] ', '') : message;
 
         // Build message history for Claude (last 10 messages)
         const messages: Anthropic.MessageParam[] = history.slice(-10).map(m => ({
@@ -540,7 +542,7 @@ The user is speaking to you via voice call. Adjust your responses:
         }));
 
         // Add current user message
-        messages.push({ role: 'user', content: cleanMessage });
+        messages.push({ role: 'user', content: message });
 
         // Ensure messages alternate properly (Claude requirement)
         const sanitized = sanitizeMessages(messages);
@@ -581,7 +583,8 @@ export async function generateWithSearchResults(
     userMessage: string,
     searchResults: any[],
     tier: 'instant' | 'business' | 'enterprise' = 'instant',
-    context?: ContextPack | null
+    context?: ContextPack | null,
+    isVoiceMode: boolean = false
 ): Promise<string> {
     try {
         const client = getClient();
@@ -590,7 +593,7 @@ export async function generateWithSearchResults(
             `Name: ${r.name || r.title || 'Unknown'}\nURL: ${r.url || ''}\nSnippet: ${r.snippet || ''}\nSource: ${r.source || ''}\nEmail: ${r.email || ''}`
         ).join('\n\n');
 
-        const systemPrompt = `You are V-Prai, the AI brain behind Visio Lead Gen. The user asked for something and you searched for results. Now synthesize these results into a strategic, helpful response.
+        let systemPrompt = `You are V-Prai, the AI brain behind Visio Lead Gen. The user asked for something and you searched for results. Now synthesize these results into a strategic, helpful response.
 
 CRITICAL RULES — DATA INTEGRITY:
 1. ONLY present data that actually appears in the search results below. NEVER fabricate, guess, or hallucinate emails, social media handles, phone numbers, or contact details.
@@ -616,6 +619,10 @@ FORMATTING:
 - End with 2-3 specific next steps
 
 Be warm, sharp, and strategic. Use "we" language.`;
+
+        if (isVoiceMode) {
+            systemPrompt += VOICE_MODE_INSTRUCTION;
+        }
 
         const response = await client.messages.create({
             model: getModel(tier),
@@ -650,12 +657,13 @@ export async function synthesizeQualifiedResults(
     qualifiedContext: string,
     tier: 'instant' | 'business' | 'enterprise' = 'instant',
     context?: ContextPack | null,
-    stats?: { total: number; verified: number; active: number; avgScore: number }
+    stats?: { total: number; verified: number; active: number; avgScore: number },
+    isVoiceMode: boolean = false
 ): Promise<string> {
     try {
         const client = getClient();
 
-        const systemPrompt = `You are V-Prai, the AI brain behind Visio Lead Gen. You've just completed a thorough lead qualification process — you didn't just search, you VERIFIED profiles.
+        let systemPrompt = `You are V-Prai, the AI brain behind Visio Lead Gen. You've just completed a thorough lead qualification process — you didn't just search, you VERIFIED profiles.
 
 WHAT YOU DID (explain to the user briefly):
 - Searched for leads matching their request
@@ -688,6 +696,10 @@ FORMATTING:
 - End with 2-3 next steps
 
 Be professional, warm, and strategic. Use "we" language.`;
+
+        if (isVoiceMode) {
+            systemPrompt += VOICE_MODE_INSTRUCTION;
+        }
 
         const response = await client.messages.create({
             model: getModel(tier),

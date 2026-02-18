@@ -19,6 +19,7 @@ const audioCache = new Map<string, string>();
 
 export const VoiceButton: React.FC<VoiceButtonProps> = ({ text, accessToken }) => {
     const [state, setState] = useState<'idle' | 'loading' | 'playing' | 'error'>('idle');
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const isLoadingRef = useRef(false);
 
@@ -39,9 +40,16 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({ text, accessToken }) =
             audioRef.current = null;
         }
         setState('idle');
+        setErrorMsg(null);
     }, []);
 
     const play = useCallback(async () => {
+        // If in error state, clicking retries — reset first
+        if (state === 'error') {
+            setState('idle');
+            setErrorMsg(null);
+        }
+
         // If already playing, stop
         if (audioRef.current && state === 'playing') {
             stop();
@@ -53,6 +61,7 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({ text, accessToken }) =
 
         isLoadingRef.current = true;
         setState('loading');
+        setErrorMsg(null);
 
         try {
             // Cache key uses text length + start + end to avoid collisions
@@ -73,7 +82,18 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({ text, accessToken }) =
 
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));
-                    throw new Error((err as any)?.error || 'Voice generation failed');
+                    const errorText = (err as any)?.error || 'Voice generation failed';
+                    // Give a clear message for auth errors
+                    if (res.status === 401) {
+                        throw new Error('Sign in required to use voice');
+                    }
+                    if (res.status === 503) {
+                        throw new Error('Voice feature is not configured');
+                    }
+                    if (res.status === 429) {
+                        throw new Error('Rate limited — try again shortly');
+                    }
+                    throw new Error(errorText);
                 }
 
                 const blob = await res.blob();
@@ -90,20 +110,18 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({ text, accessToken }) =
             };
 
             audio.onerror = () => {
+                setErrorMsg('Audio playback failed');
                 setState('error');
                 audioRef.current = null;
-                // Reset error state after 2s so the user can retry
-                setTimeout(() => setState('idle'), 2000);
             };
 
             await audio.play();
             setState('playing');
         } catch (err: any) {
             console.error('Voice playback error:', err?.message || err);
+            setErrorMsg(err?.message || 'Voice generation failed');
             setState('error');
-
-            // Reset error state after 2s so the user can retry
-            setTimeout(() => setState('idle'), 2000);
+            // Don't auto-reset — keep error visible until user clicks to retry
         } finally {
             isLoadingRef.current = false;
         }
@@ -114,14 +132,20 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({ text, accessToken }) =
 
     const iconSize = 15;
 
+    // Button label based on state
+    const label = state === 'playing' ? 'Stop'
+        : state === 'loading' ? 'Loading'
+        : state === 'error' ? (errorMsg && errorMsg.length <= 20 ? errorMsg : 'Failed')
+        : 'Listen';
+
     return (
         <button
             onClick={play}
-            disabled={isLoadingRef.current}
+            disabled={state === 'loading'}
             title={
                 state === 'playing' ? 'Stop voice' :
                 state === 'loading' ? 'Generating voice...' :
-                state === 'error' ? 'Voice failed — click to retry' :
+                state === 'error' ? (errorMsg || 'Voice failed') + ' — click to retry' :
                 'Listen to this response'
             }
             className={`
@@ -132,7 +156,7 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({ text, accessToken }) =
                 ${state === 'playing'
                     ? 'bg-visio-teal/20 text-visio-teal border border-visio-teal/40 shadow-[0_0_8px_rgba(182,240,156,0.3)]'
                     : state === 'error'
-                    ? 'bg-red-500/10 text-red-400 border border-red-500/30'
+                    ? 'bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20'
                     : state === 'loading'
                     ? 'bg-white/5 text-white/40 border border-white/10 cursor-wait'
                     : 'bg-white/5 text-white/50 border border-white/10 hover:bg-visio-teal/10 hover:text-visio-teal hover:border-visio-teal/30'
@@ -148,7 +172,7 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({ text, accessToken }) =
             ) : (
                 <Volume2 size={iconSize} />
             )}
-            {state === 'playing' ? 'Stop' : state === 'loading' ? 'Loading' : state === 'error' ? 'Retry' : 'Listen'}
+            {label}
         </button>
     );
 };

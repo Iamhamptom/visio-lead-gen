@@ -270,7 +270,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
                     'Content-Type': 'application/json',
                     ...(token ? { Authorization: `Bearer ${token}` } : {}),
                 },
-                body: JSON.stringify({ text, streaming: true }),
+                body: JSON.stringify({ text }),
             });
 
             if (!res.ok) {
