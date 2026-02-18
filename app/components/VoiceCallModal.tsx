@@ -28,7 +28,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
     const [errorMessage, setErrorMessage] = useState('');
     const [audioEnabled, setAudioEnabled] = useState(true);
 
-    // Refs to break circular callback dependencies
+    // ── Refs ──
     const recognitionRef = useRef<any>(null);
     const interruptRecognitionRef = useRef<any>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -41,6 +41,15 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
     const accessTokenRef = useRef(accessToken);
     const onSendMessageRef = useRef(onSendMessage);
     const onCallEndRef = useRef(onCallEnd);
+
+    // Generation ID — increments each turn. Stale callbacks check this to avoid acting on old data.
+    const generationIdRef = useRef(0);
+
+    // Abort controller for cancelling in-flight agent requests on interruption
+    const agentAbortRef = useRef<AbortController | null>(null);
+
+    // Flag: was the current audio interrupted? Prevents onended from double-restarting listening.
+    const wasInterruptedRef = useRef(false);
 
     // Keep refs in sync with state/props
     useEffect(() => { isMutedRef.current = isMuted; }, [isMuted]);
@@ -57,7 +66,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
         }
     }, [conversationLog]);
 
-    // ── Core functions using refs (no circular deps) ──
+    // ── Core function refs (break circular callback deps) ──
 
     const stopCallRef = useRef<() => void>(() => {});
     const startListeningRef = useRef<() => void>(() => {});
@@ -66,57 +75,74 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
     const startInterruptionListenerRef = useRef<() => void>(() => {});
     const stopInterruptionListenerRef = useRef<() => void>(() => {});
 
-    // stopInterruptionListener — clean up the interruption speech recognition
-    stopInterruptionListenerRef.current = () => {
-        if (interruptRecognitionRef.current) {
-            try { interruptRecognitionRef.current.stop(); } catch {}
-            interruptRecognitionRef.current = null;
+    // ── Helper: kill any active speech recognition instance ──
+    const killRecognition = (ref: React.MutableRefObject<any>) => {
+        if (ref.current) {
+            try { ref.current.stop(); } catch {}
+            ref.current = null;
         }
     };
 
-    // stopCall — tear down everything
+    // ── Helper: cancel in-flight agent request ──
+    const cancelAgentRequest = () => {
+        if (agentAbortRef.current) {
+            agentAbortRef.current.abort();
+            agentAbortRef.current = null;
+        }
+    };
+
+    // ── Helper: stop all audio playback ──
+    const stopAllAudio = () => {
+        wasInterruptedRef.current = true;
+        if (audioRef.current) {
+            audioRef.current.pause();
+            if (audioRef.current.src) {
+                URL.revokeObjectURL(audioRef.current.src);
+            }
+            audioRef.current = null;
+        }
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+        }
+    };
+
+    // ── stopInterruptionListener ──
+    stopInterruptionListenerRef.current = () => {
+        killRecognition(interruptRecognitionRef);
+    };
+
+    // ── stopCall — tear down everything ──
     stopCallRef.current = () => {
         callActiveRef.current = false;
+        generationIdRef.current += 1;
 
-        // Fire onCallEnd with the transcript before clearing state
+        // Fire onCallEnd before clearing state
         if (conversationLogRef.current.length > 0 && onCallEndRef.current) {
             onCallEndRef.current([...conversationLogRef.current]);
         }
 
-        if (recognitionRef.current) {
-            try { recognitionRef.current.stop(); } catch {}
-            recognitionRef.current = null;
-        }
-
+        killRecognition(recognitionRef);
         stopInterruptionListenerRef.current();
-
-        if (audioRef.current) {
-            audioRef.current.pause();
-            audioRef.current = null;
-        }
+        cancelAgentRequest();
+        stopAllAudio();
 
         if (silenceTimerRef.current) {
             clearTimeout(silenceTimerRef.current);
             silenceTimerRef.current = null;
         }
 
-        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-        }
-
         setCallState('idle');
         setTranscript('');
     };
 
-    // startInterruptionListener — listen for user speech while agent is speaking
-    // Restarts automatically on silence so interruption works throughout the agent's response.
+    // ── startInterruptionListener — listen for user speech while agent is speaking ──
     startInterruptionListenerRef.current = () => {
         if (!callActiveRef.current || isMutedRef.current) return;
 
         const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
         if (!SpeechRecognition) return;
 
-        // Stop any existing interruption listener
+        // Kill existing first
         stopInterruptionListenerRef.current();
 
         const recognition = new SpeechRecognition();
@@ -124,23 +150,18 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
         recognition.interimResults = true;
         recognition.lang = 'en-US';
 
+        const myGenId = generationIdRef.current;
+
         recognition.onresult = () => {
-            // User started speaking — interrupt the agent!
-            if (audioRef.current) {
-                audioRef.current.pause();
-                audioRef.current.currentTime = 0;
-                audioRef.current = null;
-            }
+            // Stale check
+            if (generationIdRef.current !== myGenId || !callActiveRef.current) return;
 
-            if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-            }
+            // User is speaking — interrupt everything
+            stopAllAudio();
+            cancelAgentRequest();
+            killRecognition(interruptRecognitionRef);
 
-            // Stop this interruption listener
-            try { recognition.stop(); } catch {}
-            interruptRecognitionRef.current = null;
-
-            // Switch to normal listening mode
+            // Switch to main listening
             if (callActiveRef.current) {
                 setCallState('listening');
                 startListeningRef.current();
@@ -148,21 +169,34 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
         };
 
         recognition.onerror = (event: any) => {
+            if (generationIdRef.current !== myGenId || !callActiveRef.current) return;
             interruptRecognitionRef.current = null;
-            // On no-speech or aborted, restart the interruption listener
-            // (so the user can still interrupt later in the agent's response)
+
+            // On no-speech or aborted, restart quickly if agent is still speaking
             if (event.error === 'no-speech' || event.error === 'aborted') {
-                if (callActiveRef.current && (audioRef.current || ('speechSynthesis' in window && window.speechSynthesis.speaking))) {
-                    setTimeout(() => startInterruptionListenerRef.current(), 300);
+                const isStillSpeaking = audioRef.current || ('speechSynthesis' in window && window.speechSynthesis.speaking);
+                if (callActiveRef.current && isStillSpeaking) {
+                    setTimeout(() => {
+                        if (generationIdRef.current === myGenId && callActiveRef.current) {
+                            startInterruptionListenerRef.current();
+                        }
+                    }, 100); // Faster restart — 100ms instead of 300ms
                 }
             }
         };
 
         recognition.onend = () => {
+            if (generationIdRef.current !== myGenId || !callActiveRef.current) return;
             interruptRecognitionRef.current = null;
-            // Restart interruption listening if agent is still speaking
-            if (callActiveRef.current && (audioRef.current || ('speechSynthesis' in window && window.speechSynthesis.speaking))) {
-                setTimeout(() => startInterruptionListenerRef.current(), 300);
+
+            // Restart if agent is still speaking
+            const isStillSpeaking = audioRef.current || ('speechSynthesis' in window && window.speechSynthesis.speaking);
+            if (callActiveRef.current && isStillSpeaking) {
+                setTimeout(() => {
+                    if (generationIdRef.current === myGenId && callActiveRef.current) {
+                        startInterruptionListenerRef.current();
+                    }
+                }, 100);
             }
         };
 
@@ -170,11 +204,11 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
             recognition.start();
             interruptRecognitionRef.current = recognition;
         } catch {
-            // Ignore — interruption is best-effort
+            // Best-effort — ignore
         }
     };
 
-    // startListening — begin speech recognition
+    // ── startListening — begin speech recognition ──
     startListeningRef.current = () => {
         if (!callActiveRef.current || isMutedRef.current) return;
 
@@ -185,12 +219,8 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
             return;
         }
 
-        // Stop any existing instance
-        if (recognitionRef.current) {
-            try { recognitionRef.current.stop(); } catch {}
-        }
-
-        // Stop any interruption listener
+        // Kill any existing instances to avoid conflicts
+        killRecognition(recognitionRef);
         stopInterruptionListenerRef.current();
 
         const recognition = new SpeechRecognition();
@@ -198,9 +228,13 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
         recognition.interimResults = true;
         recognition.lang = 'en-US';
 
+        const myGenId = generationIdRef.current;
         let finalTranscript = '';
+        let hasBeenProcessed = false;
 
         recognition.onresult = (event: any) => {
+            if (generationIdRef.current !== myGenId || !callActiveRef.current || hasBeenProcessed) return;
+
             let interim = '';
             for (let i = event.resultIndex; i < event.results.length; i++) {
                 const result = event.results[i];
@@ -212,26 +246,35 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
             }
             setTranscript(finalTranscript + interim);
 
-            // Reset silence timer on any speech
+            // Reset silence timer on any speech activity
             if (silenceTimerRef.current) {
                 clearTimeout(silenceTimerRef.current);
+                silenceTimerRef.current = null;
             }
 
-            // After 1.2s of silence following speech, process the input
+            // After 900ms of silence following finalized speech, process the input
             if (finalTranscript.trim()) {
                 silenceTimerRef.current = setTimeout(() => {
-                    try { recognition.stop(); } catch {}
-                    recognitionRef.current = null;
+                    if (hasBeenProcessed || generationIdRef.current !== myGenId) return;
+                    hasBeenProcessed = true;
+                    killRecognition(recognitionRef);
                     processUserInputRef.current(finalTranscript.trim());
-                }, 1200);
+                }, 900); // Faster: 900ms instead of 1200ms
             }
         };
 
         recognition.onerror = (event: any) => {
+            if (generationIdRef.current !== myGenId || !callActiveRef.current) return;
+
             if (event.error === 'no-speech' || event.error === 'aborted') {
-                // Normal — restart
-                if (callActiveRef.current) {
-                    setTimeout(() => startListeningRef.current(), 500);
+                // Normal — restart listening
+                recognitionRef.current = null;
+                if (callActiveRef.current && !hasBeenProcessed) {
+                    setTimeout(() => {
+                        if (generationIdRef.current === myGenId && callActiveRef.current) {
+                            startListeningRef.current();
+                        }
+                    }, 300);
                 }
                 return;
             }
@@ -243,9 +286,18 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
         };
 
         recognition.onend = () => {
-            // If call is still active and we're not processing, restart
-            if (callActiveRef.current && !finalTranscript.trim()) {
-                setTimeout(() => startListeningRef.current(), 300);
+            if (generationIdRef.current !== myGenId || !callActiveRef.current) return;
+            recognitionRef.current = null;
+
+            // CRITICAL FIX: Always restart if call is active and we haven't processed yet.
+            // The old code only restarted if !finalTranscript.trim(), causing the mic to die
+            // after the first exchange.
+            if (callActiveRef.current && !hasBeenProcessed) {
+                setTimeout(() => {
+                    if (generationIdRef.current === myGenId && callActiveRef.current) {
+                        startListeningRef.current();
+                    }
+                }, 200);
             }
         };
 
@@ -255,12 +307,14 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
             setCallState('listening');
         } catch {
             setTimeout(() => {
-                if (callActiveRef.current) startListeningRef.current();
+                if (callActiveRef.current && generationIdRef.current === myGenId) {
+                    startListeningRef.current();
+                }
             }, 500);
         }
     };
 
-    // pickMaleVoice — select the best deep male English voice from the browser
+    // ── pickMaleVoice — select the best deep male English voice from the browser ──
     const pickMaleVoice = (): SpeechSynthesisVoice | null => {
         const voices = window.speechSynthesis.getVoices();
         const malePrefNames = [
@@ -276,8 +330,8 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
         return voices.find(v => v.lang.startsWith('en')) || null;
     };
 
-    // speakWithBrowserTTS — clean fallback with best male voice
-    const speakWithBrowserTTS = (text: string) => {
+    // ── speakWithBrowserTTS — clean fallback with best male voice ──
+    const speakWithBrowserTTS = (text: string, genId: number) => {
         if (!('speechSynthesis' in window)) {
             if (callActiveRef.current) {
                 setCallState('listening');
@@ -288,21 +342,23 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
 
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text.slice(0, 3000));
-        utterance.rate = 1.08;    // Slightly faster — more natural conversational pace
-        utterance.pitch = 0.82;   // Deeper — sounds more male/authoritative
+        utterance.rate = 1.08;
+        utterance.pitch = 0.82;
         utterance.volume = 1.0;
 
         const voice = pickMaleVoice();
         if (voice) utterance.voice = voice;
 
         utterance.onend = () => {
+            if (generationIdRef.current !== genId) return;
             stopInterruptionListenerRef.current();
-            if (callActiveRef.current) {
+            if (callActiveRef.current && !wasInterruptedRef.current) {
                 setCallState('listening');
                 startListeningRef.current();
             }
         };
         utterance.onerror = () => {
+            if (generationIdRef.current !== genId) return;
             stopInterruptionListenerRef.current();
             if (callActiveRef.current) {
                 setCallState('listening');
@@ -310,14 +366,14 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
             }
         };
 
+        wasInterruptedRef.current = false;
         window.speechSynthesis.speak(utterance);
         startInterruptionListenerRef.current();
     };
 
-    // speakResponse — play TTS audio with interruption support, then resume listening
+    // ── speakResponse — play TTS audio then resume listening ──
     speakResponseRef.current = async (text: string) => {
         if (!audioEnabledRef.current) {
-            // No audio — just resume listening
             if (callActiveRef.current) {
                 setCallState('listening');
                 startListeningRef.current();
@@ -325,7 +381,12 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
             return;
         }
 
+        const myGenId = generationIdRef.current;
         setCallState('speaking');
+        wasInterruptedRef.current = false;
+
+        // Start interruption listener IMMEDIATELY (don't wait for audio.play())
+        startInterruptionListenerRef.current();
 
         try {
             const token = accessTokenRef.current;
@@ -335,16 +396,26 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
                     'Content-Type': 'application/json',
                     ...(token ? { Authorization: `Bearer ${token}` } : {}),
                 },
-                body: JSON.stringify({ text, streaming: true }),
+                // Use non-streaming (quality model) — the old code sent streaming:true
+                // but then called res.blob() which defeats the purpose. Non-streaming
+                // is simpler, more reliable, and uses the better quality model.
+                body: JSON.stringify({ text }),
             });
+
+            // Stale check — user may have interrupted or ended call during fetch
+            if (generationIdRef.current !== myGenId || !callActiveRef.current) return;
 
             if (!res.ok) {
                 console.warn('ElevenLabs TTS failed, using browser fallback');
-                speakWithBrowserTTS(text);
+                speakWithBrowserTTS(text, myGenId);
                 return;
             }
 
             const blob = await res.blob();
+
+            // Stale check again — blob download may take time
+            if (generationIdRef.current !== myGenId || !callActiveRef.current) return;
+
             const url = URL.createObjectURL(blob);
             const audio = new Audio(url);
             audioRef.current = audio;
@@ -353,7 +424,9 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
                 audioRef.current = null;
                 URL.revokeObjectURL(url);
                 stopInterruptionListenerRef.current();
-                if (callActiveRef.current) {
+
+                // Only resume listening if this wasn't interrupted and generation is still current
+                if (generationIdRef.current === myGenId && callActiveRef.current && !wasInterruptedRef.current) {
                     setCallState('listening');
                     startListeningRef.current();
                 }
@@ -362,37 +435,58 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
             audio.onerror = () => {
                 audioRef.current = null;
                 URL.revokeObjectURL(url);
-                // ElevenLabs audio failed to play — try browser TTS
-                console.warn('ElevenLabs audio playback failed, using browser fallback');
-                speakWithBrowserTTS(text);
+                if (generationIdRef.current === myGenId && callActiveRef.current) {
+                    console.warn('ElevenLabs audio playback failed, using browser fallback');
+                    speakWithBrowserTTS(text, myGenId);
+                }
             };
 
-            await audio.play();
+            // Check one more time before playing
+            if (generationIdRef.current !== myGenId || !callActiveRef.current || wasInterruptedRef.current) {
+                URL.revokeObjectURL(url);
+                return;
+            }
 
-            // Start listening for interruption while audio plays
-            startInterruptionListenerRef.current();
+            await audio.play();
         } catch (err) {
+            if (generationIdRef.current !== myGenId || !callActiveRef.current) return;
             console.warn('Speech playback error, falling back to browser TTS:', err);
-            speakWithBrowserTTS(text);
+            speakWithBrowserTTS(text, myGenId);
         }
     };
 
-    // processUserInput — send to agent then speak response
+    // ── processUserInput — send to agent then speak response ──
     processUserInputRef.current = async (text: string) => {
         if (!text.trim()) {
             if (callActiveRef.current) startListeningRef.current();
             return;
         }
 
+        // New generation — invalidate any stale callbacks
+        generationIdRef.current += 1;
+        const myGenId = generationIdRef.current;
+
         setCallState('processing');
         setTranscript('');
         setConversationLog(prev => [...prev, { role: 'user', text }]);
 
         try {
+            // Create an abort controller so we can cancel if user interrupts
+            const abortController = new AbortController();
+            agentAbortRef.current = abortController;
+
             const agentResponse = await onSendMessageRef.current(text);
+
+            // Stale check
+            if (generationIdRef.current !== myGenId || !callActiveRef.current) return;
+
+            agentAbortRef.current = null;
             setConversationLog(prev => [...prev, { role: 'agent', text: agentResponse }]);
             await speakResponseRef.current(agentResponse);
         } catch (err: any) {
+            if (generationIdRef.current !== myGenId || !callActiveRef.current) return;
+            agentAbortRef.current = null;
+
             console.error('Agent processing error:', err);
             const errorText = 'Sorry, I had trouble processing that. Could you say it again?';
             setConversationLog(prev => [...prev, { role: 'agent', text: errorText }]);
@@ -404,6 +498,8 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
 
     const startCall = useCallback(() => {
         callActiveRef.current = true;
+        generationIdRef.current = 0;
+        wasInterruptedRef.current = false;
         setCallState('connecting');
         setConversationLog([]);
         setTranscript('');
@@ -425,7 +521,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
         setIsMuted(prev => {
             const next = !prev;
             if (next && recognitionRef.current) {
-                try { recognitionRef.current.stop(); } catch {}
+                killRecognition(recognitionRef);
             } else if (!next && callActiveRef.current) {
                 startListeningRef.current();
             }
