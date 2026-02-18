@@ -3,17 +3,18 @@ import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 // ============================================================================
 // ElevenLabs Text-to-Speech — V-Prai Voice Engine
 // ============================================================================
-// Gives V-Prai a real voice. Uses a deep, professional male voice
-// that matches V-Prai's persona: authoritative, warm, strategic.
+// Gives V-Prai a real voice. Deep, charismatic male voice with natural energy.
+// Should feel like a real person on a call — not a robot reading text.
 // ============================================================================
 
-// Default to "George" — warm, calm British male voice. Trustworthy narrator tone
-// that suits V-Prai's smart, authoritative persona.
-// Other options: "Daniel" (onwK4e9ZLuTAKqWW03F9) — more formal/news-like British
-// Voice Library: https://elevenlabs.io/voice-library
-const DEFAULT_VOICE_ID = 'JBFqnCBsd6RMkjVDRZzb'; // George — calm, warm British male
+// "George" — warm, calm British male. Trustworthy narrator tone.
+// Other options: "Daniel" (onwK4e9ZLuTAKqWW03F9) — more formal British
+const DEFAULT_VOICE_ID = 'JBFqnCBsd6RMkjVDRZzb'; // George
 
-const VOICE_MODEL = 'eleven_turbo_v2_5'; // Fast, high-quality, low-latency
+// eleven_turbo_v2_5: fastest model, good quality, lowest latency
+// eleven_multilingual_v2: best quality, supports style, but slower
+const FAST_MODEL = 'eleven_turbo_v2_5';
+const QUALITY_MODEL = 'eleven_multilingual_v2';
 
 /** Creates a configured ElevenLabs client */
 function getClient(): ElevenLabsClient {
@@ -32,6 +33,7 @@ export function hasElevenLabsKey(): boolean {
 /**
  * Converts text to speech using ElevenLabs.
  * Returns raw audio bytes (mp3 format).
+ * Uses the quality model for read-aloud (non-realtime) use cases.
  */
 export async function textToSpeech(
     text: string,
@@ -45,23 +47,22 @@ export async function textToSpeech(
     // Limit text length to avoid excessive API costs (roughly 5 min of speech)
     const maxChars = 5000;
     const truncatedText = cleanText.length > maxChars
-        ? cleanText.slice(0, maxChars) + '... That is a summary. For the full details, please read the text response.'
+        ? cleanText.slice(0, maxChars) + '... That is the summary. Check the full text response for more details.'
         : cleanText;
 
     const audioStream = await client.textToSpeech.convert(voiceId, {
         text: truncatedText,
-        modelId: VOICE_MODEL,
+        modelId: QUALITY_MODEL,
         outputFormat: 'mp3_44100_128',
         voiceSettings: {
-            stability: 0.65,      // Higher = calmer, more consistent delivery
-            similarityBoost: 0.80, // Strong voice identity preservation
-            style: 0.15,          // Low = calm and measured, not dramatic
+            stability: 0.45,       // Lower = more dynamic/natural inflection
+            similarityBoost: 0.75, // Preserve voice identity
+            style: 0.40,          // Higher = more expressive, conversational
             useSpeakerBoost: true,
         },
     });
 
     // Collect the stream into a buffer
-    // The SDK returns a ReadableStream, so we use getReader()
     const reader = (audioStream as ReadableStream<Uint8Array>).getReader();
     const chunks: Uint8Array[] = [];
     while (true) {
@@ -75,6 +76,7 @@ export async function textToSpeech(
 /**
  * Converts text to speech using ElevenLabs with streaming output.
  * Returns a ReadableStream for lower time-to-first-audio.
+ * Uses the fast model for real-time voice calls where latency matters.
  */
 export async function textToSpeechStream(
     text: string,
@@ -85,18 +87,18 @@ export async function textToSpeechStream(
     const cleanText = stripMarkdown(text);
     const maxChars = 5000;
     const truncatedText = cleanText.length > maxChars
-        ? cleanText.slice(0, maxChars) + '... That is a summary. For the full details, please read the text response.'
+        ? cleanText.slice(0, maxChars) + '... Check the text for the full response.'
         : cleanText;
 
     const audioStream = await client.textToSpeech.stream(voiceId, {
         text: truncatedText,
-        modelId: VOICE_MODEL,
-        outputFormat: 'mp3_44100_128',
-        optimizeStreamingLatency: 3, // Max latency optimization for voice calls
+        modelId: FAST_MODEL,
+        outputFormat: 'mp3_22050_32', // Smaller format for faster streaming
+        optimizeStreamingLatency: 4, // Maximum latency optimization
         voiceSettings: {
-            stability: 0.65,
-            similarityBoost: 0.80,
-            style: 0.15,
+            stability: 0.40,       // More dynamic for conversational feel
+            similarityBoost: 0.70,
+            style: 0.35,          // Expressive but not over-the-top
             useSpeakerBoost: true,
         },
     });
