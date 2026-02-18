@@ -7,10 +7,11 @@ import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 // that matches V-Prai's persona: authoritative, warm, strategic.
 // ============================================================================
 
-// Default to "Chris" — deep, warm male voice ideal for a PR strategist persona.
-// Other good male options: "Daniel", "Adam", "Antoni", "Josh"
-// You can find voice IDs at https://elevenlabs.io/voice-library
-const DEFAULT_VOICE_ID = 'iP95p4xoKVk53GoZ742B'; // Chris — deep, clear, professional male
+// Default to "George" — warm, calm British male voice. Trustworthy narrator tone
+// that suits V-Prai's smart, authoritative persona.
+// Other options: "Daniel" (onwK4e9ZLuTAKqWW03F9) — more formal/news-like British
+// Voice Library: https://elevenlabs.io/voice-library
+const DEFAULT_VOICE_ID = 'JBFqnCBsd6RMkjVDRZzb'; // George — calm, warm British male
 
 const VOICE_MODEL = 'eleven_turbo_v2_5'; // Fast, high-quality, low-latency
 
@@ -52,9 +53,9 @@ export async function textToSpeech(
         modelId: VOICE_MODEL,
         outputFormat: 'mp3_44100_128',
         voiceSettings: {
-            stability: 0.5,       // Balanced — not robotic, not too variable
-            similarityBoost: 0.75, // Strong voice consistency
-            style: 0.3,           // Slight expressiveness
+            stability: 0.65,      // Higher = calmer, more consistent delivery
+            similarityBoost: 0.80, // Strong voice identity preservation
+            style: 0.15,          // Low = calm and measured, not dramatic
             useSpeakerBoost: true,
         },
     });
@@ -69,6 +70,38 @@ export async function textToSpeech(
         if (value) chunks.push(value);
     }
     return Buffer.concat(chunks);
+}
+
+/**
+ * Converts text to speech using ElevenLabs with streaming output.
+ * Returns a ReadableStream for lower time-to-first-audio.
+ */
+export async function textToSpeechStream(
+    text: string,
+    voiceId: string = DEFAULT_VOICE_ID
+): Promise<ReadableStream<Uint8Array>> {
+    const client = getClient();
+
+    const cleanText = stripMarkdown(text);
+    const maxChars = 5000;
+    const truncatedText = cleanText.length > maxChars
+        ? cleanText.slice(0, maxChars) + '... That is a summary. For the full details, please read the text response.'
+        : cleanText;
+
+    const audioStream = await client.textToSpeech.stream(voiceId, {
+        text: truncatedText,
+        modelId: VOICE_MODEL,
+        outputFormat: 'mp3_44100_128',
+        optimizeStreamingLatency: 3, // Max latency optimization for voice calls
+        voiceSettings: {
+            stability: 0.65,
+            similarityBoost: 0.80,
+            style: 0.15,
+            useSpeakerBoost: true,
+        },
+    });
+
+    return audioStream as ReadableStream<Uint8Array>;
 }
 
 /**

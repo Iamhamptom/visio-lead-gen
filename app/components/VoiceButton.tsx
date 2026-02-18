@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Volume2, VolumeX, Loader2, Square } from 'lucide-react';
 
 interface VoiceButtonProps {
@@ -20,6 +20,17 @@ const audioCache = new Map<string, string>();
 export const VoiceButton: React.FC<VoiceButtonProps> = ({ text, accessToken }) => {
     const [state, setState] = useState<'idle' | 'loading' | 'playing' | 'error'>('idle');
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const isLoadingRef = useRef(false);
+
+    // Cleanup on unmount — stop any playing audio
+    useEffect(() => {
+        return () => {
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current = null;
+            }
+        };
+    }, []);
 
     const stop = useCallback(() => {
         if (audioRef.current) {
@@ -32,19 +43,22 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({ text, accessToken }) =
 
     const play = useCallback(async () => {
         // If already playing, stop
-        if (state === 'playing') {
+        if (audioRef.current && state === 'playing') {
             stop();
             return;
         }
 
         // Don't allow double-click while loading
-        if (state === 'loading') return;
+        if (isLoadingRef.current) return;
 
+        isLoadingRef.current = true;
         setState('loading');
 
         try {
-            // Cache key is first 200 chars (enough to identify unique messages)
-            const cacheKey = text.slice(0, 200);
+            // Cache key uses text length + start + end to avoid collisions
+            const cacheKey = text.length <= 200
+                ? text
+                : text.slice(0, 100) + '|' + text.length + '|' + text.slice(-100);
             let blobUrl = audioCache.get(cacheKey);
 
             if (!blobUrl) {
@@ -78,6 +92,8 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({ text, accessToken }) =
             audio.onerror = () => {
                 setState('error');
                 audioRef.current = null;
+                // Reset error state after 2s so the user can retry
+                setTimeout(() => setState('idle'), 2000);
             };
 
             await audio.play();
@@ -88,6 +104,8 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({ text, accessToken }) =
 
             // Reset error state after 2s so the user can retry
             setTimeout(() => setState('idle'), 2000);
+        } finally {
+            isLoadingRef.current = false;
         }
     }, [text, accessToken, state, stop]);
 
@@ -99,7 +117,7 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({ text, accessToken }) =
     return (
         <button
             onClick={play}
-            disabled={state === 'loading'}
+            disabled={isLoadingRef.current}
             title={
                 state === 'playing' ? 'Stop voice' :
                 state === 'loading' ? 'Generating voice...' :

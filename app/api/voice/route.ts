@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { textToSpeech, hasElevenLabsKey } from '@/lib/elevenlabs';
+import { textToSpeech, textToSpeechStream, hasElevenLabsKey } from '@/lib/elevenlabs';
 import { requireUser } from '@/lib/api-auth';
 
 /**
@@ -7,7 +7,8 @@ import { requireUser } from '@/lib/api-auth';
  * Converts text to speech using ElevenLabs.
  * Returns audio/mpeg binary data.
  *
- * Body: { text: string }
+ * Body: { text: string, streaming?: boolean }
+ * When streaming=true, returns a chunked stream for lower time-to-first-audio.
  */
 export async function POST(req: NextRequest) {
     // Auth check
@@ -27,6 +28,7 @@ export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
         const text = body?.text;
+        const streaming = body?.streaming === true;
 
         if (!text || typeof text !== 'string') {
             return NextResponse.json({ error: 'Missing "text" field' }, { status: 400 });
@@ -41,6 +43,20 @@ export async function POST(req: NextRequest) {
         const maxLength = 5000;
         const safeText = text.slice(0, maxLength);
 
+        // Streaming mode — lower latency, chunked response
+        if (streaming) {
+            const audioStream = await textToSpeechStream(safeText);
+            return new NextResponse(audioStream, {
+                status: 200,
+                headers: {
+                    'Content-Type': 'audio/mpeg',
+                    'Transfer-Encoding': 'chunked',
+                    'Cache-Control': 'no-cache',
+                },
+            });
+        }
+
+        // Standard mode — full buffer response
         const audioBuffer = await textToSpeech(safeText);
 
         return new NextResponse(new Uint8Array(audioBuffer), {
