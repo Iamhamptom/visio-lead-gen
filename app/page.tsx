@@ -321,6 +321,7 @@ export default function Home() {
           // Save and set immediately
           await saveArtistProfile(defaultProfile);
           setArtistProfile(defaultProfile);
+          hasProfile = true;
 
           // Launch Tutorial for first-timers
           const tutorialDone = userId ? localStorage.getItem(`visio:tutorial_complete:${userId}`) === 'true' : false;
@@ -357,16 +358,13 @@ export default function Home() {
         }
         setCurrentView(targetView);
       } else {
-        // Logged In - Check onboarding/profile
-        if (!hasCompletedOnboarding && !hasProfile) {
-          // Profile gate is handled inside the dashboard view
-        } else {
-          if (targetView === 'landing' || targetView === 'auth') {
-            navigateTo('overview');
-            return;
-          }
-          setCurrentView(targetView);
+        // Logged In - route to app views.
+        // PortalGate component handles the no-profile case inside the dashboard view.
+        if (targetView === 'landing' || targetView === 'auth') {
+          navigateTo('overview');
+          return;
         }
+        setCurrentView(targetView);
       }
 
 

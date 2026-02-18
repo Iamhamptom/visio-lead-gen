@@ -96,6 +96,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (event, session) => {
+                // Skip INITIAL_SESSION — we handle initialization via getSession() above,
+                // which includes backup recovery logic. Processing INITIAL_SESSION can
+                // prematurely set user=null and clear the backup before recovery runs.
+                if (event === 'INITIAL_SESSION') return;
+
                 setSession(session);
                 setUser(session?.user ?? null);
                 setAuthStale(false);
@@ -106,15 +111,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         const handleVisibility = async () => {
             if (document.visibilityState !== 'visible') return;
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                setSession(session);
-                setUser(session.user ?? null);
-                setAuthStale(false);
-                storeSession(session);
-            } else {
-                // Always try to refresh if no session found. If Supabase storage is missing, use cached refresh token.
-                try {
+            try {
+                const { data: { session: currentSession } } = await supabase.auth.getSession();
+                if (currentSession) {
+                    setSession(currentSession);
+                    setUser(currentSession.user ?? null);
+                    setAuthStale(false);
+                    storeSession(currentSession);
+                } else {
+                    // Try to recover using cached refresh token
                     const cached = loadCachedSession();
                     const refreshed = cached?.refresh_token
                         ? await supabase.auth.refreshSession(cached)
@@ -125,18 +130,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         setUser(nextSession.user ?? null);
                         setAuthStale(false);
                         storeSession(nextSession);
-                    } else {
-                        setSession(null);
-                        setUser(null);
-                        setAuthStale(false);
-                        storeSession(null);
                     }
-                } catch {
-                    setSession(null);
-                    setUser(null);
-                    setAuthStale(false);
-                    storeSession(null);
+                    // If refresh failed: keep existing state. Don't sign out.
+                    // Genuine session expiry will be caught by API 401 responses.
                 }
+            } catch {
+                // Network error on tab refocus — keep existing state, don't sign out.
             }
         };
 
@@ -174,6 +173,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(null);
         setSession(null);
         setAuthStale(false);
+        try { window.localStorage.removeItem('visio:lastSession'); } catch {}
     };
 
     return (
