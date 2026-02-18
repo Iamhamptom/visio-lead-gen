@@ -8,6 +8,7 @@ interface VoiceCallModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSendMessage: (text: string) => Promise<string>;
+    onCallEnd?: (transcript: { role: 'user' | 'agent'; text: string }[]) => void;
     accessToken?: string;
 }
 
@@ -17,6 +18,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
     isOpen,
     onClose,
     onSendMessage,
+    onCallEnd,
     accessToken,
 }) => {
     const [callState, setCallState] = useState<CallState>('idle');
@@ -28,20 +30,25 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
 
     // Refs to break circular callback dependencies
     const recognitionRef = useRef<any>(null);
+    const interruptRecognitionRef = useRef<any>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const callActiveRef = useRef(false);
     const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const logContainerRef = useRef<HTMLDivElement>(null);
+    const conversationLogRef = useRef<{ role: 'user' | 'agent'; text: string }[]>([]);
     const isMutedRef = useRef(false);
     const audioEnabledRef = useRef(true);
     const accessTokenRef = useRef(accessToken);
     const onSendMessageRef = useRef(onSendMessage);
+    const onCallEndRef = useRef(onCallEnd);
 
     // Keep refs in sync with state/props
     useEffect(() => { isMutedRef.current = isMuted; }, [isMuted]);
     useEffect(() => { audioEnabledRef.current = audioEnabled; }, [audioEnabled]);
     useEffect(() => { accessTokenRef.current = accessToken; }, [accessToken]);
     useEffect(() => { onSendMessageRef.current = onSendMessage; }, [onSendMessage]);
+    useEffect(() => { onCallEndRef.current = onCallEnd; }, [onCallEnd]);
+    useEffect(() => { conversationLogRef.current = conversationLog; }, [conversationLog]);
 
     // Scroll conversation log to bottom
     useEffect(() => {
@@ -56,15 +63,32 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
     const startListeningRef = useRef<() => void>(() => {});
     const speakResponseRef = useRef<(text: string) => Promise<void>>(async () => {});
     const processUserInputRef = useRef<(text: string) => Promise<void>>(async () => {});
+    const startInterruptionListenerRef = useRef<() => void>(() => {});
+    const stopInterruptionListenerRef = useRef<() => void>(() => {});
+
+    // stopInterruptionListener — clean up the interruption speech recognition
+    stopInterruptionListenerRef.current = () => {
+        if (interruptRecognitionRef.current) {
+            try { interruptRecognitionRef.current.stop(); } catch {}
+            interruptRecognitionRef.current = null;
+        }
+    };
 
     // stopCall — tear down everything
     stopCallRef.current = () => {
         callActiveRef.current = false;
 
+        // Fire onCallEnd with the transcript before clearing state
+        if (conversationLogRef.current.length > 0 && onCallEndRef.current) {
+            onCallEndRef.current([...conversationLogRef.current]);
+        }
+
         if (recognitionRef.current) {
             try { recognitionRef.current.stop(); } catch {}
             recognitionRef.current = null;
         }
+
+        stopInterruptionListenerRef.current();
 
         if (audioRef.current) {
             audioRef.current.pause();
@@ -84,6 +108,61 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
         setTranscript('');
     };
 
+    // startInterruptionListener — listen for user speech while agent is speaking
+    startInterruptionListenerRef.current = () => {
+        if (!callActiveRef.current || isMutedRef.current) return;
+
+        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (!SpeechRecognition) return;
+
+        // Stop any existing interruption listener
+        stopInterruptionListenerRef.current();
+
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+
+        recognition.onresult = () => {
+            // User started speaking — interrupt the agent!
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current.currentTime = 0;
+                audioRef.current = null;
+            }
+
+            if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+
+            // Stop this interruption listener
+            try { recognition.stop(); } catch {}
+            interruptRecognitionRef.current = null;
+
+            // Switch to normal listening mode
+            if (callActiveRef.current) {
+                setCallState('listening');
+                startListeningRef.current();
+            }
+        };
+
+        recognition.onerror = () => {
+            // Ignore errors during interruption detection — not critical
+            interruptRecognitionRef.current = null;
+        };
+
+        recognition.onend = () => {
+            interruptRecognitionRef.current = null;
+        };
+
+        try {
+            recognition.start();
+            interruptRecognitionRef.current = recognition;
+        } catch {
+            // Ignore — interruption is best-effort
+        }
+    };
+
     // startListening — begin speech recognition
     startListeningRef.current = () => {
         if (!callActiveRef.current || isMutedRef.current) return;
@@ -99,6 +178,9 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
         if (recognitionRef.current) {
             try { recognitionRef.current.stop(); } catch {}
         }
+
+        // Stop any interruption listener
+        stopInterruptionListenerRef.current();
 
         const recognition = new SpeechRecognition();
         recognition.continuous = true;
@@ -124,13 +206,13 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
                 clearTimeout(silenceTimerRef.current);
             }
 
-            // After 2s of silence following speech, process the input
+            // After 1.2s of silence following speech, process the input
             if (finalTranscript.trim()) {
                 silenceTimerRef.current = setTimeout(() => {
                     try { recognition.stop(); } catch {}
                     recognitionRef.current = null;
                     processUserInputRef.current(finalTranscript.trim());
-                }, 2000);
+                }, 1200);
             }
         };
 
@@ -167,7 +249,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
         }
     };
 
-    // speakResponse — play TTS audio then resume listening
+    // speakResponse — play TTS audio with interruption support, then resume listening
     speakResponseRef.current = async (text: string) => {
         if (!audioEnabledRef.current) {
             // No audio — just resume listening
@@ -188,7 +270,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
                     'Content-Type': 'application/json',
                     ...(token ? { Authorization: `Bearer ${token}` } : {}),
                 },
-                body: JSON.stringify({ text }),
+                body: JSON.stringify({ text, streaming: true }),
             });
 
             if (!res.ok) {
@@ -203,18 +285,22 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
                         || voices.find(v => v.lang.startsWith('en'));
                     if (preferred) utterance.voice = preferred;
                     utterance.onend = () => {
+                        stopInterruptionListenerRef.current();
                         if (callActiveRef.current) {
                             setCallState('listening');
                             startListeningRef.current();
                         }
                     };
                     utterance.onerror = () => {
+                        stopInterruptionListenerRef.current();
                         if (callActiveRef.current) {
                             setCallState('listening');
                             startListeningRef.current();
                         }
                     };
                     window.speechSynthesis.speak(utterance);
+                    // Start listening for interruption while browser TTS plays
+                    startInterruptionListenerRef.current();
                 } else {
                     // No TTS at all, just resume
                     if (callActiveRef.current) {
@@ -233,6 +319,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
             audio.onended = () => {
                 audioRef.current = null;
                 URL.revokeObjectURL(url);
+                stopInterruptionListenerRef.current();
                 if (callActiveRef.current) {
                     setCallState('listening');
                     startListeningRef.current();
@@ -242,6 +329,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
             audio.onerror = () => {
                 audioRef.current = null;
                 URL.revokeObjectURL(url);
+                stopInterruptionListenerRef.current();
                 if (callActiveRef.current) {
                     setCallState('listening');
                     startListeningRef.current();
@@ -249,8 +337,12 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
             };
 
             await audio.play();
+
+            // Start listening for interruption while audio plays
+            startInterruptionListenerRef.current();
         } catch (err) {
             console.error('Speech playback error:', err);
+            stopInterruptionListenerRef.current();
             if (callActiveRef.current) {
                 setCallState('listening');
                 startListeningRef.current();
@@ -334,7 +426,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
         connecting: 'Connecting...',
         listening: 'Listening...',
         processing: 'Thinking...',
-        speaking: 'V-Prai is speaking...',
+        speaking: 'V-Prai is speaking... (speak to interrupt)',
         error: errorMessage || 'Call error',
     }[callState];
 
@@ -471,7 +563,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
                 {/* Browser support note */}
                 <div className="px-6 pb-4 text-center">
                     <p className="text-[10px] text-white/20">
-                        Works best in Chrome or Edge. Speak naturally — V-Prai will respond after a brief pause.
+                        Works best in Chrome or Edge. Speak naturally — V-Prai will respond after a brief pause. You can interrupt at any time.
                     </p>
                 </div>
             </div>

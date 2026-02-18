@@ -514,7 +514,24 @@ export async function generateChatResponse(
 ): Promise<string> {
     try {
         const client = getClient();
-        const systemPrompt = buildChatSystemPrompt(context, knowledgeContext, toolInstruction);
+        let systemPrompt = buildChatSystemPrompt(context, knowledgeContext, toolInstruction);
+
+        // Detect voice mode — the client prefixes voice messages with [Voice Mode]
+        const isVoiceMode = message.startsWith('[Voice Mode]');
+        if (isVoiceMode) {
+            systemPrompt += `\n\n## VOICE MODE ACTIVE
+The user is speaking to you via voice call. Adjust your responses:
+- Keep responses concise — 2-3 sentences unless they explicitly ask for more detail
+- Be conversational and natural, like you're speaking to someone on a phone call
+- Do NOT use markdown formatting: no headers, no bold, no bullet points, no tables, no code blocks
+- Do NOT use asterisks, hashes, dashes for formatting — just plain conversational text
+- Sound smart but approachable — you're their strategist on a call, not writing a document
+- If they ask you to do something (find leads, draft a pitch), confirm what you'll do briefly, then do it
+- Numbers and lists should be spoken naturally: "First... Second... Third..." not "1. 2. 3."`;
+        }
+
+        // Strip [Voice Mode] prefix before sending to Claude so it doesn't echo it
+        const cleanMessage = isVoiceMode ? message.replace('[Voice Mode] ', '') : message;
 
         // Build message history for Claude (last 10 messages)
         const messages: Anthropic.MessageParam[] = history.slice(-10).map(m => ({
@@ -523,7 +540,7 @@ export async function generateChatResponse(
         }));
 
         // Add current user message
-        messages.push({ role: 'user', content: message });
+        messages.push({ role: 'user', content: cleanMessage });
 
         // Ensure messages alternate properly (Claude requirement)
         const sanitized = sanitizeMessages(messages);
