@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Paperclip, Sparkles, Mic, Zap, Briefcase, Rocket, ChevronDown, Lock, Search, User, Brain, Coins } from 'lucide-react';
+import { Send, Paperclip, Sparkles, Phone, Zap, Briefcase, Rocket, ChevronDown, Lock, Search, User, Brain, Coins } from 'lucide-react';
 
 import { AgentMode } from '@/app/types';
 
@@ -19,6 +19,7 @@ interface ComposerProps {
     isRestricted?: boolean;
     subscriptionTier?: string;
     creditsBalance?: number | null;
+    onStartVoiceCall?: () => void;
 }
 
 const TIER_CONFIG = {
@@ -61,7 +62,8 @@ export const Composer: React.FC<ComposerProps> = ({
     onToggleArtistContext,
     isRestricted = false,
     subscriptionTier = 'artist',
-    creditsBalance = null
+    creditsBalance = null,
+    onStartVoiceCall
 }) => {
     const isDeepThinkingAllowed = ['enterprise', 'agency'].includes(subscriptionTier);
     const [input, setInput] = useState('');
@@ -293,12 +295,15 @@ export const Composer: React.FC<ComposerProps> = ({
                         />
 
                         <div className="flex items-center gap-1 pb-1">
-                            <button
-                                onClick={() => alert("Voice mode coming soon!")}
-                                className="p-2 text-white/40 hover:text-white transition-colors rounded-full hover:bg-white/5"
-                            >
-                                <Mic size={18} />
-                            </button>
+                            {onStartVoiceCall && (
+                                <button
+                                    onClick={onStartVoiceCall}
+                                    className="p-2 text-visio-teal/70 hover:text-visio-teal hover:bg-visio-teal/10 transition-colors rounded-full"
+                                    title="Call V-Prai — voice conversation"
+                                >
+                                    <Phone size={18} />
+                                </button>
+                            )}
                             <button
                                 onClick={handleSubmit}
                                 disabled={!input.trim() || isLoading}

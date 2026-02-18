@@ -21,6 +21,7 @@ import { Toast } from './components/Toast';
 import { ToolsPanel } from './components/ToolsPanel';
 import { LeadGenWizard, LeadGenConfig } from './components/LeadGenWizard';
 import { LeadGenProgress } from './components/LeadGenProgress';
+import { VoiceCallModal } from './components/VoiceCallModal';
 import { Message, Role, Campaign, ViewMode, Lead, Session, ArtistProfile, Subscription, SubscriptionTier, AgentMode, ToolId, LeadList, StrategyBrief } from './types';
 import { AITier } from './components/Composer';
 import { Menu, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
@@ -134,6 +135,7 @@ export default function Home() {
   const [showLeadGenWizard, setShowLeadGenWizard] = useState(false);
   const [leadGenProgress, setLeadGenProgress] = useState<{ tier: string; status: string; found: number; target: number; currentSource: string; logs: string[] } | null>(null);
   const [isGeneratingLeads, setIsGeneratingLeads] = useState(false);
+  const [showVoiceCall, setShowVoiceCall] = useState(false);
   const [campaignFolders, setCampaignFolders] = useState<Campaign[]>([]);
   const [isChatScrollable, setIsChatScrollable] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -1200,6 +1202,65 @@ export default function Home() {
     }
   };
 
+  // Voice call handler — sends message to agent and returns text response
+  const handleVoiceMessage = useCallback(async (text: string): Promise<string> => {
+    const accessToken = session?.access_token;
+    const res = await fetch('/api/agent', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+      },
+      body: JSON.stringify({
+        message: text,
+        conversationHistory: [],
+        tier: 'instant',
+        mode: 'chat',
+        webSearchEnabled,
+        artistContextEnabled,
+        activeTool: 'none'
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      return data?.message || 'Sorry, I had trouble with that request. Please try again.';
+    }
+
+    // Also inject the exchange into the active chat session
+    const activeIdx = sessions.findIndex(s => s.id === activeSessionId);
+    if (activeIdx !== -1) {
+      const userMsg: Message = {
+        id: crypto.randomUUID(),
+        role: Role.USER,
+        content: `[Voice] ${text}`,
+        timestamp: Date.now(),
+      };
+      const agentMsg: Message = {
+        id: crypto.randomUUID(),
+        role: Role.AGENT,
+        content: data.message || 'Done.',
+        leads: data.leads || [],
+        webResults: data.webResults || [],
+        toolUsed: data.toolUsed || undefined,
+        timestamp: Date.now(),
+      };
+      setSessions(prev => {
+        const next = [...prev];
+        const curr = next[activeIdx];
+        next[activeIdx] = {
+          ...curr,
+          messages: [...curr.messages, userMsg, agentMsg],
+          lastUpdated: Date.now(),
+        };
+        return next;
+      });
+    }
+
+    return data.message || 'Done.';
+  }, [session?.access_token, webSearchEnabled, artistContextEnabled, sessions, activeSessionId]);
+
   const handleSaveLead = async (lead: Lead) => {
     try {
       const success = await saveLeads([{
@@ -1550,6 +1611,14 @@ export default function Home() {
         defaultMarket={artistProfile?.location?.country || undefined}
       />
 
+      {/* Voice Call Modal */}
+      <VoiceCallModal
+        isOpen={showVoiceCall}
+        onClose={() => setShowVoiceCall(false)}
+        onSendMessage={handleVoiceMessage}
+        accessToken={session?.access_token}
+      />
+
       {/* Onboarding Tutorial Overlay */}
       {showTutorial && (
         <OnboardingTutorial
@@ -1834,6 +1903,7 @@ export default function Home() {
                     isRestricted={isRestricted}
                     subscriptionTier={effectiveSubscription.tier}
                     creditsBalance={creditsBalance}
+                    onStartVoiceCall={() => setShowVoiceCall(true)}
                   />
                 </div>
               </>
