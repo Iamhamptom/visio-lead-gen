@@ -32,7 +32,7 @@ const STEPS = [
     {
         icon: Sparkles,
         title: 'Welcome to V-Prai',
-        subtitle: 'Your AI-Powered PR Strategist',
+        subtitle: 'Your AI-Powered Publicist',
         description: 'V-Prai helps you find the right contacts, draft pitches, plan campaigns, and build your PR game step by step — all powered by AI.',
         tip: 'Let\'s get your account set up.',
         color: 'from-visio-teal to-visio-sage',

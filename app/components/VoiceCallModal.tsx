@@ -264,8 +264,8 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
     const pickMaleVoice = (): SpeechSynthesisVoice | null => {
         const voices = window.speechSynthesis.getVoices();
         const malePrefNames = [
-            'Google UK English Male', 'Google US English', 'Microsoft David',
-            'Microsoft Mark', 'Daniel', 'James', 'Thomas', 'Fred', 'Alex',
+            'Google UK English Male', 'Daniel', 'James', 'Thomas',
+            'Google US English', 'Microsoft David', 'Microsoft Mark', 'Fred', 'Alex',
         ];
         for (const name of malePrefNames) {
             const v = voices.find(v => v.name.includes(name) && v.lang.startsWith('en'));
@@ -411,7 +411,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
 
         setTimeout(() => {
             if (!callActiveRef.current) return;
-            const greeting = "Hey, V-Prai here. What are we working on today?";
+            const greeting = "V-Prai here, your publicist is on the line. So tell me — what are we making happen today?";
             setConversationLog([{ role: 'agent', text: greeting }]);
             speakResponseRef.current(greeting);
         }, 600);
