@@ -106,6 +106,19 @@ export interface IntentResult {
         category?: string | null;
         searchTerm?: string | null;
     };
+    /** Structured query components extracted from user request */
+    queryPlan?: {
+        /** How many results the user explicitly asked for (e.g., "find me 10" → 10) */
+        targetCount?: number;
+        /** Specific entity type requested (e.g., "dancers", "curators", "DJs") */
+        entityType?: string;
+        /** Specific platform focus (e.g., "tiktok", "instagram", "spotify") */
+        platform?: string;
+        /** Specific location/city (more granular than country, e.g., "Soweto", "Cape Town") */
+        specificLocation?: string;
+        /** Industry/niche context (e.g., "amapiano", "hip-hop", "fashion") */
+        niche?: string;
+    };
 }
 
 // ─── Stage 1: Intent Classifier ────────────────────────
@@ -143,9 +156,23 @@ Also extract:
 - "searchQuery": optimized search query IF lead_generation/deep_search/web_search (include genre+country+type for leads)
 - "country": detected country code (ZA, USA, UK, NG, etc.) or null
 - "category": detected niche/genre if mentioned, or null
+- "queryPlan": structured breakdown of the user's SPECIFIC request (ONLY for lead_generation/deep_search):
+  - "targetCount": exact number if user specified (e.g. "find me 10" → 10, "get 5" → 5). null if not specified
+  - "entityType": the SPECIFIC type of person/entity requested (e.g. "dancers", "DJs", "curators", "journalists", "influencers", "producers"). Use the user's EXACT words, not generic defaults
+  - "platform": specific social platform if mentioned (e.g. "tiktok", "instagram", "youtube", "spotify"). null if not mentioned
+  - "specificLocation": specific city/area if mentioned (e.g. "Soweto", "Cape Town", "Brooklyn"). This is MORE granular than country. null if only country mentioned
+  - "niche": industry/genre/niche context (e.g. "amapiano", "hip-hop", "dance", "fashion", "comedy"). null if not mentioned
+
+QUERY DECOMPOSITION RULES:
+- "Find me 10 TikTok dancers in Soweto" → targetCount:10, entityType:"dancers", platform:"tiktok", specificLocation:"Soweto", country:"ZA"
+- "Get me 5 amapiano playlist curators" → targetCount:5, entityType:"playlist curators", niche:"amapiano"
+- "Find hip-hop bloggers in the UK" → entityType:"bloggers", niche:"hip-hop", country:"UK"
+- If user says a NUMBER, respect it exactly. Do NOT inflate or ignore it.
+- If user specifies a PLATFORM (TikTok, Instagram), the search should focus on that platform.
+- If user specifies a LOCATION (Soweto, Cape Town), include it in the search — it's more specific than just the country.
 
 Respond with ONLY valid JSON (no markdown, no code fences):
-{"category":"...","confidence":0.0,"searchQuery":"...","filters":{"country":"...","category":"..."}}`;
+{"category":"...","confidence":0.0,"searchQuery":"...","filters":{"country":"...","category":"..."},"queryPlan":{"targetCount":null,"entityType":null,"platform":null,"specificLocation":null,"niche":null}}`;
 
 export async function classifyIntent(
     message: string,
@@ -191,6 +218,7 @@ export async function classifyIntent(
             searchQuery: parsed.searchQuery || undefined,
             tool: parsed.tool || undefined,
             filters: parsed.filters || {},
+            queryPlan: parsed.queryPlan || undefined,
         };
     } catch (error: any) {
         const { type } = categorizeApiError(error);
@@ -554,6 +582,15 @@ CRITICAL RULES — DATA INTEGRITY:
 4. If the results are web pages/articles (no direct contacts), present them as research leads with clickable links, not as people.
 5. Results marked "Verified (Scraped)" or "Local Database" have real data — prioritize these.
 6. Results from "Lead Search" or "Google" are web pages — present them as links to explore, NOT as contacts with fabricated details.
+
+CRITICAL RULES — RESULT QUALITY:
+7. REVIEW every result before presenting it. Ask yourself: "Does this result match what the user specifically asked for?"
+8. If the user asked for "10 TikTok dancers in Soweto", do NOT present playlist curators, bloggers, or random accounts. Only present actual dancers.
+9. If a result is clearly an article title (e.g., "Experience the Energy at Soweto's Finest Dance Studio"), do NOT present it as a person. Present it as a resource link or skip it entirely.
+10. Match the EXACT count the user requested. If they asked for 10, present exactly 10 (or fewer if you couldn't find enough quality matches). NEVER pad results with irrelevant entries.
+11. If you found fewer quality results than requested, be HONEST: "I found 4 verified TikTok dancers in Soweto. Here they are: ..." — then offer to search more broadly.
+12. Do NOT expose internal search logs, thinking process, or raw data to the user. Present clean, professional results.
+13. Every result you present must be a SPECIFIC, NAMED person or account — not a generic description or article excerpt.
 
 FORMATTING:
 - For verified contacts (with emails/socials): use a **markdown table** with columns: Name | Role | Email | Social | Source

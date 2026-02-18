@@ -181,6 +181,111 @@ End with 2-3 specific next steps (e.g., "Want me to draft a pitch to any of thes
     }
 }
 
+// ─── Result Relevance Filter ─────────────────────────
+/**
+ * Filters pipeline contacts for relevance based on the user's specific request.
+ * Removes article titles, non-person entries, and results that don't match
+ * the requested entity type, platform, or location.
+ */
+function filterContactsForRelevance(
+    contacts: Array<{ name: string; email?: string; company?: string; title?: string; source: string; url?: string; instagram?: string; tiktok?: string; twitter?: string; linkedin?: string; followers?: string; country?: string; confidence: string }>,
+    entityType: string,
+    platform: string,
+    specificLocation: string,
+): typeof contacts {
+    const entityLower = entityType.toLowerCase();
+    const platformLower = platform.toLowerCase();
+    const locationLower = specificLocation.toLowerCase();
+
+    return contacts.filter(contact => {
+        const name = (contact.name || '').trim();
+
+        // 1. Skip entries with no name or names that are clearly article titles
+        if (!name) return false;
+        if (name.length > 80) return false; // Article titles tend to be very long
+        // Detect article-like patterns: starts with verb phrases or contains "how to", "best of", etc.
+        const articlePatterns = [
+            /^(experience|discover|explore|learn|how to|the best|top \d+|best \d+|\d+ best|\d+ top|a guide|guide to|everything you|why you|what you|welcome to|introducing)/i,
+            /\b(tips for|ways to|things to|reasons to|steps to|click here|subscribe|sign up|download)\b/i,
+        ];
+        if (articlePatterns.some(p => p.test(name))) return false;
+
+        // 2. Skip entries named "Unknown" with no useful data
+        if (name === 'Unknown' && !contact.email && !contact.instagram && !contact.tiktok && !contact.twitter) return false;
+
+        // 3. Platform relevance: if user asked for TikTok specifically, prioritize contacts with TikTok data
+        // Don't hard-filter (some valid contacts may not have the platform field set yet), but deprioritize
+        // This is handled by scoring below
+
+        // 4. Skip results that are clearly from a different domain (e.g., recipe blogs, tech sites)
+        // when the user asked for a specific type
+        if (entityLower && entityLower !== 'contacts' && entityLower !== 'leads') {
+            const haystack = [name, contact.title || '', contact.company || '', contact.source || ''].join(' ').toLowerCase();
+            // If the contact has NO relevance signal to the entity type, check if it's completely unrelated
+            const hasEntitySignal = haystack.includes(entityLower) ||
+                haystack.includes(entityLower.replace(/s$/, '')); // Handle plural: "dancers" → "dancer"
+            const hasGenericSignal = /curator|journalist|blogger|dj|artist|producer|manager|label|music|entertainment|media/i.test(haystack);
+
+            // If the contact has neither the specific entity type nor generic music signals,
+            // and it's from a low-confidence source, filter it out
+            if (!hasEntitySignal && !hasGenericSignal && contact.confidence === 'low') {
+                return false;
+            }
+        }
+
+        return true;
+    }).sort((a, b) => {
+        // Score-based sorting: most relevant first
+        let scoreA = 0;
+        let scoreB = 0;
+
+        // Platform match bonus
+        if (platformLower) {
+            if (platformLower === 'tiktok') {
+                if (a.tiktok) scoreA += 10;
+                if (b.tiktok) scoreB += 10;
+            } else if (platformLower === 'instagram') {
+                if (a.instagram) scoreA += 10;
+                if (b.instagram) scoreB += 10;
+            } else if (platformLower === 'twitter') {
+                if (a.twitter) scoreA += 10;
+                if (b.twitter) scoreB += 10;
+            } else if (platformLower === 'linkedin') {
+                if (a.linkedin) scoreA += 10;
+                if (b.linkedin) scoreB += 10;
+            }
+        }
+
+        // Has email = higher confidence
+        if (a.email) scoreA += 5;
+        if (b.email) scoreB += 5;
+
+        // Confidence scoring
+        const confRank: Record<string, number> = { high: 6, medium: 3, low: 0 };
+        scoreA += confRank[a.confidence] || 0;
+        scoreB += confRank[b.confidence] || 0;
+
+        // Location match bonus
+        if (locationLower) {
+            const aHaystack = [a.name, a.company || '', a.title || ''].join(' ').toLowerCase();
+            const bHaystack = [b.name, b.company || '', b.title || ''].join(' ').toLowerCase();
+            if (aHaystack.includes(locationLower)) scoreA += 4;
+            if (bHaystack.includes(locationLower)) scoreB += 4;
+        }
+
+        // Entity type match bonus
+        if (entityType) {
+            const entLower = entityType.toLowerCase();
+            const aHaystack = [a.name, a.title || '', a.company || ''].join(' ').toLowerCase();
+            const bHaystack = [b.name, b.title || '', b.company || ''].join(' ').toLowerCase();
+            if (aHaystack.includes(entLower) || aHaystack.includes(entLower.replace(/s$/, ''))) scoreA += 4;
+            if (bHaystack.includes(entLower) || bHaystack.includes(entLower.replace(/s$/, ''))) scoreB += 4;
+        }
+
+        return scoreB - scoreA;
+    });
+}
+
 // ═══════════════════════════════════════════════════════
 // MAIN AGENT HANDLER
 // ═══════════════════════════════════════════════════════
@@ -480,12 +585,33 @@ export async function POST(request: NextRequest) {
                         toolsUsed.push('find_leads');
                         const leadQuery = intentResult.searchQuery || userMessage;
                         const country = normalizeCountry(intentResult.filters?.country || artistContext?.location?.country);
-                        const targetCount = 100;
-                        logs.push(`🎯 Lead Finder activated: "${leadQuery}" (target: ${targetCount})`);
+
+                        // Respect the user's requested count from queryPlan, with sensible bounds
+                        const queryPlan = intentResult.queryPlan || {};
+                        const userRequestedCount = queryPlan.targetCount;
+                        const targetCount = userRequestedCount
+                            ? Math.min(Math.max(userRequestedCount, 1), 100) // Clamp between 1 and 100
+                            : 20; // Sensible default instead of 100
+                        logs.push(`🎯 Lead Finder activated: "${leadQuery}" (target: ${targetCount}${userRequestedCount ? ` — user requested ${userRequestedCount}` : ''})`);
 
                         if (!webSearchEnabled) {
                             intent = { action: 'clarify', filters: {}, message: `I'd love to find those contacts for you, but web search is currently off. Toggle it on and I'll start searching!` };
                             break;
+                        }
+
+                        // Credit pre-check BEFORE running any searches to avoid wasting API calls
+                        const leadCreditCost = getCreditCost('lead_generation');
+                        if (leadCreditCost > 0 && !isAdminUser(auth.user)) {
+                            const preBalance = await getUserCredits(auth.user.id);
+                            if (preBalance < leadCreditCost) {
+                                logs.push(`💳 Insufficient credits (need ${leadCreditCost}, have ${preBalance})`);
+                                intent = {
+                                    action: 'clarify', filters: {},
+                                    message: `You need ${leadCreditCost} credit${leadCreditCost > 1 ? 's' : ''} for a lead search, but you have ${preBalance}. Upgrade your plan for more credits!`
+                                };
+                                suggestedNextSteps = ['Upgrade your plan for more credits'];
+                                break;
+                            }
                         }
 
                         // Log lead request to admin dashboard
@@ -509,31 +635,49 @@ export async function POST(request: NextRequest) {
                             console.error('Failed to log lead request:', e);
                         }
 
-                        // Build contact types from intent, with sensible defaults
-                        const leadContactTypes = intentResult.filters?.category
-                            ? [intentResult.filters.category]
-                            : ['curators', 'journalists', 'bloggers', 'DJs', 'A&R'];
-                        const leadGenre = artistContext?.identity?.genre || '';
+                        // Build contact types from queryPlan entity type, then intent category, then defaults
+                        const leadContactTypes = queryPlan.entityType
+                            ? [queryPlan.entityType]
+                            : intentResult.filters?.category
+                                ? [intentResult.filters.category]
+                                : ['curators', 'journalists', 'bloggers', 'DJs', 'A&R'];
+                        const leadGenre = queryPlan.niche || artistContext?.identity?.genre || '';
                         const leadMarkets = [country];
                         leadMeta = { contactTypes: leadContactTypes, genre: leadGenre, markets: leadMarkets };
 
                         const pipelineStatus = getPipelineStatus();
                         logs.push(`📡 Pipelines: Apollo=${pipelineStatus.apollo ? '🟢' : '⚪'} LinkedIn=${pipelineStatus.linkedin ? '🟢' : '⚪'} ZoomInfo=${pipelineStatus.zoominfo ? '🟢' : '⚪'}`);
 
+                        // Build a more specific search query incorporating location and platform
+                        let refinedQuery = leadQuery;
+                        if (queryPlan.specificLocation && !leadQuery.toLowerCase().includes(queryPlan.specificLocation.toLowerCase())) {
+                            refinedQuery = `${refinedQuery} ${queryPlan.specificLocation}`;
+                        }
+
                         // Use cascading search (Tier 1 quick pass for fast initial results)
                         const brief: PipelineBrief = {
                             contactTypes: leadContactTypes,
                             markets: leadMarkets,
                             genre: leadGenre,
-                            query: leadQuery,
+                            query: refinedQuery,
                             targetCount,
                             searchDepth: 'quick',
+                            preferredPlatform: queryPlan.platform || undefined,
+                            specificLocation: queryPlan.specificLocation || undefined,
                         };
 
                         const cascadeResult = await performCascadingSearch(brief);
                         logs.push(...cascadeResult.logs);
 
-                        leads = cascadeResult.contacts.slice(0, targetCount).map((c, i) => ({
+                        // Filter results for relevance before presenting
+                        const filteredContacts = filterContactsForRelevance(
+                            cascadeResult.contacts,
+                            queryPlan.entityType || '',
+                            queryPlan.platform || '',
+                            queryPlan.specificLocation || ''
+                        );
+
+                        leads = filteredContacts.slice(0, targetCount).map((c, i) => ({
                             id: -(i + 1),
                             name: c.name,
                             company: c.company,
@@ -549,7 +693,7 @@ export async function POST(request: NextRequest) {
                             country
                         }));
 
-                        logs.push(`✅ Total: ${leads.length} unique contacts (${cascadeResult.total} found across all sources)`);
+                        logs.push(`✅ Total: ${leads.length} relevant contacts (${cascadeResult.total} found, ${filteredContacts.length} after relevance filter)`);
 
                         // Update admin log with completion status + persist results
                         if (leadRequestId) {
@@ -568,7 +712,7 @@ export async function POST(request: NextRequest) {
                             }
                         }
 
-                        // Claude synthesizes results
+                        // Claude synthesizes results — include the user's specific request context
                         const allResultsForSynthesis = leads.map(l => ({ name: l.name, url: l.url, snippet: l.snippet, source: l.source, email: l.email, instagram: l.instagram, twitter: l.twitter, tiktok: l.tiktok }));
                         const enrichedMsg = await generateWithSearchResults(userMessage, allResultsForSynthesis, validatedTier as any, artistContext);
                         intent = {
@@ -833,10 +977,10 @@ Format with markdown tables for top content, bullet points for insights. End wit
         // ─── CREDIT CHECK ─────────────────────────────
         // Map intent action to credit cost category
         const creditCategoryMap: Record<string, string> = {
-            'find_leads': 'deep_search',
-            'search': 'web_search',
-            'deep_search': 'deep_search',
-            'smart_scrape': 'smart_scrape',
+            'find_leads': 'lead_generation',   // 2 credits, not deep_search (5)
+            'search': 'web_search',            // 1 credit
+            'deep_search': 'deep_search',      // 5 credits
+            'smart_scrape': 'smart_scrape',    // 3 credits
         };
         const creditCategory = creditCategoryMap[intent.action] || 'chat_message';
         const creditCost = getCreditCost(creditCategory);

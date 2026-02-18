@@ -63,32 +63,53 @@ function mapToProfiles(results: SerperResult[], platform: string): SocialProfile
 
 // ─── Individual Platform Searches ──────────────────────
 
+/** Check if query already contains music/entertainment context */
+function hasMusicContext(query: string): boolean {
+    const musicKeywords = [
+        'music', 'artist', 'rapper', 'dj', 'producer', 'label', 'song', 'album',
+        'genre', 'playlist', 'curator', 'radio', 'hip-hop', 'amapiano', 'afrobeats',
+        'gqom', 'r&b', 'pop', 'rock', 'jazz', 'dance', 'dancer', 'singer',
+        'songwriter', 'entertainment', 'media', 'press', 'journalist', 'blogger',
+        'influencer', 'content creator', 'promoter', 'festival', 'concert'
+    ];
+    const lower = query.toLowerCase();
+    return musicKeywords.some(k => lower.includes(k));
+}
+
 export async function searchInstagram(query: string, country: string = 'ZA'): Promise<SocialProfile[]> {
-    const results = await performGoogleSearch(`site:instagram.com ${query} music`, country);
+    // Only append "music" if query doesn't already have relevant context
+    const contextSuffix = hasMusicContext(query) ? '' : ' music';
+    const results = await performGoogleSearch(`site:instagram.com ${query}${contextSuffix}`, country);
     return mapToProfiles(results, 'instagram')
         .filter(p => !p.url.includes('/p/') && !p.url.includes('/reel/')); // Exclude posts
 }
 
 export async function searchTikTok(query: string, country: string = 'ZA'): Promise<SocialProfile[]> {
-    const results = await performGoogleSearch(`site:tiktok.com/@ ${query} music`, country);
+    // Only append "music" if query doesn't already have relevant context
+    const contextSuffix = hasMusicContext(query) ? '' : ' music';
+    const results = await performGoogleSearch(`site:tiktok.com/@ ${query}${contextSuffix}`, country);
     return mapToProfiles(results, 'tiktok')
         .filter(p => p.url.includes('/@')); // Only profile pages
 }
 
 export async function searchTwitter(query: string, country: string = 'ZA'): Promise<SocialProfile[]> {
-    const results = await performGoogleSearch(`site:x.com ${query} music OR journalist OR curator OR blogger`, country);
+    // Only append generic music context if query doesn't have its own context
+    const contextSuffix = hasMusicContext(query) ? '' : ' music OR journalist OR curator OR blogger';
+    const results = await performGoogleSearch(`site:x.com ${query}${contextSuffix}`, country);
     return mapToProfiles(results, 'twitter')
         .filter(p => !p.url.includes('/status/')); // Exclude individual tweets
 }
 
 export async function searchYouTube(query: string, country: string = 'ZA'): Promise<SocialProfile[]> {
-    const results = await performGoogleSearch(`site:youtube.com ${query} music channel`, country);
+    const contextSuffix = hasMusicContext(query) ? ' channel' : ' music channel';
+    const results = await performGoogleSearch(`site:youtube.com ${query}${contextSuffix}`, country);
     return mapToProfiles(results, 'youtube')
         .filter(p => p.url.includes('/channel/') || p.url.includes('/c/') || p.url.includes('/@'));
 }
 
 export async function searchLinkedIn(query: string, country: string = 'ZA'): Promise<SocialProfile[]> {
-    const results = await performGoogleSearch(`site:linkedin.com/in ${query} music entertainment PR`, country);
+    const contextSuffix = hasMusicContext(query) ? '' : ' music entertainment PR';
+    const results = await performGoogleSearch(`site:linkedin.com/in ${query}${contextSuffix}`, country);
     return mapToProfiles(results, 'linkedin');
 }
 

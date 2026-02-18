@@ -24,6 +24,10 @@ export interface PipelineBrief {
     query: string;
     targetCount: number;
     searchDepth: 'quick' | 'deep' | 'full';
+    /** Preferred social platform to focus on (e.g., 'tiktok', 'instagram') */
+    preferredPlatform?: string;
+    /** Specific location more granular than country (e.g., 'Soweto', 'Cape Town') */
+    specificLocation?: string;
 }
 
 export interface PipelineProgress {
@@ -107,6 +111,12 @@ function buildSearchQuery(brief: PipelineBrief): string {
     // Add contact types (e.g. "playlist curators", "bloggers", "A&R")
     if (brief.contactTypes.length > 0) {
         parts.push(brief.contactTypes.join(' '));
+    }
+
+    // Add specific location before market-level location for precision
+    // e.g., "Soweto" before "South Africa"
+    if (brief.specificLocation) {
+        parts.push(brief.specificLocation);
     }
 
     // Add markets as location context
@@ -199,9 +209,22 @@ function mapDBLeadToContact(lead: DBLead, countryCode: string): PipelineContact 
     };
 }
 
-function mapSearchResultToContact(result: SearchResult): PipelineContact {
+function mapSearchResultToContact(result: SearchResult): PipelineContact | null {
+    const name = (result.name || '').trim();
+
+    // Skip results that are clearly article/page titles, not people or organizations
+    // These patterns indicate a web page title, not a contact name
+    if (!name) return null;
+    if (name.length > 80) return null; // Article titles tend to be very long
+
+    const articlePatterns = [
+        /^(experience|discover|explore|learn|how to|the best|top \d+|best \d+|\d+ best|\d+ top|a guide|guide to|everything you|why you|what you|welcome to|introducing)/i,
+        /\b(tips for|ways to|things to|reasons to|steps to|click here|subscribe|sign up|download|privacy policy|terms of|cookie|loading)\b/i,
+    ];
+    if (articlePatterns.some(p => p.test(name))) return null;
+
     return {
-        name: result.name,
+        name,
         email: undefined,
         company: result.company || undefined,
         title: result.title || undefined,
@@ -330,7 +353,7 @@ export async function performCascadingSearch(
         const searchResults = await performLeadSearch(searchQuery, primaryCountry);
         logs.push(`[Tier 1] Google Lead Search: ${searchResults.length} results`);
 
-        const googleContacts = searchResults.map(mapSearchResultToContact);
+        const googleContacts = searchResults.map(mapSearchResultToContact).filter((c): c is PipelineContact => c !== null);
         allContacts.push(...googleContacts);
     } catch (error: any) {
         logs.push(`[Tier 1] Google Lead Search error: ${error.message} — continuing`);
@@ -340,10 +363,32 @@ export async function performCascadingSearch(
 
     // --- 1c: Social Media Search ---
     try {
-        const socialQuery = [brief.genre, ...brief.contactTypes].filter(Boolean).join(' ');
+        // Build social query with location context if available
+        const socialQueryParts = [...brief.contactTypes];
+        if (brief.genre) socialQueryParts.unshift(brief.genre);
+        if (brief.specificLocation) socialQueryParts.push(brief.specificLocation);
+        const socialQuery = socialQueryParts.filter(Boolean).join(' ');
+
+        // If user specified a platform, focus search on that platform
+        // Otherwise search all default platforms
+        type SocialPlatformType = 'instagram' | 'tiktok' | 'twitter' | 'youtube' | 'linkedin' | 'soundcloud' | 'spotify';
+        const platformMap: Record<string, SocialPlatformType[]> = {
+            'tiktok': ['tiktok'],
+            'instagram': ['instagram'],
+            'twitter': ['twitter'],
+            'youtube': ['youtube'],
+            'linkedin': ['linkedin'],
+        };
+        const platforms = brief.preferredPlatform
+            ? platformMap[brief.preferredPlatform.toLowerCase()] || ['instagram', 'tiktok', 'twitter', 'linkedin']
+            : ['instagram', 'tiktok', 'twitter', 'linkedin'];
+
+        logs.push(`[Tier 1] Social Search: querying ${platforms.join(', ')} for "${socialQuery || searchQuery}"`);
+
         const socialResults = await searchAllSocials(
             socialQuery || searchQuery,
-            primaryCountry
+            primaryCountry,
+            platforms as any
         );
         const flatSocials = flattenSocialResults(socialResults);
         logs.push(`[Tier 1] Social Search: ${flatSocials.length} profiles found`);

@@ -26,7 +26,10 @@ export async function performSmartSearch(query: string, country: string = 'ZA'):
         'producer', 'label', 'record', 'song', 'album', 'genre', 'media',
         'playlist', 'curator', 'radio', 'press', 'interview', 'podcast',
         'manager', 'booking', 'festival', 'club', 'venue', 'chart',
-        'pr', 'publicist', 'journalist', 'writer', 'editor', 'contact'
+        'pr', 'publicist', 'journalist', 'writer', 'editor', 'contact',
+        'dancer', 'dance', 'influencer', 'content creator', 'singer', 'songwriter',
+        'promoter', 'concert', 'gig', 'hip-hop', 'amapiano', 'afrobeats',
+        'tiktok', 'instagram', 'youtube', 'twitter'
     ];
 
     const hasSafeKeyword = safeKeywords.some(k => lowerQ.includes(k));
