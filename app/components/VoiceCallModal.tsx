@@ -13,17 +13,6 @@ interface VoiceCallModalProps {
 
 type CallState = 'idle' | 'connecting' | 'listening' | 'processing' | 'speaking' | 'error';
 
-// Browser speech recognition types
-interface SpeechRecognitionEvent {
-    results: SpeechRecognitionResultList;
-    resultIndex: number;
-}
-
-interface SpeechRecognitionErrorEvent {
-    error: string;
-    message?: string;
-}
-
 export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
     isOpen,
     onClose,
@@ -33,17 +22,26 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
     const [callState, setCallState] = useState<CallState>('idle');
     const [isMuted, setIsMuted] = useState(false);
     const [transcript, setTranscript] = useState('');
-    const [response, setResponse] = useState('');
     const [conversationLog, setConversationLog] = useState<{ role: 'user' | 'agent'; text: string }[]>([]);
     const [errorMessage, setErrorMessage] = useState('');
     const [audioEnabled, setAudioEnabled] = useState(true);
 
+    // Refs to break circular callback dependencies
     const recognitionRef = useRef<any>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
-    const isListeningRef = useRef(false);
     const callActiveRef = useRef(false);
-    const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const logContainerRef = useRef<HTMLDivElement>(null);
+    const isMutedRef = useRef(false);
+    const audioEnabledRef = useRef(true);
+    const accessTokenRef = useRef(accessToken);
+    const onSendMessageRef = useRef(onSendMessage);
+
+    // Keep refs in sync with state/props
+    useEffect(() => { isMutedRef.current = isMuted; }, [isMuted]);
+    useEffect(() => { audioEnabledRef.current = audioEnabled; }, [audioEnabled]);
+    useEffect(() => { accessTokenRef.current = accessToken; }, [accessToken]);
+    useEffect(() => { onSendMessageRef.current = onSendMessage; }, [onSendMessage]);
 
     // Scroll conversation log to bottom
     useEffect(() => {
@@ -52,130 +50,64 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
         }
     }, [conversationLog]);
 
-    // Clean up on close
-    useEffect(() => {
-        if (!isOpen) {
-            stopCall();
-        }
-    }, [isOpen]);
+    // ── Core functions using refs (no circular deps) ──
 
-    const getSpeechRecognition = useCallback(() => {
+    const stopCallRef = useRef<() => void>(() => {});
+    const startListeningRef = useRef<() => void>(() => {});
+    const speakResponseRef = useRef<(text: string) => Promise<void>>(async () => {});
+    const processUserInputRef = useRef<(text: string) => Promise<void>>(async () => {});
+
+    // stopCall — tear down everything
+    stopCallRef.current = () => {
+        callActiveRef.current = false;
+
+        if (recognitionRef.current) {
+            try { recognitionRef.current.stop(); } catch {}
+            recognitionRef.current = null;
+        }
+
+        if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current = null;
+        }
+
+        if (silenceTimerRef.current) {
+            clearTimeout(silenceTimerRef.current);
+            silenceTimerRef.current = null;
+        }
+
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+        }
+
+        setCallState('idle');
+        setTranscript('');
+    };
+
+    // startListening — begin speech recognition
+    startListeningRef.current = () => {
+        if (!callActiveRef.current || isMutedRef.current) return;
+
         const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
         if (!SpeechRecognition) {
             setErrorMessage('Speech recognition is not supported in this browser. Try Chrome or Edge.');
             setCallState('error');
-            return null;
-        }
-        return new SpeechRecognition();
-    }, []);
-
-    const speakResponse = useCallback(async (text: string) => {
-        if (!audioEnabled) return;
-
-        try {
-            setCallState('speaking');
-
-            const res = await fetch('/api/voice', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-                },
-                body: JSON.stringify({ text }),
-            });
-
-            if (!res.ok) {
-                console.error('TTS failed, falling back to browser speech');
-                // Fallback to browser TTS
-                if ('speechSynthesis' in window) {
-                    const utterance = createFallbackUtterance(text);
-                    utterance.rate = 1.0;
-                    utterance.pitch = 0.9;
-                    utterance.onend = () => {
-                        if (callActiveRef.current) {
-                            startListening();
-                        }
-                    };
-                    window.speechSynthesis.speak(utterance);
-                }
-                return;
-            }
-
-            const blob = await res.blob();
-            const url = URL.createObjectURL(blob);
-            const audio = new Audio(url);
-            audioRef.current = audio;
-
-            audio.onended = () => {
-                audioRef.current = null;
-                URL.revokeObjectURL(url);
-                // Resume listening after speaking
-                if (callActiveRef.current) {
-                    startListening();
-                }
-            };
-
-            audio.onerror = () => {
-                audioRef.current = null;
-                URL.revokeObjectURL(url);
-                if (callActiveRef.current) {
-                    startListening();
-                }
-            };
-
-            await audio.play();
-        } catch (err) {
-            console.error('Speech playback error:', err);
-            // Resume listening even on error
-            if (callActiveRef.current) {
-                startListening();
-            }
-        }
-    }, [accessToken, audioEnabled]);
-
-    const processUserInput = useCallback(async (text: string) => {
-        if (!text.trim()) {
-            if (callActiveRef.current) startListening();
             return;
         }
 
-        setCallState('processing');
-        setTranscript('');
-        setConversationLog(prev => [...prev, { role: 'user', text }]);
-
-        try {
-            const agentResponse = await onSendMessage(text);
-            setResponse(agentResponse);
-            setConversationLog(prev => [...prev, { role: 'agent', text: agentResponse }]);
-
-            // Speak the response
-            await speakResponse(agentResponse);
-        } catch (err: any) {
-            console.error('Agent processing error:', err);
-            const errorText = 'Sorry, I had trouble processing that. Could you say it again?';
-            setResponse(errorText);
-            setConversationLog(prev => [...prev, { role: 'agent', text: errorText }]);
-            if (callActiveRef.current) {
-                startListening();
-            }
+        // Stop any existing instance
+        if (recognitionRef.current) {
+            try { recognitionRef.current.stop(); } catch {}
         }
-    }, [onSendMessage, speakResponse]);
 
-    const startListening = useCallback(() => {
-        if (!callActiveRef.current || isMuted) return;
-
-        const recognition = getSpeechRecognition();
-        if (!recognition) return;
-
+        const recognition = new SpeechRecognition();
         recognition.continuous = true;
         recognition.interimResults = true;
         recognition.lang = 'en-US';
 
         let finalTranscript = '';
-        let hasResults = false;
 
-        recognition.onresult = (event: SpeechRecognitionEvent) => {
-            hasResults = true;
+        recognition.onresult = (event: any) => {
             let interim = '';
             for (let i = event.resultIndex; i < event.results.length; i++) {
                 const result = event.results[i];
@@ -192,21 +124,21 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
                 clearTimeout(silenceTimerRef.current);
             }
 
-            // After 2 seconds of silence following speech, process the input
+            // After 2s of silence following speech, process the input
             if (finalTranscript.trim()) {
                 silenceTimerRef.current = setTimeout(() => {
-                    recognition.stop();
-                    isListeningRef.current = false;
-                    processUserInput(finalTranscript.trim());
+                    try { recognition.stop(); } catch {}
+                    recognitionRef.current = null;
+                    processUserInputRef.current(finalTranscript.trim());
                 }, 2000);
             }
         };
 
-        recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+        recognition.onerror = (event: any) => {
             if (event.error === 'no-speech' || event.error === 'aborted') {
-                // These are normal — restart listening
+                // Normal — restart
                 if (callActiveRef.current) {
-                    setTimeout(() => startListening(), 500);
+                    setTimeout(() => startListeningRef.current(), 500);
                 }
                 return;
             }
@@ -218,77 +150,156 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
         };
 
         recognition.onend = () => {
-            isListeningRef.current = false;
-            // If we have no results and call is still active, restart
-            if (callActiveRef.current && !hasResults && callState !== 'processing' && callState !== 'speaking') {
-                setTimeout(() => startListening(), 300);
+            // If call is still active and we're not processing, restart
+            if (callActiveRef.current && !finalTranscript.trim()) {
+                setTimeout(() => startListeningRef.current(), 300);
             }
         };
 
         try {
             recognition.start();
             recognitionRef.current = recognition;
-            isListeningRef.current = true;
             setCallState('listening');
-        } catch (err) {
-            console.error('Failed to start recognition:', err);
-            // Might already be running, try restarting
+        } catch {
             setTimeout(() => {
-                if (callActiveRef.current) startListening();
+                if (callActiveRef.current) startListeningRef.current();
             }, 500);
         }
-    }, [getSpeechRecognition, isMuted, processUserInput, callState]);
+    };
+
+    // speakResponse — play TTS audio then resume listening
+    speakResponseRef.current = async (text: string) => {
+        if (!audioEnabledRef.current) {
+            // No audio — just resume listening
+            if (callActiveRef.current) {
+                setCallState('listening');
+                startListeningRef.current();
+            }
+            return;
+        }
+
+        try {
+            setCallState('speaking');
+
+            const token = accessTokenRef.current;
+            const res = await fetch('/api/voice', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({ text }),
+            });
+
+            if (!res.ok) {
+                console.warn('ElevenLabs TTS failed, using browser fallback');
+                // Fallback to browser TTS
+                if ('speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.rate = 1.0;
+                    utterance.pitch = 0.9;
+                    const voices = window.speechSynthesis.getVoices();
+                    const preferred = voices.find(v => v.name.includes('Google') && v.lang.startsWith('en'))
+                        || voices.find(v => v.lang.startsWith('en'));
+                    if (preferred) utterance.voice = preferred;
+                    utterance.onend = () => {
+                        if (callActiveRef.current) {
+                            setCallState('listening');
+                            startListeningRef.current();
+                        }
+                    };
+                    utterance.onerror = () => {
+                        if (callActiveRef.current) {
+                            setCallState('listening');
+                            startListeningRef.current();
+                        }
+                    };
+                    window.speechSynthesis.speak(utterance);
+                } else {
+                    // No TTS at all, just resume
+                    if (callActiveRef.current) {
+                        setCallState('listening');
+                        startListeningRef.current();
+                    }
+                }
+                return;
+            }
+
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const audio = new Audio(url);
+            audioRef.current = audio;
+
+            audio.onended = () => {
+                audioRef.current = null;
+                URL.revokeObjectURL(url);
+                if (callActiveRef.current) {
+                    setCallState('listening');
+                    startListeningRef.current();
+                }
+            };
+
+            audio.onerror = () => {
+                audioRef.current = null;
+                URL.revokeObjectURL(url);
+                if (callActiveRef.current) {
+                    setCallState('listening');
+                    startListeningRef.current();
+                }
+            };
+
+            await audio.play();
+        } catch (err) {
+            console.error('Speech playback error:', err);
+            if (callActiveRef.current) {
+                setCallState('listening');
+                startListeningRef.current();
+            }
+        }
+    };
+
+    // processUserInput — send to agent then speak response
+    processUserInputRef.current = async (text: string) => {
+        if (!text.trim()) {
+            if (callActiveRef.current) startListeningRef.current();
+            return;
+        }
+
+        setCallState('processing');
+        setTranscript('');
+        setConversationLog(prev => [...prev, { role: 'user', text }]);
+
+        try {
+            const agentResponse = await onSendMessageRef.current(text);
+            setConversationLog(prev => [...prev, { role: 'agent', text: agentResponse }]);
+            await speakResponseRef.current(agentResponse);
+        } catch (err: any) {
+            console.error('Agent processing error:', err);
+            const errorText = 'Sorry, I had trouble processing that. Could you say it again?';
+            setConversationLog(prev => [...prev, { role: 'agent', text: errorText }]);
+            await speakResponseRef.current(errorText);
+        }
+    };
+
+    // ── Stable callbacks for UI ──
 
     const startCall = useCallback(() => {
         callActiveRef.current = true;
         setCallState('connecting');
         setConversationLog([]);
-        setResponse('');
         setTranscript('');
         setErrorMessage('');
 
-        // Simulate brief connection delay
         setTimeout(() => {
             if (!callActiveRef.current) return;
-
             const greeting = "Hey! V-Prai here. I'm listening — what are you working on?";
-            setResponse(greeting);
             setConversationLog([{ role: 'agent', text: greeting }]);
-            speakResponse(greeting);
+            speakResponseRef.current(greeting);
         }, 800);
-    }, [speakResponse]);
+    }, []);
 
     const stopCall = useCallback(() => {
-        callActiveRef.current = false;
-        isListeningRef.current = false;
-
-        // Stop speech recognition
-        if (recognitionRef.current) {
-            try {
-                recognitionRef.current.stop();
-            } catch {}
-            recognitionRef.current = null;
-        }
-
-        // Stop audio playback
-        if (audioRef.current) {
-            audioRef.current.pause();
-            audioRef.current = null;
-        }
-
-        // Clear silence timer
-        if (silenceTimerRef.current) {
-            clearTimeout(silenceTimerRef.current);
-            silenceTimerRef.current = null;
-        }
-
-        // Stop browser TTS if active
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-        }
-
-        setCallState('idle');
-        setTranscript('');
+        stopCallRef.current();
     }, []);
 
     const toggleMute = useCallback(() => {
@@ -296,13 +307,24 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
             const next = !prev;
             if (next && recognitionRef.current) {
                 try { recognitionRef.current.stop(); } catch {}
-                isListeningRef.current = false;
-            } else if (!next && callActiveRef.current && callState === 'listening') {
-                startListening();
+            } else if (!next && callActiveRef.current) {
+                startListeningRef.current();
             }
             return next;
         });
-    }, [callState, startListening]);
+    }, []);
+
+    // Clean up when modal closes
+    useEffect(() => {
+        if (!isOpen) {
+            stopCallRef.current();
+        }
+    }, [isOpen]);
+
+    // Clean up on unmount
+    useEffect(() => {
+        return () => { stopCallRef.current(); };
+    }, []);
 
     if (!isOpen) return null;
 
@@ -321,7 +343,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
             {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-black/80 backdrop-blur-xl"
-                onClick={isActive ? undefined : onClose}
+                onClick={isActive ? undefined : () => { stopCall(); onClose(); }}
             />
 
             {/* Modal */}
@@ -344,7 +366,6 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
                 <div className="flex flex-col items-center py-6">
                     <div className={`relative ${callState === 'speaking' ? 'scale-110' : callState === 'listening' ? 'scale-105' : 'scale-100'} transition-transform duration-500`}>
                         <VisioOrb active={isActive} size="md" />
-                        {/* Listening indicator ring */}
                         {callState === 'listening' && !isMuted && (
                             <div className="absolute inset-0 rounded-full border-2 border-visio-teal/50 animate-ping" />
                         )}
@@ -371,7 +392,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
                     {transcript && callState === 'listening' && (
                         <div className="mt-3 px-6 w-full">
                             <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white/70 italic max-h-20 overflow-y-auto">
-                                "{transcript}"
+                                &ldquo;{transcript}&rdquo;
                             </div>
                         </div>
                     )}
@@ -436,7 +457,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
 
                     {/* Audio toggle */}
                     <button
-                        onClick={() => setAudioEnabled(!audioEnabled)}
+                        onClick={() => setAudioEnabled(prev => !prev)}
                         className={`p-4 rounded-full transition-all duration-200 ${
                             audioEnabled
                                 ? 'bg-white/5 text-white/60 border border-white/10 hover:bg-white/10 hover:text-white'
@@ -457,13 +478,3 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
         </div>
     );
 };
-
-// Fallback: create a SpeechSynthesisUtterance for when ElevenLabs is unavailable
-function createFallbackUtterance(text: string): SpeechSynthesisUtterance {
-    const utterance = new SpeechSynthesisUtterance(text);
-    // Try to find a good voice
-    const voices = window.speechSynthesis.getVoices();
-    const preferred = voices.find(v => v.name.includes('Google') && v.lang.startsWith('en')) || voices.find(v => v.lang.startsWith('en'));
-    if (preferred) utterance.voice = preferred;
-    return utterance;
-}
