@@ -94,7 +94,7 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({ text, accessToken }) =
     // Don't render if text is too short to be worth reading aloud
     if (!text || text.trim().length < 10) return null;
 
-    const iconSize = 13;
+    const iconSize = 15;
 
     return (
         <button
@@ -107,8 +107,9 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({ text, accessToken }) =
                 'Listen to this response'
             }
             className={`
-                inline-flex items-center justify-center
-                w-7 h-7 rounded-full
+                inline-flex items-center justify-center gap-1.5
+                px-2.5 py-1 rounded-lg
+                text-[10px] font-medium uppercase tracking-wider
                 transition-all duration-200
                 ${state === 'playing'
                     ? 'bg-visio-teal/20 text-visio-teal border border-visio-teal/40 shadow-[0_0_8px_rgba(182,240,156,0.3)]'
@@ -116,7 +117,7 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({ text, accessToken }) =
                     ? 'bg-red-500/10 text-red-400 border border-red-500/30'
                     : state === 'loading'
                     ? 'bg-white/5 text-white/40 border border-white/10 cursor-wait'
-                    : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10 hover:text-white/70 hover:border-white/20'
+                    : 'bg-white/5 text-white/50 border border-white/10 hover:bg-visio-teal/10 hover:text-visio-teal hover:border-visio-teal/30'
                 }
             `}
         >
@@ -129,6 +130,7 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({ text, accessToken }) =
             ) : (
                 <Volume2 size={iconSize} />
             )}
+            {state === 'playing' ? 'Stop' : state === 'loading' ? 'Loading' : state === 'error' ? 'Retry' : 'Listen'}
         </button>
     );
 };
