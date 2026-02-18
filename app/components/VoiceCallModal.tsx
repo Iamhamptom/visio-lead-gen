@@ -109,6 +109,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
     };
 
     // startInterruptionListener — listen for user speech while agent is speaking
+    // Restarts automatically on silence so interruption works throughout the agent's response.
     startInterruptionListenerRef.current = () => {
         if (!callActiveRef.current || isMutedRef.current) return;
 
@@ -146,13 +147,23 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
             }
         };
 
-        recognition.onerror = () => {
-            // Ignore errors during interruption detection — not critical
+        recognition.onerror = (event: any) => {
             interruptRecognitionRef.current = null;
+            // On no-speech or aborted, restart the interruption listener
+            // (so the user can still interrupt later in the agent's response)
+            if (event.error === 'no-speech' || event.error === 'aborted') {
+                if (callActiveRef.current && (audioRef.current || ('speechSynthesis' in window && window.speechSynthesis.speaking))) {
+                    setTimeout(() => startInterruptionListenerRef.current(), 300);
+                }
+            }
         };
 
         recognition.onend = () => {
             interruptRecognitionRef.current = null;
+            // Restart interruption listening if agent is still speaking
+            if (callActiveRef.current && (audioRef.current || ('speechSynthesis' in window && window.speechSynthesis.speaking))) {
+                setTimeout(() => startInterruptionListenerRef.current(), 300);
+            }
         };
 
         try {
@@ -249,6 +260,60 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
         }
     };
 
+    // pickMaleVoice — select the best deep male English voice from the browser
+    const pickMaleVoice = (): SpeechSynthesisVoice | null => {
+        const voices = window.speechSynthesis.getVoices();
+        const malePrefNames = [
+            'Google UK English Male', 'Google US English', 'Microsoft David',
+            'Microsoft Mark', 'Daniel', 'James', 'Thomas', 'Fred', 'Alex',
+        ];
+        for (const name of malePrefNames) {
+            const v = voices.find(v => v.name.includes(name) && v.lang.startsWith('en'));
+            if (v) return v;
+        }
+        const male = voices.find(v => v.name.includes('Male') && v.lang.startsWith('en'));
+        if (male) return male;
+        return voices.find(v => v.lang.startsWith('en')) || null;
+    };
+
+    // speakWithBrowserTTS — clean fallback with best male voice
+    const speakWithBrowserTTS = (text: string) => {
+        if (!('speechSynthesis' in window)) {
+            if (callActiveRef.current) {
+                setCallState('listening');
+                startListeningRef.current();
+            }
+            return;
+        }
+
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text.slice(0, 3000));
+        utterance.rate = 1.08;    // Slightly faster — more natural conversational pace
+        utterance.pitch = 0.82;   // Deeper — sounds more male/authoritative
+        utterance.volume = 1.0;
+
+        const voice = pickMaleVoice();
+        if (voice) utterance.voice = voice;
+
+        utterance.onend = () => {
+            stopInterruptionListenerRef.current();
+            if (callActiveRef.current) {
+                setCallState('listening');
+                startListeningRef.current();
+            }
+        };
+        utterance.onerror = () => {
+            stopInterruptionListenerRef.current();
+            if (callActiveRef.current) {
+                setCallState('listening');
+                startListeningRef.current();
+            }
+        };
+
+        window.speechSynthesis.speak(utterance);
+        startInterruptionListenerRef.current();
+    };
+
     // speakResponse — play TTS audio with interruption support, then resume listening
     speakResponseRef.current = async (text: string) => {
         if (!audioEnabledRef.current) {
@@ -260,9 +325,9 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
             return;
         }
 
-        try {
-            setCallState('speaking');
+        setCallState('speaking');
 
+        try {
             const token = accessTokenRef.current;
             const res = await fetch('/api/voice', {
                 method: 'POST',
@@ -270,44 +335,12 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
                     'Content-Type': 'application/json',
                     ...(token ? { Authorization: `Bearer ${token}` } : {}),
                 },
-                body: JSON.stringify({ text }),
+                body: JSON.stringify({ text, streaming: true }),
             });
 
             if (!res.ok) {
                 console.warn('ElevenLabs TTS failed, using browser fallback');
-                // Fallback to browser TTS
-                if ('speechSynthesis' in window) {
-                    const utterance = new SpeechSynthesisUtterance(text);
-                    utterance.rate = 1.0;
-                    utterance.pitch = 0.9;
-                    const voices = window.speechSynthesis.getVoices();
-                    const preferred = voices.find(v => v.name.includes('Google') && v.lang.startsWith('en'))
-                        || voices.find(v => v.lang.startsWith('en'));
-                    if (preferred) utterance.voice = preferred;
-                    utterance.onend = () => {
-                        stopInterruptionListenerRef.current();
-                        if (callActiveRef.current) {
-                            setCallState('listening');
-                            startListeningRef.current();
-                        }
-                    };
-                    utterance.onerror = () => {
-                        stopInterruptionListenerRef.current();
-                        if (callActiveRef.current) {
-                            setCallState('listening');
-                            startListeningRef.current();
-                        }
-                    };
-                    window.speechSynthesis.speak(utterance);
-                    // Start listening for interruption while browser TTS plays
-                    startInterruptionListenerRef.current();
-                } else {
-                    // No TTS at all, just resume
-                    if (callActiveRef.current) {
-                        setCallState('listening');
-                        startListeningRef.current();
-                    }
-                }
+                speakWithBrowserTTS(text);
                 return;
             }
 
@@ -329,11 +362,9 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
             audio.onerror = () => {
                 audioRef.current = null;
                 URL.revokeObjectURL(url);
-                stopInterruptionListenerRef.current();
-                if (callActiveRef.current) {
-                    setCallState('listening');
-                    startListeningRef.current();
-                }
+                // ElevenLabs audio failed to play — try browser TTS
+                console.warn('ElevenLabs audio playback failed, using browser fallback');
+                speakWithBrowserTTS(text);
             };
 
             await audio.play();
@@ -341,12 +372,8 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
             // Start listening for interruption while audio plays
             startInterruptionListenerRef.current();
         } catch (err) {
-            console.error('Speech playback error:', err);
-            stopInterruptionListenerRef.current();
-            if (callActiveRef.current) {
-                setCallState('listening');
-                startListeningRef.current();
-            }
+            console.warn('Speech playback error, falling back to browser TTS:', err);
+            speakWithBrowserTTS(text);
         }
     };
 
@@ -384,10 +411,10 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
 
         setTimeout(() => {
             if (!callActiveRef.current) return;
-            const greeting = "Hey! V-Prai here. I'm listening — what are you working on?";
+            const greeting = "Hey, V-Prai here. What are we working on today?";
             setConversationLog([{ role: 'agent', text: greeting }]);
             speakResponseRef.current(greeting);
-        }, 800);
+        }, 600);
     }, []);
 
     const stopCall = useCallback(() => {
