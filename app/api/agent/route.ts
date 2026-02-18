@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { parseIntent, ParsedIntent, createGeminiClient } from '@/lib/gemini';
-import { classifyIntent, generateChatResponse, generateWithSearchResults, extractPortalData, IntentResult, hasClaudeKey } from '@/lib/claude';
+import { classifyIntent, generateChatResponse, generateWithSearchResults, synthesizeQualifiedResults, reviewResultQuality, extractPortalData, IntentResult, hasClaudeKey } from '@/lib/claude';
 import { getLeadsByCountry, filterLeads, getDatabaseSummary, DBLead, FilterOptions } from '@/lib/db';
 import { performSmartSearch, performLeadSearch } from '@/lib/search';
 import { getContextPack } from '@/lib/god-mode';
@@ -11,6 +11,7 @@ import { performCascadingSearch, PipelineBrief } from '@/lib/lead-pipeline';
 import { scrapeContactsFromUrl, scrapeMultipleUrls } from '@/lib/scraper';
 import { searchAllSocials, flattenSocialResults } from '@/lib/social-search';
 import { performSmartScrape, formatScrapeForContext } from '@/lib/smart-scrape';
+import { qualifyLeads, formatQualifiedLeadsForSynthesis, QualifiedLead } from '@/lib/qualify-leads';
 import { detectAndExecuteAutomation, listAvailableAutomations } from '@/lib/automation-bank';
 import { requireUser, isAdminUser } from '@/lib/api-auth';
 import { getUserCredits, deductCredits, getCreditCost } from '@/lib/credits';
@@ -669,7 +670,7 @@ export async function POST(request: NextRequest) {
                         const cascadeResult = await performCascadingSearch(brief);
                         logs.push(...cascadeResult.logs);
 
-                        // Filter results for relevance before presenting
+                        // Filter results for relevance before qualification
                         const filteredContacts = filterContactsForRelevance(
                             cascadeResult.contacts,
                             queryPlan.entityType || '',
@@ -677,14 +678,53 @@ export async function POST(request: NextRequest) {
                             queryPlan.specificLocation || ''
                         );
 
-                        leads = filteredContacts.slice(0, targetCount).map((c, i) => ({
+                        logs.push(`📊 ${filteredContacts.length} contacts after relevance filter (from ${cascadeResult.total} raw)`);
+
+                        // === QUALIFICATION PIPELINE ===
+                        // Verify profiles via Apify scrapers: check followers, activity, bio, location, niche
+                        const hasApifyToken = !!process.env.APIFY_API_TOKEN;
+                        let qualifiedLeads: QualifiedLead[] = [];
+                        let qualifiedContext = '';
+
+                        if (hasApifyToken && filteredContacts.length > 0) {
+                            logs.push('🔍 Qualifying leads — verifying profiles, followers, activity...');
+
+                            const qualResult = await qualifyLeads(filteredContacts, {
+                                entityType: queryPlan.entityType || '',
+                                niche: queryPlan.niche || leadGenre,
+                                targetLocation: queryPlan.specificLocation || '',
+                                platform: queryPlan.platform || '',
+                                maxToQualify: Math.min(targetCount + 5, 15), // Qualify slightly more than needed
+                            });
+                            qualifiedLeads = qualResult.qualified;
+                            logs.push(...qualResult.logs);
+
+                            // Build qualified context for AI synthesis
+                            qualifiedContext = formatQualifiedLeadsForSynthesis(
+                                qualifiedLeads.slice(0, targetCount)
+                            );
+                        } else {
+                            // No Apify — use basic filtered contacts
+                            qualifiedLeads = filteredContacts.slice(0, targetCount).map(c => ({
+                                ...c,
+                                isActive: false,
+                                qualityScore: c.confidence === 'high' ? 40 : c.confidence === 'medium' ? 25 : 10,
+                                qualityReasons: ['Basic scoring (profile verification unavailable)'],
+                                wasVerified: false,
+                            }));
+                        }
+
+                        // Map qualified leads to response format
+                        leads = qualifiedLeads.slice(0, targetCount).map((c, i) => ({
                             id: -(i + 1),
                             name: c.name,
                             company: c.company,
                             title: c.title,
                             email: c.email,
                             url: c.url || '',
-                            snippet: `${c.source} | Confidence: ${c.confidence}`,
+                            snippet: c.wasVerified
+                                ? `Score: ${c.qualityScore}/100 | ${c.qualityReasons.slice(0, 2).join(', ')} | ${c.source}`
+                                : `${c.source} | Confidence: ${c.confidence}`,
                             source: c.source,
                             instagram: c.instagram,
                             tiktok: c.tiktok,
@@ -693,7 +733,19 @@ export async function POST(request: NextRequest) {
                             country
                         }));
 
-                        logs.push(`✅ Total: ${leads.length} relevant contacts (${cascadeResult.total} found, ${filteredContacts.length} after relevance filter)`);
+                        const verifiedCount = qualifiedLeads.filter(q => q.wasVerified).length;
+                        const activeCount = qualifiedLeads.filter(q => q.isActive).length;
+                        logs.push(`✅ Total: ${leads.length} qualified contacts (${verifiedCount} verified, ${activeCount} active)`);
+
+                        // === AI SELF-REVIEW ===
+                        // Quick check: are these results actually useful?
+                        const reviewData = qualifiedLeads.slice(0, 15).map(l => ({
+                            name: l.name, source: l.source, email: l.email,
+                            tiktok: l.tiktok, instagram: l.instagram,
+                            followers: l.followers, qualityScore: l.qualityScore,
+                        }));
+                        const review = await reviewResultQuality(userMessage, reviewData);
+                        logs.push(`🔎 Self-review: ${review.verdict} (${review.relevant} relevant, ${review.irrelevant} irrelevant)`);
 
                         // Update admin log with completion status + persist results
                         if (leadRequestId) {
@@ -712,9 +764,29 @@ export async function POST(request: NextRequest) {
                             }
                         }
 
-                        // Claude synthesizes results — include the user's specific request context
-                        const allResultsForSynthesis = leads.map(l => ({ name: l.name, url: l.url, snippet: l.snippet, source: l.source, email: l.email, instagram: l.instagram, twitter: l.twitter, tiktok: l.tiktok }));
-                        const enrichedMsg = await generateWithSearchResults(userMessage, allResultsForSynthesis, validatedTier as any, artistContext);
+                        // === INTELLIGENT SYNTHESIS ===
+                        // Use qualified synthesis if we have verified data, otherwise fall back
+                        let enrichedMsg: string;
+                        if (qualifiedContext && verifiedCount > 0) {
+                            enrichedMsg = await synthesizeQualifiedResults(
+                                userMessage, qualifiedContext,
+                                validatedTier as any, artistContext,
+                                { total: leads.length, verified: verifiedCount, active: activeCount, avgScore: qualifiedLeads.length > 0 ? Math.round(qualifiedLeads.reduce((s, q) => s + q.qualityScore, 0) / qualifiedLeads.length) : 0 }
+                            );
+                        } else {
+                            const allResultsForSynthesis = leads.map(l => ({
+                                name: l.name, url: l.url, snippet: l.snippet,
+                                source: l.source, email: l.email,
+                                instagram: l.instagram, twitter: l.twitter, tiktok: l.tiktok
+                            }));
+                            enrichedMsg = await generateWithSearchResults(userMessage, allResultsForSynthesis, validatedTier as any, artistContext);
+                        }
+
+                        // If self-review says poor quality, prepend an honest note
+                        if (review.verdict === 'poor' && review.recommendation) {
+                            enrichedMsg = `> Note: I found limited quality matches for your specific request. ${review.recommendation}\n\n${enrichedMsg}`;
+                        }
+
                         intent = {
                             action: 'find_leads',
                             filters: { country },
