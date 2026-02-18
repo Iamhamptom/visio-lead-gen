@@ -1213,7 +1213,8 @@ export default function Home() {
       .filter(m => !m.isThinking && !m.isResearching)
       .map(m => ({
         role: m.role === Role.AGENT ? 'agent' : 'user',
-        content: m.content
+        // Strip [Voice] and [Voice Mode] prefixes from history so AI sees clean context
+        content: m.content.replace(/^\[Voice\]\s*/, '').replace(/^\[Voice Mode\]\s*/, '')
       }));
 
     // Determine best AI tier from subscription (don't hardcode to instant)
