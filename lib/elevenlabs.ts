@@ -3,13 +3,13 @@ import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 // ============================================================================
 // ElevenLabs Text-to-Speech — V-Prai Voice Engine
 // ============================================================================
-// Gives V-Prai a real voice. Deep, charismatic male voice with natural energy.
-// Should feel like a real person on a call — not a robot reading text.
+// Gives V-Prai a real voice. African American male — deep, warm, professional, confident.
+// Should feel like a publicist on a call — energetic, persuasive, never robotic.
 // ============================================================================
 
-// "George" — warm, calm British male. Trustworthy narrator tone.
-// Other options: "Daniel" (onwK4e9ZLuTAKqWW03F9) — more formal British
-const DEFAULT_VOICE_ID = 'JBFqnCBsd6RMkjVDRZzb'; // George
+// "Alex" — mid-30s African American male. Professional, warm, confident tone.
+// Previous: "George" (JBFqnCBsd6RMkjVDRZzb) — warm, calm British male
+const DEFAULT_VOICE_ID = 'ePEc9tlhrIO7VRkiOlQN'; // Alex
 
 // eleven_turbo_v2_5: fastest model, good quality, lowest latency
 // eleven_multilingual_v2: best quality, supports style, but slower
@@ -55,9 +55,9 @@ export async function textToSpeech(
         modelId: QUALITY_MODEL,
         outputFormat: 'mp3_44100_128',
         voiceSettings: {
-            stability: 0.45,       // Lower = more dynamic/natural inflection
-            similarityBoost: 0.75, // Preserve voice identity
-            style: 0.40,          // Higher = more expressive, conversational
+            stability: 0.40,       // Slightly lower for more dynamic, energetic delivery
+            similarityBoost: 0.78, // Preserve Alex's distinctive voice identity
+            style: 0.50,          // Higher expressiveness — publicist energy, not narrator calm
             useSpeakerBoost: true,
         },
     });
@@ -96,9 +96,9 @@ export async function textToSpeechStream(
         outputFormat: 'mp3_22050_32', // Smaller format for faster streaming
         optimizeStreamingLatency: 4, // Maximum latency optimization
         voiceSettings: {
-            stability: 0.40,       // More dynamic for conversational feel
-            similarityBoost: 0.70,
-            style: 0.35,          // Expressive but not over-the-top
+            stability: 0.35,       // More dynamic — publicist energy on live calls
+            similarityBoost: 0.72, // Preserve Alex's voice character
+            style: 0.45,          // More animated and persuasive for live conversation
             useSpeakerBoost: true,
         },
     });
