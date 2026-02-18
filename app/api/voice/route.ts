@@ -1,0 +1,70 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { textToSpeech, hasElevenLabsKey } from '@/lib/elevenlabs';
+import { requireUser } from '@/lib/api-auth';
+
+/**
+ * POST /api/voice
+ * Converts text to speech using ElevenLabs.
+ * Returns audio/mpeg binary data.
+ *
+ * Body: { text: string }
+ */
+export async function POST(req: NextRequest) {
+    // Auth check
+    const auth = await requireUser(req);
+    if (!auth.ok) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check if ElevenLabs is configured
+    if (!hasElevenLabsKey()) {
+        return NextResponse.json(
+            { error: 'Voice feature is not configured. ELEVENLABS_API_KEY is missing.' },
+            { status: 503 }
+        );
+    }
+
+    try {
+        const body = await req.json();
+        const text = body?.text;
+
+        if (!text || typeof text !== 'string') {
+            return NextResponse.json({ error: 'Missing "text" field' }, { status: 400 });
+        }
+
+        // Reject empty or whitespace-only text
+        if (text.trim().length === 0) {
+            return NextResponse.json({ error: 'Text cannot be empty' }, { status: 400 });
+        }
+
+        // Cap text length server-side (5000 chars ~= 3-4 min of speech)
+        const maxLength = 5000;
+        const safeText = text.slice(0, maxLength);
+
+        const audioBuffer = await textToSpeech(safeText);
+
+        return new NextResponse(new Uint8Array(audioBuffer), {
+            status: 200,
+            headers: {
+                'Content-Type': 'audio/mpeg',
+                'Content-Length': String(audioBuffer.length),
+                'Cache-Control': 'private, max-age=3600', // Cache for 1 hour on client
+            },
+        });
+    } catch (error: any) {
+        console.error('Voice API error:', error?.message || error);
+
+        if (error?.message?.includes('API key') || error?.message?.includes('authentication')) {
+            return NextResponse.json({ error: 'Voice service authentication failed' }, { status: 401 });
+        }
+
+        if (error?.message?.includes('rate') || error?.status === 429) {
+            return NextResponse.json({ error: 'Voice service rate limit reached. Try again shortly.' }, { status: 429 });
+        }
+
+        return NextResponse.json(
+            { error: 'Failed to generate voice audio' },
+            { status: 500 }
+        );
+    }
+}

@@ -163,6 +163,9 @@ SUPABASE_SERVICE_ROLE_KEY=sb_secret_...
 
 # OpenAI (if used)
 OPENAI_API_KEY=your_openai_api_key
+
+# ElevenLabs (Voice / TTS)
+ELEVENLABS_API_KEY=your_elevenlabs_api_key
 ```
 
 ---

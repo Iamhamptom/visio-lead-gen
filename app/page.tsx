@@ -1736,7 +1736,7 @@ export default function Home() {
                         {activeMessages.length > 0 ? (
                           <>
                             {activeMessages.map((msg) => (
-                              <ChatMessage key={msg.id} message={msg} onSaveLead={handleSaveLead} onLoadMore={handleLoadMore} />
+                              <ChatMessage key={msg.id} message={msg} onSaveLead={handleSaveLead} onLoadMore={handleLoadMore} accessToken={session?.access_token} />
                             ))}
                             {isGeneratingLeads && (
                               <LeadGenProgress isActive={isGeneratingLeads} progress={leadGenProgress} />

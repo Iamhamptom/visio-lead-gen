@@ -6,11 +6,13 @@ import { Skeleton } from './ui/skeleton';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { generateLeadListCSV, downloadCSV } from '@/lib/csv-export';
+import { VoiceButton } from './VoiceButton';
 
 interface ChatMessageProps {
     message: Message;
     onSaveLead?: (lead: Lead) => void;
     onLoadMore?: (messageId: string, query: string, offset: number) => void;
+    accessToken?: string;
 }
 
 // Reasoning steps for different tiers
@@ -33,7 +35,7 @@ const REASONING_STEPS = {
     ]
 };
 
-export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSaveLead, onLoadMore }) => {
+export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSaveLead, onLoadMore, accessToken }) => {
     const isUser = message.role === Role.USER;
     const [reasoningStep, setReasoningStep] = useState(0);
     const [showAllLeads, setShowAllLeads] = useState(false);
@@ -129,6 +131,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSaveLead, o
                     {!isUser && (
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <span className="text-xs font-medium text-visio-teal/80">V-Prai</span>
+                            {/* Voice button — only show on completed bot messages with content */}
+                            {!message.isThinking && !message.isResearching && parsedContent.text.length > 10 && (
+                                <VoiceButton text={parsedContent.text} accessToken={accessToken} />
+                            )}
                             {message.webResults && message.webResults.length > 0 && (
                                 <span className="text-[10px] uppercase tracking-widest text-visio-teal/70 border border-visio-teal/30 bg-visio-teal/10 px-2 py-0.5 rounded-full">
                                     Web Search Used
