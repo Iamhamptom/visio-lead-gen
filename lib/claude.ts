@@ -621,6 +621,133 @@ Be warm, sharp, and strategic. Use "we" language.`;
     }
 }
 
+// ─── Qualified Results Synthesis ─────────────────────────
+
+/**
+ * Synthesizes qualified, verified leads into an intelligent response.
+ * This is called when leads have been through the qualification pipeline
+ * and have verified profile data (followers, activity, niche, etc.)
+ */
+export async function synthesizeQualifiedResults(
+    userMessage: string,
+    qualifiedContext: string,
+    tier: 'instant' | 'business' | 'enterprise' = 'instant',
+    context?: ContextPack | null,
+    stats?: { total: number; verified: number; active: number; avgScore: number }
+): Promise<string> {
+    try {
+        const client = getClient();
+
+        const systemPrompt = `You are V-Prai, the AI brain behind Visio Lead Gen. You've just completed a thorough lead qualification process — you didn't just search, you VERIFIED profiles.
+
+WHAT YOU DID (explain to the user briefly):
+- Searched for leads matching their request
+- Scraped actual profiles to verify followers, activity, and relevance
+- Checked when they last posted (active vs dormant accounts)
+- Read their bios and recent content to detect niche and location
+- Scored each lead on a quality scale of 0-100
+
+PRESENTATION RULES:
+1. Lead with a brief summary: how many you found, how many verified, key stats
+2. Present ONLY the verified, quality results — never pad with junk
+3. For each lead, show the INTELLIGENCE you gathered:
+   - Name and handle
+   - Verified follower count
+   - Whether they're active (last post date)
+   - Their niche/what they post about
+   - Their location (if detected)
+   - Quality score and why
+   - Any website or contact info
+4. Use a structured format — NOT a raw data dump. Use markdown tables for overview, then detailed cards for top picks.
+5. If you found fewer quality leads than requested, be HONEST: "I found X verified [type] in [location]. Here's the intelligence on each..."
+6. Never fabricate data. If something wasn't detected, say so.
+7. Do NOT show internal logs, thinking process, or raw scraping data.
+8. End with actionable next steps.
+
+FORMATTING:
+- Start with a results summary line (e.g., "I found 7 verified TikTok dancers in Soweto — here's the intelligence:")
+- Use a **summary table**: Name | Handle | Followers | Active? | Niche | Score
+- Follow with **detailed profiles** for the top 3-5 using bold headers
+- End with 2-3 next steps
+
+Be professional, warm, and strategic. Use "we" language.`;
+
+        const response = await client.messages.create({
+            model: getModel(tier),
+            max_tokens: 3000,
+            system: systemPrompt,
+            messages: [{
+                role: 'user',
+                content: `User asked: "${userMessage}"\n\n${qualifiedContext}\n\nPresent these qualified results intelligently. Show the verification data, quality scores, and intelligence for each lead.`,
+            }],
+        });
+
+        const firstBlock = response.content?.[0];
+        const text = firstBlock && firstBlock.type === 'text' ? firstBlock.text : '';
+        return text.trim() || `Found ${stats?.total || 0} qualified leads. Check the results below!`;
+
+    } catch (error: any) {
+        const { type } = categorizeApiError(error);
+        console.error(`Qualified synthesis error [${type}]:`, error?.message || error);
+        return `Found ${stats?.total || 0} verified leads. Check the results below!`;
+    }
+}
+
+// ─── AI Self-Review Step ────────────────────────────────
+
+/**
+ * Self-review step: the AI reviews its own search results BEFORE
+ * presenting them to the user. Returns a verdict on quality and
+ * suggests whether to proceed, refine, or apologize.
+ *
+ * Uses the cheapest model (Haiku) to keep costs low.
+ */
+export async function reviewResultQuality(
+    userMessage: string,
+    results: Array<{ name: string; source?: string; email?: string; tiktok?: string; instagram?: string; followers?: string; qualityScore?: number }>,
+): Promise<{ verdict: 'good' | 'partial' | 'poor'; relevant: number; irrelevant: number; recommendation: string }> {
+    try {
+        const client = getClient();
+
+        const resultsSummary = results.slice(0, 20).map((r, i) =>
+            `${i + 1}. "${r.name}" | Source: ${r.source || '?'} | Email: ${r.email || 'none'} | TikTok: ${r.tiktok || 'none'} | IG: ${r.instagram || 'none'} | Followers: ${r.followers || '?'} | Score: ${r.qualityScore ?? '?'}`
+        ).join('\n');
+
+        const response = await client.messages.create({
+            model: getModel('instant'), // Always use cheapest model for review
+            max_tokens: 300,
+            system: `You are a quality control reviewer. Given a user's request and search results, determine if the results are relevant and useful. Respond with ONLY valid JSON.`,
+            messages: [{
+                role: 'user',
+                content: `User asked: "${userMessage}"
+
+Results found:
+${resultsSummary}
+
+Review these results. How many are actually relevant to what the user asked for? How many are irrelevant (article titles, wrong type of person, inactive accounts)?
+
+Respond with JSON only:
+{"verdict":"good|partial|poor","relevant":NUMBER,"irrelevant":NUMBER,"recommendation":"brief suggestion if poor"}`,
+            }],
+        });
+
+        const firstBlock = response.content?.[0];
+        const text = firstBlock && firstBlock.type === 'text' ? firstBlock.text : '{}';
+        const cleaned = text.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
+        const parsed = JSON.parse(cleaned);
+
+        return {
+            verdict: parsed.verdict || 'partial',
+            relevant: parsed.relevant || 0,
+            irrelevant: parsed.irrelevant || 0,
+            recommendation: parsed.recommendation || '',
+        };
+    } catch {
+        // If review fails, don't block the pipeline
+        return { verdict: 'partial', relevant: results.length, irrelevant: 0, recommendation: '' };
+    }
+}
+
 // ─── Portal Data Extraction (BETA) ─────────────────────
 
 /**
