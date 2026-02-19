@@ -3,6 +3,12 @@ import type { NextConfig } from "next";
 
 // Force Vercel Rebuild: Added new About, Features, How It Works pages
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      { source: '/prai', destination: 'https://prai.visioai.co', permanent: true },
+      { source: '/prai/:path*', destination: 'https://prai.visioai.co/:path*', permanent: true },
+    ];
+  },
   async rewrites() {
     return [
       {
