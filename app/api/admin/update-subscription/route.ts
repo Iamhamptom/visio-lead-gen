@@ -118,6 +118,17 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'No profile row was updated' }, { status: 500 });
         }
 
+        // Auto-approve users when assigned a paid tier so the UI restriction gate is lifted.
+        if (tier !== 'artist') {
+            try {
+                await supabaseAdmin.auth.admin.updateUserById(userId, {
+                    app_metadata: { approved: true }
+                });
+            } catch (approveErr) {
+                console.error('Failed to set approved flag during admin tier update:', approveErr);
+            }
+        }
+
         // Optionally record manual billing history so admin-granted paid access is traceable.
         const effectiveStatus = (status || 'active') as string;
         const isPaidTier = tier !== 'artist' && tier !== 'enterprise';

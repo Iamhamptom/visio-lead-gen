@@ -169,6 +169,16 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Profile row not found for payment user' }, { status: 404 });
         }
 
+        // Mark user as approved so the UI restriction gate is lifted for paid users.
+        try {
+            await supabaseAdmin.auth.admin.updateUserById(targetUserId, {
+                app_metadata: { approved: true }
+            });
+        } catch (approveErr) {
+            console.error('[Yoco Webhook] Failed to set approved flag:', approveErr);
+            // Non-fatal: the client-side isRestricted check also considers paid tier
+        }
+
         // Create invoice record (best-effort; do not fail webhook if invoice insert fails).
         const checkoutId = typeof payload?.id === 'string' ? payload.id : null;
         const paymentId = typeof payload?.paymentId === 'string' ? payload.paymentId : null;

@@ -70,7 +70,6 @@ export default function Home() {
   const { user, session, loading: authLoading, signOut } = useAuth();
   const isApproved = user?.app_metadata?.approved === true;
   const [isAdmin, setIsAdmin] = useState(false);
-  const isRestricted = !isApproved && !isAdmin;
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [creditsBalance, setCreditsBalance] = useState<number | null>(null);
   const [creditsAllocation, setCreditsAllocation] = useState<number | string | null>(null);
@@ -114,6 +113,10 @@ export default function Home() {
     // Admin accounts should not be feature-gated by plan.
     return { ...subscription, tier: 'enterprise', status: 'active' };
   }, [isAdmin, subscription]);
+
+  // Paid users with active subscriptions should never be restricted, even without manual approval.
+  const hasPaidSubscription = subscription.tier !== 'artist' && subscription.status === 'active';
+  const isRestricted = !isApproved && !isAdmin && !hasPaidSubscription;
 
   const [isLoading, setIsLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
