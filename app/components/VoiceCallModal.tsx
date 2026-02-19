@@ -99,6 +99,9 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
 
     const { status, isSpeaking } = conversation;
 
+    const conversationRef = useRef(conversation);
+    useEffect(() => { conversationRef.current = conversation; }, [conversation]);
+
     // Deduct credits on the server
     const deductCallCredits = async (durationSeconds: number) => {
         try {
@@ -158,10 +161,10 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
                 return;
             }
 
-            const { signedUrl } = await res.json();
+            const { signedUrl, systemPrompt } = await res.json();
 
-            // Build dynamic overrides with artist context
-            const artistInfo = artistContext
+            // Build artist context suffix for the system prompt
+            const artistSuffix = artistContext
                 ? `\n\nARTIST CONTEXT:\nName: ${artistContext.name || 'Unknown'}\nGenre: ${artistContext.genre || 'Not specified'}\nLocation: ${artistContext.location || 'Not specified'}\nUse this context to personalize your responses and recommendations.`
                 : '';
 
@@ -170,6 +173,9 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
                 signedUrl,
                 overrides: {
                     agent: {
+                        prompt: {
+                            prompt: (systemPrompt || '') + artistSuffix,
+                        },
                         firstMessage: "V-Prai here, your publicist is on the line. So tell me — what are we making happen today?",
                     },
                     tts: {
@@ -208,9 +214,15 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
     // Mute / unmute
     const [isMuted, setIsMuted] = useState(false);
 
-    const toggleMute = useCallback(() => {
-        setIsMuted(prev => !prev);
-    }, []);
+    const toggleMute = useCallback(async () => {
+        const next = !isMuted;
+        setIsMuted(next);
+        try {
+            await conversation.setMicMuted(next);
+        } catch (err) {
+            console.error('Failed to toggle mute:', err);
+        }
+    }, [isMuted, conversation]);
 
     // Audio volume toggle
     const [audioEnabled, setAudioEnabled] = useState(true);
@@ -230,9 +242,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
     // Clean up on unmount
     useEffect(() => {
         return () => {
-            if (status === 'connected') {
-                conversation.endSession().catch(() => {});
-            }
+            conversationRef.current.endSession().catch(() => {});
             stopDurationTimer();
         };
     }, []);
