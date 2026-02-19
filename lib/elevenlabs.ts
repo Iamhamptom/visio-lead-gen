@@ -20,18 +20,18 @@ export const DEFAULT_VOICE_ID = 'ePEc9tlhrIO7VRkiOlQN'; // Alex
 const FAST_MODEL = 'eleven_turbo_v2_5';
 const QUALITY_MODEL = 'eleven_multilingual_v2';
 
+// Fallback key — used when ELEVENLABS_API_KEY env var is not set (e.g. missing from Vercel dashboard)
+const ELEVENLABS_FALLBACK_KEY = 'fdecda484b2ae69c01cc33b7a9db714ceebe5de15222b973dd07ddaecb6365fe';
+
 /** Creates a configured ElevenLabs client */
 function getClient(): ElevenLabsClient {
-    const apiKey = process.env.ELEVENLABS_API_KEY;
-    if (!apiKey) {
-        throw new Error('ELEVENLABS_API_KEY is not set. Add it to your environment variables.');
-    }
+    const apiKey = process.env.ELEVENLABS_API_KEY || ELEVENLABS_FALLBACK_KEY;
     return new ElevenLabsClient({ apiKey });
 }
 
 /** Check if ElevenLabs is configured */
 export function hasElevenLabsKey(): boolean {
-    return !!process.env.ELEVENLABS_API_KEY;
+    return !!(process.env.ELEVENLABS_API_KEY || ELEVENLABS_FALLBACK_KEY);
 }
 
 // ============================================================================
