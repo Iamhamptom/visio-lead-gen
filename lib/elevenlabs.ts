@@ -11,9 +11,10 @@ import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 // 2. Conversational AI — full real-time voice agent (STT + LLM + TTS + turn-taking)
 // ============================================================================
 
-// "Alex" — mid-30s African American male. Professional, warm, confident tone.
+// "Eric" — Smooth, Trustworthy. American, middle-aged, classy, conversational.
+// Previous: "Alex" (ePEc9tlhrIO7VRkiOlQN) — no longer available on account
 // Previous: "George" (JBFqnCBsd6RMkjVDRZzb) — warm, calm British male
-export const DEFAULT_VOICE_ID = 'ePEc9tlhrIO7VRkiOlQN'; // Alex
+export const DEFAULT_VOICE_ID = 'cjVigY5qzO86Huf0OWal'; // Eric
 
 // eleven_turbo_v2_5: fastest model, good quality, lowest latency
 // eleven_multilingual_v2: best quality, supports style, but slower
@@ -79,6 +80,9 @@ You cannot run lead searches, web scraping, or deep searches during a voice call
 - Help them clarify what they want so the search is focused
 - You CAN still give strategic advice about who to target and how to pitch`;
 
+// Pre-created V-Prai agent ID — avoids creating a new agent on every deploy
+const ELEVENLABS_FALLBACK_AGENT_ID = 'agent_4601khsw5ja9fj5snq6nfvkxvcg1';
+
 /** Cached agent ID — avoids re-creating/re-fetching every request */
 let cachedAgentId: string | null = null;
 
@@ -90,6 +94,11 @@ export async function getOrCreateVoiceAgent(): Promise<string> {
     // 1. Use explicit env var if set
     if (process.env.ELEVENLABS_AGENT_ID) {
         return process.env.ELEVENLABS_AGENT_ID;
+    }
+
+    // 1b. Use fallback agent ID
+    if (ELEVENLABS_FALLBACK_AGENT_ID) {
+        return ELEVENLABS_FALLBACK_AGENT_ID;
     }
 
     // 2. Return cached
