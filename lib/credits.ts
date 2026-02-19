@@ -34,6 +34,9 @@ export const CREDIT_COSTS: Record<string, number> = {
     pr_trend_monitor: 3,
     campaign_rollout_research: 3,
     competitor_intelligence: 3,
+
+    // Voice Calls (charged per minute like airtime)
+    voice_call_minute: 1,
 };
 
 /** Monthly credit allocation per subscription tier */

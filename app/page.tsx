@@ -1200,104 +1200,31 @@ export default function Home() {
     }
   };
 
-  // Voice call handler — sends message to agent and returns text response
-  const handleVoiceMessage = useCallback(async (text: string): Promise<string> => {
-    const accessToken = session?.access_token;
-
-    // Build conversation history from current session (same pattern as handleSendMessage)
-    const activeIdx = sessions.findIndex(s => s.id === activeSessionId);
-    const currentMessages = activeIdx !== -1 ? sessions[activeIdx].messages : [];
-    const historyForApi = currentMessages
-      .filter(m => !m.isThinking && !m.isResearching)
-      .map(m => ({
-        role: m.role === Role.AGENT ? 'agent' : 'user',
-        // Strip [Voice] and [Voice Mode] prefixes from history so AI sees clean context
-        content: m.content.replace(/^\[Voice\]\s*/, '').replace(/^\[Voice Mode\]\s*/, '')
-      }));
-
-    // Determine best AI tier from subscription (don't hardcode to instant)
-    const subTier = effectiveSubscription.tier;
-    const voiceTierMap: Record<string, string> = {
-      'artist': 'instant',
-      'starter': 'instant',
-      'artiste': 'instant',
-      'starter_label': 'business',
-      'label': 'business',
-      'agency': 'enterprise',
-      'enterprise': 'enterprise'
-    };
-    const bestTier = voiceTierMap[subTier] || 'instant';
-
-    // Prefix with [Voice Mode] so the backend can optimize for spoken responses
-    const voiceMessage = `[Voice Mode] ${text}`;
-
-    const res = await fetch('/api/agent', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
-      },
-      body: JSON.stringify({
-        message: voiceMessage,
-        conversationHistory: historyForApi,
-        tier: bestTier,
-        mode: 'chat',
-        webSearchEnabled,
-        artistContextEnabled,
-        activeTool
-      })
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      return data?.message || 'Sorry, I had trouble with that request. Please try again.';
-    }
-
-    // Inject the exchange into the active chat session for persistence
-    if (activeIdx !== -1) {
-      const userMsg: Message = {
-        id: crypto.randomUUID(),
-        role: Role.USER,
-        content: `[Voice] ${text}`,
-        timestamp: Date.now(),
-      };
-      const agentMsg: Message = {
-        id: crypto.randomUUID(),
-        role: Role.AGENT,
-        content: data.message || 'Done.',
-        leads: data.leads || [],
-        webResults: data.webResults || [],
-        toolUsed: data.toolUsed || undefined,
-        timestamp: Date.now(),
-      };
-      setSessions(prev => {
-        const next = [...prev];
-        const curr = next[activeIdx];
-        next[activeIdx] = {
-          ...curr,
-          messages: [...curr.messages, userMsg, agentMsg],
-          lastUpdated: Date.now(),
-        };
-        return next;
-      });
-    }
-
-    return data.message || 'Done.';
-  }, [session?.access_token, webSearchEnabled, artistContextEnabled, sessions, activeSessionId, effectiveSubscription.tier, activeTool]);
-
-  // Voice call end handler — saves a summary marker into the chat session
-  const handleVoiceCallEnd = useCallback((transcript: { role: 'user' | 'agent'; text: string }[]) => {
+  // Voice call end handler — saves transcript + summary into the chat session and records duration
+  const handleVoiceCallEnd = useCallback((transcript: { role: 'user' | 'agent'; text: string }[], durationSeconds: number) => {
     if (transcript.length <= 1) return; // Only greeting, no real conversation
 
     const activeIdx = sessions.findIndex(s => s.id === activeSessionId);
     if (activeIdx === -1) return;
 
-    const exchanges = Math.floor(transcript.filter(t => t.role === 'user').length);
+    const exchanges = transcript.filter(t => t.role === 'user').length;
+    const minutes = Math.ceil(durationSeconds / 60);
+
+    // Build messages: inject each voice exchange into the chat, then add a summary marker
+    const voiceMessages: Message[] = [];
+    for (const entry of transcript) {
+      voiceMessages.push({
+        id: crypto.randomUUID(),
+        role: entry.role === 'user' ? Role.USER : Role.AGENT,
+        content: entry.role === 'user' ? `[Voice] ${entry.text}` : entry.text,
+        timestamp: Date.now(),
+      });
+    }
+
     const summaryMsg: Message = {
       id: crypto.randomUUID(),
       role: Role.AGENT,
-      content: `---\n**Voice Call Ended** — ${exchanges} exchange${exchanges !== 1 ? 's' : ''}\n---`,
+      content: `---\n**Voice Call Ended** — ${exchanges} exchange${exchanges !== 1 ? 's' : ''}, ${minutes} min${minutes !== 1 ? 's' : ''} (${minutes} credit${minutes !== 1 ? 's' : ''} used)\n---`,
       timestamp: Date.now(),
     };
 
@@ -1306,7 +1233,7 @@ export default function Home() {
       const curr = next[activeIdx];
       next[activeIdx] = {
         ...curr,
-        messages: [...curr.messages, summaryMsg],
+        messages: [...curr.messages, ...voiceMessages, summaryMsg],
         lastUpdated: Date.now(),
       };
       return next;
@@ -1667,9 +1594,13 @@ export default function Home() {
       <VoiceCallModal
         isOpen={showVoiceCall}
         onClose={() => setShowVoiceCall(false)}
-        onSendMessage={handleVoiceMessage}
         onCallEnd={handleVoiceCallEnd}
         accessToken={session?.access_token}
+        artistContext={artistProfile ? {
+          name: artistProfile.name,
+          genre: artistProfile.genre,
+          location: artistProfile.location?.country || artistProfile.location?.city,
+        } : null}
       />
 
       {/* Onboarding Tutorial Overlay */}
