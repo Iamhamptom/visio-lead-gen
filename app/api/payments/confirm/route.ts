@@ -3,6 +3,8 @@ import crypto from 'crypto';
 import { getYocoCheckout, PlanTier, PLAN_PRICING } from '@/lib/yoco';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { requireUser } from '@/lib/api-auth';
+import { PLAN_CREDITS } from '@/lib/credits';
+import { SubscriptionTier } from '@/app/types';
 
 function makeInvoiceNumber() {
     const year = new Date().getFullYear();
@@ -56,6 +58,9 @@ export async function POST(request: NextRequest) {
         }
 
         const periodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+        const creditsResetAt = periodEnd;
+        const rawCredits = PLAN_CREDITS[tier as SubscriptionTier] ?? 20;
+        const creditsToSet = rawCredits === Infinity ? 999999 : rawCredits;
         const normalizedEmail = (auth.user.email || '').trim().toLowerCase();
         const nameFromMeta =
             typeof auth.user.user_metadata?.name === 'string'
@@ -83,6 +88,9 @@ export async function POST(request: NextRequest) {
                     subscription_tier: tier,
                     subscription_status: 'active',
                     subscription_period_end: periodEnd,
+                    credits_balance: creditsToSet,
+                    credits_used: 0,
+                    credits_reset_at: creditsResetAt,
                     updated_at: new Date().toISOString()
                 });
             if (insertProfileError) throw insertProfileError;
@@ -93,6 +101,9 @@ export async function POST(request: NextRequest) {
                     subscription_tier: tier,
                     subscription_status: 'active',
                     subscription_period_end: periodEnd,
+                    credits_balance: creditsToSet,
+                    credits_used: 0,
+                    credits_reset_at: creditsResetAt,
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', auth.user.id);

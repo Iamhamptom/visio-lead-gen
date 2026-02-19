@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { PLAN_PRICING, type PlanTier } from '@/lib/yoco';
+import { PLAN_CREDITS } from '@/lib/credits';
+import { SubscriptionTier } from '@/app/types';
 
 function getSignatureHeader(req: NextRequest) {
     return (
@@ -107,6 +109,9 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
 
+        const rawCredits = PLAN_CREDITS[tier as SubscriptionTier] ?? 20;
+        const creditsToSet = rawCredits === Infinity ? 999999 : rawCredits;
+
         // Ensure the profile row exists before subscription updates.
         const { data: existingProfile } = await supabaseAdmin
             .from('profiles')
@@ -127,8 +132,11 @@ export async function POST(req: NextRequest) {
                     .insert({
                         id: targetUserId,
                         email: emailForProfile,
-                        subscription_tier: 'artist',
+                        subscription_tier: tier,
                         subscription_status: 'active',
+                        credits_balance: creditsToSet,
+                        credits_used: 0,
+                        credits_reset_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
                         updated_at: new Date().toISOString()
                     });
                 if (createProfileError) {
@@ -145,6 +153,9 @@ export async function POST(req: NextRequest) {
                 subscription_tier: tier,
                 subscription_status: 'active',
                 subscription_period_end: periodEnd,
+                credits_balance: creditsToSet,
+                credits_used: 0,
+                credits_reset_at: periodEnd,
                 updated_at: new Date().toISOString()
             })
             .eq('id', targetUserId)
