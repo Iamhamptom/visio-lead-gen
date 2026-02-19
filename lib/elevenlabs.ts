@@ -132,7 +132,7 @@ export async function getOrCreateVoiceAgent(): Promise<string> {
                 language: 'en',
                 prompt: {
                     prompt: VOICE_AGENT_SYSTEM_PROMPT,
-                    llm: 'gpt-4o',
+                    llm: 'claude-sonnet-4',
                     temperature: 0.7,
                     maxTokens: 300,
                 },
