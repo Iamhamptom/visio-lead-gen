@@ -6,7 +6,7 @@ import { isAdminUser } from '@/lib/api-auth';
 
 /**
  * GET /api/voice-agent
- * Returns a signed URL for the ElevenLabs Conversational AI agent.
+ * Returns a signed URL for the Conversational AI voice agent.
  * Checks auth and credit balance before issuing the URL.
  */
 export async function GET(req: NextRequest) {
