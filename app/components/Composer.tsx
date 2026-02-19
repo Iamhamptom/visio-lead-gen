@@ -148,7 +148,7 @@ export const Composer: React.FC<ComposerProps> = ({
                     )}
 
                     {/* Tier Selector Bar */}
-                    <div className="flex items-center justify-between px-4 pt-3 pb-1 border-b border-white/5">
+                    <div className="flex flex-wrap items-center justify-between gap-y-2 px-4 pt-3 pb-1 border-b border-white/5">
                         <div className="relative" ref={tierMenuRef}>
                             <button
                                 onClick={() => setShowTierMenu(!showTierMenu)}
@@ -190,12 +190,12 @@ export const Composer: React.FC<ComposerProps> = ({
                         </div>
 
                         {/* Mode + Web Search */}
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                             {onToggleArtistContext && (
                                 <button
                                     type="button"
                                     onClick={onToggleArtistContext}
-                                    className={`flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium rounded-md border transition-all ${artistContextEnabled
+                                    className={`flex items-center gap-1.5 px-2 sm:px-2.5 py-1 text-[11px] font-medium rounded-md border transition-all ${artistContextEnabled
                                         ? 'border-visio-accent/40 bg-visio-accent/15 text-visio-accent'
                                         : 'border-white/10 bg-white/5 text-white/50 hover:text-white/70'
                                         }`}
@@ -203,7 +203,7 @@ export const Composer: React.FC<ComposerProps> = ({
                                     title={artistContextEnabled ? 'Artist context is ON — responses use your profile data' : 'Artist context is OFF — general mode'}
                                 >
                                     <User size={12} />
-                                    Artist Portal
+                                    <span className="hidden sm:inline">Artist Portal</span>
                                 </button>
                             )}
                             <button
@@ -216,7 +216,7 @@ export const Composer: React.FC<ComposerProps> = ({
                                 aria-pressed={webSearchEnabled}
                             >
                                 <Search size={12} />
-                                Web Search
+                                <span className="hidden sm:inline">Web Search</span>
                             </button>
                             {/* Credits Display */}
                             {creditsBalance !== null && (

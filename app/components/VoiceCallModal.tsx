@@ -47,7 +47,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
         }
     }, [conversationLog]);
 
-    // ElevenLabs Conversational AI hook
+    // Voice conversation hook
     const conversation = useConversation({
         onConnect: ({ conversationId }) => {
             console.log('Voice agent connected:', conversationId);
@@ -165,7 +165,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
                 ? `\n\nARTIST CONTEXT:\nName: ${artistContext.name || 'Unknown'}\nGenre: ${artistContext.genre || 'Not specified'}\nLocation: ${artistContext.location || 'Not specified'}\nUse this context to personalize your responses and recommendations.`
                 : '';
 
-            // Start the ElevenLabs conversation session
+            // Start the voice conversation session
             await conversation.startSession({
                 signedUrl,
                 overrides: {
@@ -264,7 +264,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
             />
 
             {/* Modal */}
-            <div className="relative w-full max-w-md mx-4 bg-[#0a0a0a] border border-white/10 rounded-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-300">
+            <div className="relative w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto bg-[#0a0a0a] border border-white/10 rounded-3xl shadow-2xl animate-in fade-in zoom-in-95 duration-300">
                 {/* Close button */}
                 <button
                     onClick={() => { endCall(); onClose(); }}
@@ -397,7 +397,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
                 {/* Info note */}
                 <div className="px-6 pb-4 text-center">
                     <p className="text-[10px] text-white/20">
-                        Powered by ElevenLabs Conversational AI. Speak naturally — V-Prai handles the rest.
+                        Speak naturally — V-Prai handles the rest.
                     </p>
                 </div>
             </div>

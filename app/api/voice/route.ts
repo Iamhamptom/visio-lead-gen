@@ -4,7 +4,7 @@ import { requireUser } from '@/lib/api-auth';
 
 /**
  * POST /api/voice
- * Converts text to speech using ElevenLabs.
+ * Converts text to speech using the voice API.
  * Returns audio/mpeg binary data.
  *
  * Body: { text: string, streaming?: boolean }
@@ -17,10 +17,10 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if ElevenLabs is configured
+    // Check if voice API is configured
     if (!hasElevenLabsKey()) {
         return NextResponse.json(
-            { error: 'Voice feature is not configured. ELEVENLABS_API_KEY is missing.' },
+            { error: 'Voice feature is not configured.' },
             { status: 503 }
         );
     }

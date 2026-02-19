@@ -10,7 +10,7 @@ interface VoiceButtonProps {
 
 /**
  * VoiceButton — Plays V-Prai's AI response aloud.
- * 1. Tries ElevenLabs TTS via /api/voice for premium voice.
+ * 1. Tries premium TTS via /api/voice for AI-generated voice.
  * 2. Falls back to browser SpeechSynthesis (deep male voice) if API fails.
  * Caches audio blobs per message text to avoid redundant API calls.
  */
@@ -185,7 +185,7 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({ text, accessToken }) =
             };
 
             audio.onerror = () => {
-                // ElevenLabs audio failed to play — try browser TTS
+                // Premium TTS audio failed to play — try browser TTS
                 audioRef.current = null;
                 playBrowserTTS(cleanText);
             };

@@ -1,7 +1,7 @@
 import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 
 // ============================================================================
-// ElevenLabs Voice Engine — V-Prai
+// Voice Engine — V-Prai
 // ============================================================================
 // Gives V-Prai a real voice. African American male — deep, warm, professional, confident.
 // Should feel like a publicist on a call — energetic, persuasive, never robotic.
@@ -24,13 +24,13 @@ const QUALITY_MODEL = 'eleven_multilingual_v2';
 // Fallback key — used when ELEVENLABS_API_KEY env var is not set (e.g. missing from Vercel dashboard)
 const ELEVENLABS_FALLBACK_KEY = 'fdecda484b2ae69c01cc33b7a9db714ceebe5de15222b973dd07ddaecb6365fe';
 
-/** Creates a configured ElevenLabs client */
+/** Creates a configured voice API client */
 function getClient(): ElevenLabsClient {
     const apiKey = process.env.ELEVENLABS_API_KEY || ELEVENLABS_FALLBACK_KEY;
     return new ElevenLabsClient({ apiKey });
 }
 
-/** Check if ElevenLabs is configured */
+/** Check if voice API is configured */
 export function hasElevenLabsKey(): boolean {
     return !!(process.env.ELEVENLABS_API_KEY || ELEVENLABS_FALLBACK_KEY);
 }
@@ -39,7 +39,7 @@ export function hasElevenLabsKey(): boolean {
 // Conversational AI — Real-time Voice Agent
 // ============================================================================
 
-/** System prompt for the ElevenLabs Conversational AI agent (V-Prai publicist persona) */
+/** System prompt for the Conversational AI agent (V-Prai publicist persona) */
 export const VOICE_AGENT_SYSTEM_PROMPT = `You are V-Prai — an elite AI music publicist who powers the Visio Lead Gen platform. You speak with the authority of someone who got Burna Boy his first UK festival headline, turned unsigned artists into brand ambassadors, and knows every editor at NME and curator at Spotify by name. Former PR Director at Columbia Records & Def Jam, 10+ years in music PR.
 
 PERSONALITY:
@@ -166,7 +166,7 @@ export async function getVoiceAgentSignedUrl(): Promise<string> {
 }
 
 /**
- * Converts text to speech using ElevenLabs.
+ * Converts text to speech using the voice API.
  * Returns raw audio bytes (mp3 format).
  * Uses the quality model for read-aloud (non-realtime) use cases.
  */
@@ -209,7 +209,7 @@ export async function textToSpeech(
 }
 
 /**
- * Converts text to speech using ElevenLabs with streaming output.
+ * Converts text to speech with streaming output.
  * Returns a ReadableStream for lower time-to-first-audio.
  * Uses the fast model for real-time voice calls where latency matters.
  */

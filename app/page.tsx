@@ -1765,7 +1765,7 @@ export default function Home() {
                   <div
                     ref={chatScrollRef}
                     onScroll={handleChatScroll}
-                    className="absolute inset-0 overflow-y-auto overscroll-contain scroll-smooth touch-pan-y px-4 md:px-0 pb-32"
+                    className="absolute inset-0 overflow-y-auto overscroll-contain scroll-smooth touch-pan-y px-4 md:px-0 pb-40 sm:pb-32"
                     style={{ WebkitOverflowScrolling: 'touch' }}
                   >
                     {!artistProfile ? (
@@ -1807,7 +1807,7 @@ export default function Home() {
                               <p className="text-white/40 text-sm">I can find industry contacts, draft pitches, plan campaigns, or research competitors for you.</p>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-lg px-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-lg px-6 sm:px-4">
                               {[
                                 { label: "Find Playlist Curators", prompt: "Find playlist curators for my genre", icon: "🎵" },
                                 { label: "Draft a Pitch Email", prompt: "Help me draft a pitch email for a music blog", icon: "✉️" },
@@ -1840,7 +1840,7 @@ export default function Home() {
                   </div>
 
                   {/* Scroll rail + controls (right side) */}
-                  <div className="pointer-events-none absolute right-3 top-24 bottom-28 flex flex-col items-center z-30">
+                  <div className="pointer-events-none absolute right-3 top-24 bottom-28 flex-col items-center z-30 hidden md:flex">
                     <div className="w-1 flex-1 rounded-full bg-white/10 relative overflow-hidden">
                       <div
                         className="absolute left-0 right-0 rounded-full bg-white/50"

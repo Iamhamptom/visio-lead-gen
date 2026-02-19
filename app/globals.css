@@ -124,10 +124,8 @@ body {
   background-color: var(--color-visio-bg);
   color: #ffffff;
   font-family: var(--font-outfit), system-ui, sans-serif;
-  /* Lock body scroll - content scrolls internally */
-  /* Re-enabling scroll for "stupid issue" fix */
-  overflow-y: auto;
-  overflow-x: hidden;
+  /* Lock body scroll - content scrolls internally via app shell */
+  overflow: hidden;
 }
 
 /* Custom Scrollbar - Handled in utilities layer below */
@@ -152,6 +150,21 @@ body {
     background: transparent;
   }
 
+  @media (max-width: 767px) {
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+  }
+
+  @media (max-width: 767px) {
+    html,
+    body,
+    .overflow-y-auto {
+      scrollbar-width: thin;
+    }
+  }
+
   ::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.05);
   }
@@ -173,8 +186,13 @@ body {
 /* Smooth Chat Scroll */
 .visio-chat-scroll {
   overscroll-behavior: contain;
-  scrollbar-gutter: stable both-edges;
   scroll-behavior: smooth;
+}
+
+@media (min-width: 768px) {
+  .visio-chat-scroll {
+    scrollbar-gutter: stable both-edges;
+  }
 }
 
 /* Force Text Selection - High Specificity */
