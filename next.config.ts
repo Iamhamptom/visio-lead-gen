@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: '/prai', destination: 'https://prai.visioai.co', permanent: true },
-      { source: '/prai/:path*', destination: 'https://prai.visioai.co/:path*', permanent: true },
+      { source: '/prai/:path*', destination: 'https://prai.visioai.co', permanent: true },
     ];
   },
   async rewrites() {
