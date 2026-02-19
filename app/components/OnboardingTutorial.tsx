@@ -14,7 +14,8 @@ import {
     ChevronRight,
     Rocket,
     Check,
-    Loader2
+    Loader2,
+    Lightbulb
 } from 'lucide-react';
 import { trackEvent } from '@/lib/analytics';
 import { TIER_DETAILS } from '@/app/data/pricing';
@@ -40,11 +41,22 @@ const STEPS = [
         iconColor: 'text-visio-teal'
     },
     {
+        icon: Lightbulb,
+        title: 'How V-Prai Works',
+        subtitle: 'Your Journey',
+        description: 'V-Prai guides you through a simple process to power your music career.',
+        tip: 'Each step builds on the last — from setup to outreach.',
+        color: 'from-cyan-500 to-blue-500',
+        iconBg: 'bg-cyan-500/20',
+        iconColor: 'text-cyan-400',
+        isHowItWorksStep: true
+    },
+    {
         icon: Rocket,
         title: 'Choose Your Plan',
-        subtitle: 'Step 1 of 4',
-        description: 'Select the plan that fits your needs. You can upgrade or cancel anytime.',
-        tip: '🚀 Start with the Free tier to explore, or upgrade for full access.',
+        subtitle: 'Step 1 of 5',
+        description: 'Select the plan that fits your needs. You can always upgrade or change later.',
+        tip: 'Start with the Free tier to explore, or upgrade for full access.',
         color: 'from-amber-500 to-orange-500',
         iconBg: 'bg-amber-500/20',
         iconColor: 'text-amber-400',
@@ -53,9 +65,9 @@ const STEPS = [
     {
         icon: User,
         title: 'Set Up Your Profile',
-        subtitle: 'Step 2 of 4',
+        subtitle: 'Step 2 of 5',
         description: 'Head to Settings and fill in your artist or label profile. This helps the AI tailor its suggestions to your genre, market, and goals.',
-        tip: '💡 The more detail you add, the better your results will be.',
+        tip: 'The more detail you add, the better your results will be.',
         color: 'from-blue-500 to-cyan-500',
         iconBg: 'bg-blue-500/20',
         iconColor: 'text-blue-400',
@@ -65,9 +77,9 @@ const STEPS = [
     {
         icon: MessageSquare,
         title: 'Start a Consultation',
-        subtitle: 'Step 3 of 4',
+        subtitle: 'Step 3 of 5',
         description: 'Open a new chat session with the AI. Tell it about your upcoming release, event, or campaign and it will guide you through building a strategy.',
-        tip: '💡 Try saying: "I\'m releasing a single next month and need PR contacts in South Africa."',
+        tip: 'Try saying: "I\'m releasing a single next month and need PR contacts in South Africa."',
         color: 'from-purple-500 to-pink-500',
         iconBg: 'bg-purple-500/20',
         iconColor: 'text-purple-400',
@@ -77,9 +89,9 @@ const STEPS = [
     {
         icon: BookmarkPlus,
         title: 'Save & Manage Leads',
-        subtitle: 'Step 4 of 4',
+        subtitle: 'Step 4 of 5',
         description: 'When the AI finds contacts for you, save them to your Lead Database. You can organize, filter, and export them anytime.',
-        tip: '💡 Look for the "Save Lead" button on any contact card in the chat.',
+        tip: 'Look for the "Save Lead" button on any contact card in the chat.',
         color: 'from-emerald-500 to-green-500',
         iconBg: 'bg-emerald-500/20',
         iconColor: 'text-emerald-400',
@@ -201,9 +213,7 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="absolute inset-0 bg-black/80 backdrop-blur-xl"
-                onClick={() => {
-                    if (!(step as any).isPricingStep) handleComplete();
-                }}
+                onClick={handleComplete}
             />
 
             {/* Modal */}
@@ -217,16 +227,14 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
                 {/* Gradient Header */}
                 <div className={`h-2 w-full bg-gradient-to-r ${step.color}`} />
 
-                {/* Close Button - Hide on Pricing Step */}
-                {!(step as any).isPricingStep && (
-                    <button
-                        onClick={handleComplete}
-                        className="absolute top-5 right-5 p-2 rounded-full text-white/30 hover:text-white hover:bg-white/10 transition-colors z-10"
-                        aria-label="Skip tutorial"
-                    >
-                        <X size={18} />
-                    </button>
-                )}
+                {/* Close Button */}
+                <button
+                    onClick={handleComplete}
+                    className="absolute top-5 right-5 p-2 rounded-full text-white/30 hover:text-white hover:bg-white/10 transition-colors z-10"
+                    aria-label="Skip tutorial"
+                >
+                    <X size={18} />
+                </button>
 
                 {/* Content */}
                 <div className="p-8 pt-6 min-h-[420px] flex flex-col">
@@ -265,6 +273,29 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
                             <div className="bg-white/5 border border-white/5 rounded-xl p-4 mb-6">
                                 <p className="text-sm text-white/50">{step.tip}</p>
                             </div>
+
+                            {/* How It Works Mini-Journey */}
+                            {(step as any).isHowItWorksStep && (
+                                <div className="space-y-3 mt-2 mb-6">
+                                    {[
+                                        { num: 1, label: 'Sign Up & Set Profile', desc: 'Tell us about your music and goals' },
+                                        { num: 2, label: 'Chat with AI Strategist', desc: 'Describe your campaign or release' },
+                                        { num: 3, label: 'Get Curated Contacts', desc: 'AI finds journalists, curators, DJs, A&R' },
+                                        { num: 4, label: 'Save & Manage Leads', desc: 'Build your contact database' },
+                                        { num: 5, label: 'Launch Outreach', desc: 'Draft pitches and execute campaigns' },
+                                    ].map(item => (
+                                        <div key={item.num} className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5">
+                                            <div className="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center text-cyan-400 font-bold text-sm shrink-0">
+                                                {item.num}
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-medium text-white">{item.label}</div>
+                                                <div className="text-xs text-white/40">{item.desc}</div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
 
                             {/* Action Button (optional) */}
                             {step.action && onNavigate && !(step as any).isPricingStep && (
@@ -370,38 +401,39 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
 
                         {/* Navigation Buttons */}
                         <div className="flex items-center gap-3">
-                            {!(step as any).isPricingStep && (
-                                <>
-                                    {!isFirstStep && (
-                                        <button
-                                            onClick={handlePrev}
-                                            className="p-2.5 rounded-xl text-white/50 hover:text-white hover:bg-white/10 transition-colors"
-                                            aria-label="Previous step"
-                                        >
-                                            <ChevronLeft size={20} />
-                                        </button>
-                                    )}
-                                    <button
-                                        onClick={handleNext}
-                                        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium text-sm transition-all ${isLastStep
-                                            ? 'bg-visio-teal text-black hover:bg-visio-teal/90'
-                                            : 'bg-white/10 text-white hover:bg-white/20'
-                                            }`}
-                                    >
-                                        {isLastStep ? (
-                                            <>
-                                                <Rocket size={16} />
-                                                Let&apos;s Go!
-                                            </>
-                                        ) : (
-                                            <>
-                                                Next
-                                                <ChevronRight size={16} />
-                                            </>
-                                        )}
-                                    </button>
-                                </>
+                            {!isFirstStep && (
+                                <button
+                                    onClick={handlePrev}
+                                    className="p-2.5 rounded-xl text-white/50 hover:text-white hover:bg-white/10 transition-colors"
+                                    aria-label="Previous step"
+                                >
+                                    <ChevronLeft size={20} />
+                                </button>
                             )}
+                            <button
+                                onClick={handleNext}
+                                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium text-sm transition-all ${isLastStep
+                                    ? 'bg-visio-teal text-black hover:bg-visio-teal/90'
+                                    : 'bg-white/10 text-white hover:bg-white/20'
+                                    }`}
+                            >
+                                {isLastStep ? (
+                                    <>
+                                        <Rocket size={16} />
+                                        Let&apos;s Go!
+                                    </>
+                                ) : (step as any).isPricingStep ? (
+                                    <>
+                                        Skip for Now
+                                        <ChevronRight size={16} />
+                                    </>
+                                ) : (
+                                    <>
+                                        Next
+                                        <ChevronRight size={16} />
+                                    </>
+                                )}
+                            </button>
                         </div>
                     </div>
                 </div>

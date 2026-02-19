@@ -19,15 +19,17 @@ import ReasonPage from './reason/page';
 import ReachPage from './reach/page';
 import { Toast } from './components/Toast';
 import { ToolsPanel } from './components/ToolsPanel';
+import { UpgradeBanner } from './components/UpgradeBanner';
 import { LeadGenWizard, LeadGenConfig } from './components/LeadGenWizard';
 import { LeadGenProgress } from './components/LeadGenProgress';
 import { VoiceCallModal } from './components/VoiceCallModal';
 import { Message, Role, Campaign, ViewMode, Lead, Session, ArtistProfile, Subscription, SubscriptionTier, AgentMode, ToolId, LeadList, StrategyBrief } from './types';
 import { AITier } from './components/Composer';
-import { Menu, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Menu, Loader2, ChevronDown, ChevronUp, Target, Mail, Megaphone, Calendar, Search } from 'lucide-react';
 import { BackgroundBeams } from './components/ui/background-beams';
 import { CommandMenu, COMMAND_ACTIONS, ACTION_PROMPTS } from './components/ui/command-menu';
 import { useAuth } from '@/lib/auth-context';
+import { supabase } from '@/lib/supabase/client';
 import { trackEvent } from '@/lib/analytics';
 import {
   saveArtistProfile,
@@ -118,6 +120,7 @@ export default function Home() {
   const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
+  const [showUpgradeBanner, setShowUpgradeBanner] = useState(false);
   const [persistenceWarning, setPersistenceWarning] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -323,12 +326,7 @@ export default function Home() {
           setArtistProfile(defaultProfile);
           hasProfile = true;
 
-          // Launch Tutorial for first-timers
-          const tutorialDone = userId ? localStorage.getItem(`visio:tutorial_complete:${userId}`) === 'true' : false;
-          if (!tutorialDone) {
-            setShowTutorial(true);
-            trackEvent('tutorial_started');
-          }
+          // Tutorial is triggered via handleAuthComplete — no duplicate trigger needed here.
         }
       }
 
@@ -390,35 +388,27 @@ export default function Home() {
   };
 
   const handleAuthComplete = async () => {
-    // Check both profile AND onboarding completion status
-    const [profile, hasCompletedOnboarding] = await Promise.all([
-      loadArtistProfile(),
-      checkOnboardingComplete()
-    ]);
-
+    const profile = await loadArtistProfile();
     if (profile) {
       setArtistProfile(profile);
     }
 
-    // Track sign-in
     trackEvent('sign_in');
 
-    // Check if tutorial has been completed
-    const tutorialDone = userId ? localStorage.getItem(`visio:tutorial_complete:${userId}`) === 'true' : false;
+    // Use supabase.auth.getUser() directly since userId state may not be updated yet
+    const { data: { user: currentUser } } = await supabase.auth.getUser();
+    const currentUserId = currentUser?.id;
 
-    // Only check if profile exists
-    if (profile) {
-      setArtistProfile(profile);
-      navigateTo('overview');
-    } else {
-      // No profile found - show tutorial for new users, then overview
-      if (!tutorialDone) {
-        setShowTutorial(true);
-        trackEvent('tutorial_started');
-      }
-      console.log("No profile found, will show gate");
-      navigateTo('overview');
+    const tutorialDone = currentUserId
+      ? localStorage.getItem(`visio:tutorial_complete:${currentUserId}`) === 'true'
+      : false;
+
+    if (!tutorialDone) {
+      setShowTutorial(true);
+      trackEvent('tutorial_started');
     }
+
+    navigateTo('overview');
   };
 
   const [artistProfile, setArtistProfile] = useState<ArtistProfile | null>(null);
@@ -512,6 +502,34 @@ export default function Home() {
       .catch(() => {});
     return () => { cancelled = true; };
   }, [user, authLoading, session?.access_token, subscription.tier]);
+
+  // Show upgrade banner for free-tier users after some usage
+  useEffect(() => {
+    if (!user || authLoading) return;
+    if (effectiveSubscription.tier !== 'artist') return;
+    if (currentView !== 'dashboard') return;
+
+    const dismissed = sessionStorage.getItem('visio:upgrade_banner_dismissed');
+    if (dismissed) return;
+
+    const totalUserMessages = sessions.reduce((acc, s) =>
+      acc + s.messages.filter(m => m.role === Role.USER).length, 0);
+
+    if (totalUserMessages >= 3) {
+      const timer = setTimeout(() => setShowUpgradeBanner(true), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [user, authLoading, effectiveSubscription.tier, currentView, sessions]);
+
+  // Also trigger upgrade banner when credits are low
+  useEffect(() => {
+    if (creditsBalance !== null && creditsBalance <= 5 && creditsBalance > 0 && effectiveSubscription.tier === 'artist') {
+      const dismissed = sessionStorage.getItem('visio:upgrade_banner_dismissed');
+      if (!dismissed) {
+        setShowUpgradeBanner(true);
+      }
+    }
+  }, [creditsBalance, effectiveSubscription.tier]);
 
   // Load campaign folders from Supabase on auth
   useEffect(() => {
@@ -1830,8 +1848,8 @@ export default function Home() {
                     )}
                   </div>
 
-                  {/* Tools Panel (desktop) */}
-                  <div className="hidden lg:block absolute right-16 top-24 z-30">
+                  {/* Tools Panel (desktop - xl and up to avoid overlay on narrower screens) */}
+                  <div className="hidden xl:block absolute right-4 top-24 z-30">
                     <ToolsPanel
                       activeTool={activeTool}
                       onSelect={handleToolSelect}
@@ -1873,6 +1891,30 @@ export default function Home() {
                   </div>
                 </div>
 
+                {/* Compact Tools Bar (lg only — hidden on xl where full ToolsPanel shows) */}
+                <div className="hidden lg:flex xl:hidden items-center gap-2 px-4 pb-2 flex-shrink-0 overflow-x-auto">
+                  {([
+                    { id: 'generate_leads' as ToolId, icon: Target, label: 'Leads' },
+                    { id: 'draft_pitch' as ToolId, icon: Mail, label: 'Pitch' },
+                    { id: 'press_release' as ToolId, icon: Megaphone, label: 'Press' },
+                    { id: 'campaign_plan' as ToolId, icon: Calendar, label: 'Campaign' },
+                    { id: 'web_search' as ToolId, icon: Search, label: 'Search' },
+                  ]).map(tool => (
+                    <button
+                      key={tool.id}
+                      onClick={() => handleToolSelect(tool.id)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all whitespace-nowrap ${
+                        activeTool === tool.id
+                          ? 'border-visio-teal/40 bg-visio-teal/10 text-visio-teal'
+                          : 'border-white/5 bg-white/[0.02] text-white/50 hover:text-white/70 hover:bg-white/5'
+                      }`}
+                    >
+                      <tool.icon size={12} />
+                      {tool.label}
+                    </button>
+                  ))}
+                </div>
+
                 {/* Footer / Composer */}
                 <div className="flex-shrink-0 bg-gradient-to-t from-visio-bg via-visio-bg to-transparent pt-10 pb-2 relative z-20">
                   <Composer
@@ -1890,6 +1932,21 @@ export default function Home() {
                     onStartVoiceCall={() => setShowVoiceCall(true)}
                   />
                 </div>
+
+                {/* Upgrade Banner (non-intrusive slide-in for free tier) */}
+                <UpgradeBanner
+                  isVisible={showUpgradeBanner}
+                  onClose={() => {
+                    setShowUpgradeBanner(false);
+                    sessionStorage.setItem('visio:upgrade_banner_dismissed', 'true');
+                  }}
+                  onUpgrade={() => {
+                    setShowUpgradeBanner(false);
+                    navigateTo('billing');
+                  }}
+                  currentTier={effectiveSubscription.tier}
+                  creditsBalance={creditsBalance}
+                />
               </>
             ) : currentView === 'leads' ? (
               <LeadsGallery
