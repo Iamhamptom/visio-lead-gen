@@ -2,7 +2,75 @@
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useConversation } from '@elevenlabs/react';
-import { Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX, X, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+
+// ─── Sound Effects ───────────────────────────────────────────────────────────
+
+let _audioCtx: AudioContext | null = null;
+function getAudioCtx(): AudioContext {
+    if (!_audioCtx) _audioCtx = new AudioContext();
+    return _audioCtx;
+}
+
+/** Soft click sound for button presses */
+function playClick() {
+    try {
+        const ctx = getAudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(900, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.06);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.08);
+    } catch { /* silent fail in unsupported envs */ }
+}
+
+/** Connection / activation sound — ascending tone */
+function playConnect() {
+    try {
+        const ctx = getAudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(400, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.2);
+    } catch {}
+}
+
+/** Disconnect sound — descending tone */
+function playDisconnect() {
+    try {
+        const ctx = getAudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(700, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + 0.2);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.25);
+    } catch {}
+}
+
+// ─── Spectre Introduction Text (TTS) ─────────────────────────────────────────
+
+const SPECTRE_INTRO = `Welcome to Visio. I'm Spectre, your personal AI voice assistant. This platform gives independent artists the same firepower that major labels have. We find you the right playlist curators, journalists, bloggers, and influencers. We draft pitch perfect emails, plan full PR campaigns, and track your reach across every platform. Whether you're pushing a new single or building your brand from scratch, I'm here to make it happen. Just start talking to me or use the chat. Let's make some noise.`;
+
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 interface SpectrePanelProps {
     isOpen: boolean;
@@ -12,104 +80,109 @@ interface SpectrePanelProps {
     artistContext?: { name?: string; genre?: string; location?: string } | null;
 }
 
-type CallPhase = 'idle' | 'connecting' | 'active' | 'ending' | 'error';
+type CallPhase = 'idle' | 'intro' | 'connecting' | 'active' | 'ending' | 'error';
 
 // ─── Spectre Orb ─────────────────────────────────────────────────────────────
-// Animated orb that visually "tweaks" based on voice state
+
 const SpectreOrb: React.FC<{
     isConnected: boolean;
     isSpeaking: boolean;
+    isIntroPlaying: boolean;
     isMuted: boolean;
     callPhase: CallPhase;
-}> = ({ isConnected, isSpeaking, isMuted, callPhase }) => {
+}> = ({ isConnected, isSpeaking, isIntroPlaying, isMuted, callPhase }) => {
     const isActive = isConnected || callPhase === 'connecting';
+    const showSpeaking = isSpeaking || isIntroPlaying;
 
     return (
         <div className="relative w-28 h-28 mx-auto flex items-center justify-center">
-            {/* Background glow — breathes when idle, expands when speaking */}
+            {/* Background glow */}
             <div
                 className={`absolute inset-0 rounded-full blur-3xl transition-all duration-700 ${
-                    isSpeaking
+                    showSpeaking
                         ? 'bg-visio-teal/40 scale-[2] opacity-100'
                         : isActive
                         ? 'bg-visio-teal/20 scale-150 opacity-80 spectre-breathe'
-                        : 'bg-visio-teal/10 scale-100 opacity-30'
+                        : 'bg-visio-teal/10 scale-100 opacity-40 spectre-breathe'
                 }`}
             />
 
             {/* Outer ring 1 — slow reverse spin */}
             <div
-                className={`absolute inset-0 rounded-full border border-visio-teal/30 border-t-visio-teal border-l-transparent transition-all duration-700 ${
-                    isActive ? 'animate-spin opacity-100' : 'opacity-20'
+                className={`absolute inset-0 rounded-full border transition-all duration-700 ${
+                    showSpeaking
+                        ? 'border-visio-teal/50 border-t-visio-accent border-l-transparent animate-spin opacity-100'
+                        : isActive
+                        ? 'border-visio-teal/30 border-t-visio-teal border-l-transparent animate-spin opacity-100'
+                        : 'border-visio-teal/15 border-t-visio-teal/30 border-l-transparent animate-spin opacity-40'
                 }`}
                 style={{
-                    animationDuration: isActive ? '3s' : '10s',
+                    animationDuration: showSpeaking ? '2s' : isActive ? '3s' : '8s',
                     animationDirection: 'reverse',
                 }}
             />
 
-            {/* Outer ring 2 — forward spin, offset */}
+            {/* Outer ring 2 — forward spin */}
             <div
                 className={`absolute inset-1 rounded-full border border-visio-accent/20 border-b-visio-accent/60 border-r-transparent transition-all duration-700 ${
-                    isActive ? 'animate-spin opacity-100' : 'opacity-0'
+                    isActive || showSpeaking ? 'animate-spin opacity-100' : 'opacity-0'
                 }`}
                 style={{ animationDuration: '4s' }}
             />
 
-            {/* Middle ring — fast spin when active */}
+            {/* Middle ring — fast spin */}
             <div
                 className={`absolute inset-3 rounded-full border-2 border-transparent border-r-visio-accent border-b-visio-accent/50 transition-all duration-700 ${
-                    isActive ? 'animate-spin opacity-100' : 'opacity-0'
+                    isActive || showSpeaking ? 'animate-spin opacity-100' : 'opacity-0'
                 }`}
                 style={{ animationDuration: isActive ? '1.5s' : '5s' }}
             />
 
             {/* Speaking pulse rings */}
-            {isSpeaking && (
+            {showSpeaking && (
                 <>
                     <div className="absolute inset-0 rounded-full border-2 border-visio-teal/40 spectre-pulse-ring" />
                     <div className="absolute inset-0 rounded-full border border-visio-teal/20 spectre-pulse-ring" style={{ animationDelay: '0.5s' }} />
                 </>
             )}
 
-            {/* Listening indicator — ping ring */}
-            {isConnected && !isSpeaking && !isMuted && (
-                <div className="absolute inset-0 rounded-full border-2 border-visio-teal/50 animate-ping" style={{ animationDuration: '2s' }} />
+            {/* Listening indicator */}
+            {isConnected && !showSpeaking && !isMuted && (
+                <div className="absolute inset-0 rounded-full border-2 border-visio-teal/40 animate-ping" style={{ animationDuration: '2s' }} />
             )}
 
             {/* Core orb */}
             <div
                 className={`relative w-14 h-14 rounded-full transition-all duration-500 ${
-                    isSpeaking
+                    showSpeaking
                         ? 'scale-110 brightness-150 spectre-core-speaking'
                         : isActive
                         ? 'scale-100 brightness-125 animate-pulse'
-                        : 'scale-90 brightness-75'
+                        : 'scale-95 brightness-90 animate-pulse'
                 }`}
                 style={{
-                    background: isSpeaking
+                    background: showSpeaking
                         ? 'radial-gradient(circle at 40% 40%, #B6F09C, #608A94, #3a5f6a)'
                         : isActive
                         ? 'radial-gradient(circle at 40% 40%, #608A94, #B6F09C, #3a5f6a)'
-                        : 'radial-gradient(circle at 40% 40%, #3a5f6a, #2a4a54)',
-                    boxShadow: isSpeaking
+                        : 'radial-gradient(circle at 40% 40%, #4a7a8a, #3a5f6a)',
+                    boxShadow: showSpeaking
                         ? '0 0 40px rgba(182, 240, 156, 0.6), 0 0 80px rgba(96, 138, 148, 0.3)'
                         : isActive
                         ? '0 0 30px rgba(96, 138, 148, 0.4)'
-                        : '0 0 10px rgba(96, 138, 148, 0.2)',
-                    animationDuration: '2.5s',
+                        : '0 0 15px rgba(96, 138, 148, 0.25)',
+                    animationDuration: '3s',
                 }}
             >
-                {/* Inner highlight */}
                 <div
-                    className={`absolute inset-0 bg-white/30 blur-sm rounded-full ${isActive ? 'animate-pulse' : ''}`}
+                    className={`absolute inset-0 bg-white/25 blur-sm rounded-full ${isActive || showSpeaking ? 'animate-pulse' : ''}`}
                     style={{ animationDuration: '2s' }}
                 />
             </div>
 
-            {/* Audio visualizer bars — appear when Spectre speaks */}
-            {isSpeaking && (
-                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 flex items-end gap-[3px]">
+            {/* Audio visualizer bars */}
+            {showSpeaking && (
+                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-end gap-[3px]">
                     {[0, 1, 2, 3, 4, 5, 6].map(i => (
                         <div
                             key={i}
@@ -136,6 +209,7 @@ const SpectreOrb: React.FC<{
 };
 
 // ─── Spectre Panel (Sidebar) ─────────────────────────────────────────────────
+
 export const SpectrePanel: React.FC<SpectrePanelProps> = ({
     isOpen,
     onClose,
@@ -147,6 +221,10 @@ export const SpectrePanel: React.FC<SpectrePanelProps> = ({
     const [errorMessage, setErrorMessage] = useState('');
     const [conversationLog, setConversationLog] = useState<{ role: 'user' | 'agent'; text: string }[]>([]);
     const [callDuration, setCallDuration] = useState(0);
+    const [isIntroPlaying, setIsIntroPlaying] = useState(false);
+    const [introPlayed, setIntroPlayed] = useState(false);
+    const [isMuted, setIsMuted] = useState(false);
+    const [audioEnabled, setAudioEnabled] = useState(true);
 
     // Refs
     const logContainerRef = useRef<HTMLDivElement>(null);
@@ -155,6 +233,7 @@ export const SpectrePanel: React.FC<SpectrePanelProps> = ({
     const conversationLogRef = useRef<{ role: 'user' | 'agent'; text: string }[]>([]);
     const onCallEndRef = useRef(onCallEnd);
     const accessTokenRef = useRef(accessToken);
+    const introAudioRef = useRef<HTMLAudioElement | null>(null);
 
     // Keep refs in sync
     useEffect(() => { onCallEndRef.current = onCallEnd; }, [onCallEnd]);
@@ -168,31 +247,123 @@ export const SpectrePanel: React.FC<SpectrePanelProps> = ({
         }
     }, [conversationLog]);
 
+    // ─── Auto-play introduction when panel first opens ───
+    useEffect(() => {
+        if (isOpen && !introPlayed && callPhase === 'idle') {
+            const timer = setTimeout(() => {
+                playIntroduction();
+            }, 800);
+            return () => clearTimeout(timer);
+        }
+    }, [isOpen, introPlayed, callPhase]);
+
+    /** Play the TTS introduction using /api/voice */
+    const playIntroduction = useCallback(async () => {
+        if (introPlayed || isIntroPlaying) return;
+
+        setIsIntroPlaying(true);
+        setCallPhase('intro');
+        playConnect();
+
+        try {
+            const token = accessTokenRef.current;
+            const res = await fetch('/api/voice', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({ text: SPECTRE_INTRO, streaming: false }),
+            });
+
+            if (!res.ok) {
+                playIntroFallback();
+                return;
+            }
+
+            const audioBlob = await res.blob();
+            const audioUrl = URL.createObjectURL(audioBlob);
+            const audio = new Audio(audioUrl);
+            introAudioRef.current = audio;
+
+            audio.onended = () => {
+                setIsIntroPlaying(false);
+                setCallPhase('idle');
+                setIntroPlayed(true);
+                URL.revokeObjectURL(audioUrl);
+            };
+
+            audio.onerror = () => {
+                setIsIntroPlaying(false);
+                setCallPhase('idle');
+                setIntroPlayed(true);
+                playIntroFallback();
+            };
+
+            await audio.play();
+        } catch {
+            playIntroFallback();
+        }
+    }, [introPlayed, isIntroPlaying]);
+
+    /** Fallback: browser SpeechSynthesis for the intro */
+    const playIntroFallback = useCallback(() => {
+        if (typeof window === 'undefined' || !window.speechSynthesis) {
+            setIsIntroPlaying(false);
+            setCallPhase('idle');
+            setIntroPlayed(true);
+            return;
+        }
+
+        const utterance = new SpeechSynthesisUtterance(SPECTRE_INTRO);
+        utterance.rate = 1.0;
+        utterance.pitch = 1.05;
+        utterance.volume = 1.0;
+
+        const voices = window.speechSynthesis.getVoices();
+        const femaleNames = ['Google UK English Female', 'Samantha', 'Karen', 'Victoria', 'Zira'];
+        for (const name of femaleNames) {
+            const v = voices.find(v => v.name.includes(name) && v.lang.startsWith('en'));
+            if (v) { utterance.voice = v; break; }
+        }
+        if (!utterance.voice) {
+            const any = voices.find(v => v.lang.startsWith('en'));
+            if (any) utterance.voice = any;
+        }
+
+        utterance.onend = () => {
+            setIsIntroPlaying(false);
+            setCallPhase('idle');
+            setIntroPlayed(true);
+        };
+
+        window.speechSynthesis.speak(utterance);
+    }, []);
+
     // Voice conversation hook — ElevenLabs Conversational AI
     const conversation = useConversation({
         onConnect: ({ conversationId }) => {
             console.log('Spectre connected:', conversationId);
             setCallPhase('active');
+            playConnect();
             callStartTimeRef.current = Date.now();
 
-            // Start duration timer
             durationIntervalRef.current = setInterval(() => {
                 setCallDuration(Math.floor((Date.now() - callStartTimeRef.current) / 1000));
             }, 1000);
         },
         onDisconnect: () => {
             console.log('Spectre disconnected');
+            playDisconnect();
             stopDurationTimer();
             const duration = callStartTimeRef.current > 0
                 ? Math.floor((Date.now() - callStartTimeRef.current) / 1000)
                 : 0;
 
-            // Report call end with transcript and duration
             if (conversationLogRef.current.length > 0 && onCallEndRef.current) {
                 onCallEndRef.current([...conversationLogRef.current], duration);
             }
 
-            // Deduct credits for the call
             if (duration > 0) {
                 deductCallCredits(duration);
             }
@@ -203,7 +374,7 @@ export const SpectrePanel: React.FC<SpectrePanelProps> = ({
         onError: (message, context) => {
             console.error('Spectre voice error:', message, context);
             if (message?.includes('microphone') || message?.includes('permission')) {
-                setErrorMessage('Microphone access denied. Please allow mic access and try again.');
+                setErrorMessage('Microphone access needed. Please allow mic access in your browser and try again.');
             } else {
                 setErrorMessage('Connection issue. Please try again.');
             }
@@ -219,7 +390,6 @@ export const SpectrePanel: React.FC<SpectrePanelProps> = ({
 
     const { status, isSpeaking } = conversation;
 
-    // Deduct credits on the server
     const deductCallCredits = async (durationSeconds: number) => {
         try {
             const token = accessTokenRef.current;
@@ -243,22 +413,45 @@ export const SpectrePanel: React.FC<SpectrePanelProps> = ({
         }
     };
 
-    // Format duration as mm:ss
     const formatDuration = (seconds: number) => {
         const m = Math.floor(seconds / 60);
         const s = seconds % 60;
         return `${m}:${s.toString().padStart(2, '0')}`;
     };
 
-    // Start a voice call
+    // ─── Start two-way voice call ───
     const startCall = useCallback(async () => {
+        playClick();
+
+        // Stop intro audio if still playing
+        if (introAudioRef.current) {
+            introAudioRef.current.pause();
+            introAudioRef.current = null;
+        }
+        if (isIntroPlaying) {
+            window.speechSynthesis?.cancel();
+            setIsIntroPlaying(false);
+        }
+        setIntroPlayed(true);
+
         setCallPhase('connecting');
         setConversationLog([]);
         setCallDuration(0);
         setErrorMessage('');
 
+        // Request microphone permission BEFORE starting ElevenLabs session
         try {
-            // Fetch signed URL from our API
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            // Release — ElevenLabs SDK will open its own stream via WebRTC
+            stream.getTracks().forEach(t => t.stop());
+        } catch (micErr: any) {
+            console.error('Mic permission denied:', micErr);
+            setErrorMessage('Microphone access is required for voice calls. Please allow mic access in your browser settings and try again.');
+            setCallPhase('error');
+            return;
+        }
+
+        try {
             const token = accessTokenRef.current;
             const res = await fetch('/api/voice-agent', {
                 method: 'GET',
@@ -280,14 +473,13 @@ export const SpectrePanel: React.FC<SpectrePanelProps> = ({
 
             const { signedUrl } = await res.json();
 
-            // Start the voice conversation session
             await conversation.startSession({
                 signedUrl,
                 overrides: {
                     agent: {
                         firstMessage: artistContext?.name
-                            ? `Hey ${artistContext.name}, it's Spectre. What are we working on today?`
-                            : "Hey, it's Spectre. I'm here whenever you need me — what are we working on?",
+                            ? `Hey ${artistContext.name}, Spectre here. What are we working on?`
+                            : "Spectre here. I'm ready — what are we working on?",
                     },
                     tts: {
                         stability: 0.50,
@@ -303,16 +495,16 @@ export const SpectrePanel: React.FC<SpectrePanelProps> = ({
         } catch (err: any) {
             console.error('Failed to start Spectre voice call:', err);
             if (err?.message?.includes('microphone') || err?.message?.includes('NotAllowed')) {
-                setErrorMessage('Microphone access denied. Please allow mic access in your browser settings.');
+                setErrorMessage('Microphone access needed. Please allow mic access in your browser settings.');
             } else {
                 setErrorMessage('Could not start voice call. Check your connection and try again.');
             }
             setCallPhase('error');
         }
-    }, [conversation, artistContext]);
+    }, [conversation, artistContext, isIntroPlaying]);
 
-    // End the voice call
     const endCall = useCallback(async () => {
+        playClick();
         setCallPhase('ending');
         try {
             await conversation.endSession();
@@ -322,26 +514,14 @@ export const SpectrePanel: React.FC<SpectrePanelProps> = ({
         setCallPhase('idle');
     }, [conversation]);
 
-    // Mute / unmute
-    const [isMuted, setIsMuted] = useState(false);
-
     const toggleMute = useCallback(() => {
+        playClick();
         setIsMuted(prev => !prev);
     }, []);
-
-    // Audio volume toggle
-    const [audioEnabled, setAudioEnabled] = useState(true);
 
     useEffect(() => {
         conversation.setVolume({ volume: audioEnabled ? 1 : 0 });
     }, [audioEnabled, conversation]);
-
-    // Clean up on panel close — but keep call going if active
-    useEffect(() => {
-        if (!isOpen && status === 'connected') {
-            // Don't auto-disconnect — let user hear Spectre even with panel closed
-        }
-    }, [isOpen, status]);
 
     // Clean up on unmount
     useEffect(() => {
@@ -350,6 +530,9 @@ export const SpectrePanel: React.FC<SpectrePanelProps> = ({
                 conversation.endSession().catch(() => {});
             }
             stopDurationTimer();
+            if (introAudioRef.current) {
+                introAudioRef.current.pause();
+            }
         };
     }, []);
 
@@ -357,10 +540,11 @@ export const SpectrePanel: React.FC<SpectrePanelProps> = ({
     const isConnected = status === 'connected';
 
     const statusText = (() => {
-        if (callPhase === 'error') return errorMessage || 'Call error';
+        if (callPhase === 'error') return errorMessage || 'Connection error';
         if (callPhase === 'ending') return 'Ending call...';
+        if (callPhase === 'intro') return 'Spectre is introducing herself...';
         if (callPhase === 'connecting' || status === 'connecting') return 'Connecting...';
-        if (!isConnected) return 'Ready to talk';
+        if (!isConnected && callPhase === 'idle') return introPlayed ? 'Ready — tap to start a conversation' : 'Initializing...';
         if (isSpeaking) return 'Spectre is speaking...';
         if (isMuted) return 'Muted';
         return 'Listening...';
@@ -368,27 +552,29 @@ export const SpectrePanel: React.FC<SpectrePanelProps> = ({
 
     return (
         <>
-            {/* Sidebar Panel — slides in from the right */}
+            {/* Sidebar Panel */}
             <div
                 className={`fixed top-0 right-0 h-full z-[90] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
                     isOpen ? 'translate-x-0' : 'translate-x-full'
                 }`}
                 style={{ width: '360px' }}
             >
-                {/* Glass panel */}
                 <div className="h-full flex flex-col bg-[#060606]/95 backdrop-blur-2xl border-l border-white/8 shadow-[-20px_0_60px_rgba(0,0,0,0.5)]">
 
                     {/* Header */}
                     <div className="flex items-center justify-between px-5 pt-5 pb-3">
                         <div className="flex items-center gap-3">
-                            <div className={`w-2.5 h-2.5 rounded-full ${
+                            <div className={`w-2.5 h-2.5 rounded-full transition-all duration-500 ${
                                 isConnected ? 'bg-visio-teal shadow-[0_0_8px_rgba(96,138,148,0.6)]' :
                                 callPhase === 'connecting' ? 'bg-yellow-500 animate-pulse' :
-                                'bg-white/20'
+                                isIntroPlaying ? 'bg-visio-accent animate-pulse' :
+                                'bg-white/25'
                             }`} />
                             <div>
                                 <h3 className="text-sm font-semibold text-white tracking-wide">Spectre</h3>
-                                <p className="text-[10px] text-white/30 font-medium">Voice Assistant</p>
+                                <p className="text-[10px] text-white/30 font-medium">
+                                    {isConnected ? 'Call Active' : isIntroPlaying ? 'Speaking' : 'Voice Assistant'}
+                                </p>
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -398,12 +584,7 @@ export const SpectrePanel: React.FC<SpectrePanelProps> = ({
                                 </span>
                             )}
                             <button
-                                onClick={() => {
-                                    if (!isActive) {
-                                        endCall();
-                                    }
-                                    onClose();
-                                }}
+                                onClick={() => { playClick(); onClose(); }}
                                 className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/40 hover:text-white transition-colors"
                             >
                                 <ChevronRight size={16} />
@@ -416,23 +597,24 @@ export const SpectrePanel: React.FC<SpectrePanelProps> = ({
                         <SpectreOrb
                             isConnected={isConnected}
                             isSpeaking={isSpeaking}
+                            isIntroPlaying={isIntroPlaying}
                             isMuted={isMuted}
                             callPhase={callPhase}
                         />
 
                         {/* Status */}
-                        <div className="mt-5 flex items-center gap-2">
+                        <div className="mt-5 flex items-center gap-2 min-h-[20px]">
                             {(callPhase === 'connecting' || callPhase === 'ending') && (
                                 <Loader2 size={13} className="animate-spin text-visio-teal" />
                             )}
                             {isConnected && !isSpeaking && !isMuted && (
                                 <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
                             )}
-                            <span className={`text-xs font-medium ${
+                            <span className={`text-xs font-medium transition-colors duration-300 ${
                                 callPhase === 'error' ? 'text-red-400' :
-                                isSpeaking ? 'text-visio-accent' :
+                                isSpeaking || isIntroPlaying ? 'text-visio-accent' :
                                 isConnected && !isMuted ? 'text-visio-teal' :
-                                'text-white/50'
+                                'text-white/40'
                             }`}>
                                 {statusText}
                             </span>
@@ -475,20 +657,36 @@ export const SpectrePanel: React.FC<SpectrePanelProps> = ({
                             </div>
                         ) : (
                             <div className="h-full flex flex-col items-center justify-center text-center px-6">
+                                {callPhase === 'intro' && (
+                                    <p className="text-visio-accent/60 text-xs leading-relaxed animate-pulse">
+                                        Spectre is introducing herself...
+                                    </p>
+                                )}
                                 {callPhase === 'idle' && (
                                     <>
                                         <p className="text-white/25 text-xs leading-relaxed">
-                                            Tap the call button to start talking with Spectre.
+                                            {introPlayed
+                                                ? 'Tap the call button below to start a two-way voice conversation with Spectre.'
+                                                : 'Spectre is your AI voice assistant. She knows everything about Visio.'
+                                            }
                                         </p>
                                         <p className="text-white/15 text-[10px] mt-2 leading-relaxed">
-                                            She knows everything about leads, campaigns, pitches, and the music industry.
+                                            Leads, campaigns, pitches, strategy — just ask.
                                         </p>
                                     </>
                                 )}
                                 {callPhase === 'error' && (
-                                    <p className="text-red-400/70 text-xs leading-relaxed">
-                                        {errorMessage || 'Something went wrong. Try again.'}
-                                    </p>
+                                    <div className="space-y-2">
+                                        <p className="text-red-400/70 text-xs leading-relaxed">
+                                            {errorMessage || 'Something went wrong.'}
+                                        </p>
+                                        <button
+                                            onClick={() => { setCallPhase('idle'); setErrorMessage(''); }}
+                                            className="text-[10px] text-visio-teal/60 hover:text-visio-teal underline"
+                                        >
+                                            Try again
+                                        </button>
+                                    </div>
                                 )}
                             </div>
                         )}
@@ -516,14 +714,19 @@ export const SpectrePanel: React.FC<SpectrePanelProps> = ({
                             {isActive ? (
                                 <button
                                     onClick={endCall}
-                                    className="p-4.5 rounded-full bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/25 hover:scale-105 active:scale-95 transition-all duration-200"
+                                    className="p-5 rounded-full bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/25 hover:scale-105 active:scale-95 transition-all duration-200"
                                 >
                                     <PhoneOff size={22} />
                                 </button>
                             ) : (
                                 <button
                                     onClick={startCall}
-                                    className="p-4.5 rounded-full bg-visio-teal hover:brightness-110 text-black shadow-lg shadow-visio-teal/25 hover:scale-105 active:scale-95 transition-all duration-200"
+                                    disabled={callPhase === 'intro'}
+                                    className={`p-5 rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 ${
+                                        callPhase === 'intro'
+                                            ? 'bg-visio-teal/50 text-black/50 cursor-wait shadow-visio-teal/10'
+                                            : 'bg-visio-teal hover:brightness-110 text-black shadow-visio-teal/25'
+                                    }`}
                                 >
                                     <Phone size={22} />
                                 </button>
@@ -531,7 +734,7 @@ export const SpectrePanel: React.FC<SpectrePanelProps> = ({
 
                             {/* Audio toggle */}
                             <button
-                                onClick={() => setAudioEnabled(prev => !prev)}
+                                onClick={() => { playClick(); setAudioEnabled(prev => !prev); }}
                                 className={`p-3.5 rounded-full transition-all duration-200 ${
                                     audioEnabled
                                         ? 'bg-white/5 text-white/50 border border-white/8 hover:bg-white/10 hover:text-white'
@@ -542,7 +745,6 @@ export const SpectrePanel: React.FC<SpectrePanelProps> = ({
                             </button>
                         </div>
 
-                        {/* Speak naturally hint */}
                         <p className="text-center text-[9px] text-white/15 mt-4 font-medium tracking-wide">
                             Speak naturally — Spectre handles the rest.
                         </p>
@@ -550,10 +752,10 @@ export const SpectrePanel: React.FC<SpectrePanelProps> = ({
                 </div>
             </div>
 
-            {/* Floating toggle button — always visible on the right edge */}
+            {/* Floating toggle button — always visible when panel is closed */}
             {!isOpen && (
                 <button
-                    onClick={onClose} // onClose toggles the panel in page.tsx
+                    onClick={() => { playClick(); onClose(); }}
                     className={`fixed right-0 top-1/2 -translate-y-1/2 z-[89] transition-all duration-300 group ${
                         isConnected ? 'spectre-fab-active' : ''
                     }`}
@@ -563,7 +765,6 @@ export const SpectrePanel: React.FC<SpectrePanelProps> = ({
                             ? 'bg-visio-teal/15 border-visio-teal/30 shadow-[-4px_0_20px_rgba(96,138,148,0.15)]'
                             : 'bg-[#0a0a0a]/90 border-white/8 hover:bg-white/5 hover:border-white/15'
                     }`}>
-                        {/* Mini orb */}
                         <div className={`w-5 h-5 rounded-full transition-all duration-500 ${
                             isSpeaking
                                 ? 'bg-gradient-to-tr from-visio-accent to-visio-teal shadow-[0_0_12px_rgba(182,240,156,0.5)] scale-110'

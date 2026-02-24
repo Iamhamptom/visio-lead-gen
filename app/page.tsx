@@ -141,7 +141,7 @@ export default function Home() {
   const [showLeadGenWizard, setShowLeadGenWizard] = useState(false);
   const [leadGenProgress, setLeadGenProgress] = useState<{ tier: string; status: string; found: number; target: number; currentSource: string; logs: string[] } | null>(null);
   const [isGeneratingLeads, setIsGeneratingLeads] = useState(false);
-  const [showVoiceCall, setShowVoiceCall] = useState(false);
+  const [showVoiceCall, setShowVoiceCall] = useState(true);
   const [campaignFolders, setCampaignFolders] = useState<Campaign[]>([]);
   const [isChatScrollable, setIsChatScrollable] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);

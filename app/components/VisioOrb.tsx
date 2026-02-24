@@ -8,12 +8,12 @@ interface VisioOrbProps {
 export const VisioOrb: React.FC<VisioOrbProps> = ({ active = true, size = 'md' }) => {
     const sizeClasses = {
         sm: 'w-8 h-8',
-        md: 'w-24 h-24', // Chat size
+        md: 'w-24 h-24',
         lg: 'w-32 h-32'
     };
 
     return (
-        <div className={`relative flex items-center justify-center ${sizeClasses[size]} mx-auto my-4 animate-float`}>
+        <div className={`relative flex items-center justify-center ${sizeClasses[size]} mx-auto`}>
             {/* Background Glow */}
             <div
                 className={`absolute inset-0 bg-visio-accent/20 rounded-full blur-3xl transition-all duration-1000 ${active ? 'opacity-100 scale-150' : 'opacity-20 scale-75'
