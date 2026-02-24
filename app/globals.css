@@ -210,3 +210,71 @@ body {
   background-color: rgba(96, 138, 148, 0.4);
   color: white;
 }
+
+/* ─── Spectre Voice Animations ─── */
+
+/* Breathing glow when idle/listening */
+@keyframes spectre-breathe {
+  0%, 100% { transform: scale(1.5); opacity: 0.8; }
+  50% { transform: scale(1.7); opacity: 0.5; }
+}
+.spectre-breathe {
+  animation: spectre-breathe 3s ease-in-out infinite;
+}
+
+/* Pulse ring that expands outward when speaking */
+@keyframes spectre-pulse-ring {
+  0% { transform: scale(1); opacity: 0.5; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+.spectre-pulse-ring {
+  animation: spectre-pulse-ring 1.5s ease-out infinite;
+}
+
+/* Core orb scale pulse when speaking */
+@keyframes spectre-core-speak {
+  0%, 100% { transform: scale(1.1); }
+  30% { transform: scale(1.15); }
+  60% { transform: scale(1.08); }
+}
+.spectre-core-speaking {
+  animation: spectre-core-speak 0.8s ease-in-out infinite;
+}
+
+/* Audio visualizer bars */
+@keyframes spectre-audio-bar {
+  0%, 100% { height: 4px; }
+  50% { height: 18px; }
+}
+.spectre-audio-bar {
+  height: 4px;
+  animation: spectre-audio-bar 0.5s ease-in-out infinite alternate;
+}
+
+/* Floating action button pulse for active call */
+@keyframes spectre-fab-pulse {
+  0%, 100% { box-shadow: -4px 0 20px rgba(96, 138, 148, 0.15); }
+  50% { box-shadow: -4px 0 30px rgba(96, 138, 148, 0.3); }
+}
+.spectre-fab-active > div {
+  animation: spectre-fab-pulse 2s ease-in-out infinite;
+}
+
+/* Spectre panel scroll — thinner scrollbar */
+.spectre-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(96, 138, 148, 0.2) transparent;
+}
+.spectre-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.spectre-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.spectre-scroll::-webkit-scrollbar-thumb {
+  background: rgba(96, 138, 148, 0.2);
+  border-radius: 99px;
+}
+.spectre-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(96, 138, 148, 0.4);
+}

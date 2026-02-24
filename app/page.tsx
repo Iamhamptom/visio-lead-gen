@@ -22,7 +22,7 @@ import { ToolsPanel } from './components/ToolsPanel';
 import { UpgradeBanner } from './components/UpgradeBanner';
 import { LeadGenWizard, LeadGenConfig } from './components/LeadGenWizard';
 import { LeadGenProgress } from './components/LeadGenProgress';
-import { VoiceCallModal } from './components/VoiceCallModal';
+import { SpectrePanel } from './components/SpectrePanel';
 import { Message, Role, Campaign, ViewMode, Lead, Session, ArtistProfile, Subscription, SubscriptionTier, AgentMode, ToolId, LeadList, StrategyBrief } from './types';
 import { AITier } from './components/Composer';
 import { Menu, Loader2, ChevronDown, ChevronUp, Target, Mail, Megaphone, Calendar, Search } from 'lucide-react';
@@ -1245,7 +1245,7 @@ export default function Home() {
     const summaryMsg: Message = {
       id: crypto.randomUUID(),
       role: Role.AGENT,
-      content: `---\n**Voice Call Ended** — ${exchanges} exchange${exchanges !== 1 ? 's' : ''}, ${minutes} min${minutes !== 1 ? 's' : ''} (${minutes} credit${minutes !== 1 ? 's' : ''} used)\n---`,
+      content: `---\n**Spectre Call Ended** — ${exchanges} exchange${exchanges !== 1 ? 's' : ''}, ${minutes} min${minutes !== 1 ? 's' : ''} (${minutes} credit${minutes !== 1 ? 's' : ''} used)\n---`,
       timestamp: Date.now(),
     };
 
@@ -1611,10 +1611,10 @@ export default function Home() {
         defaultMarket={artistProfile?.location?.country || undefined}
       />
 
-      {/* Voice Call Modal */}
-      <VoiceCallModal
+      {/* Spectre Voice Panel — persistent sidebar */}
+      <SpectrePanel
         isOpen={showVoiceCall}
-        onClose={() => setShowVoiceCall(false)}
+        onClose={() => setShowVoiceCall(prev => !prev)}
         onCallEnd={handleVoiceCallEnd}
         accessToken={session?.access_token}
         artistContext={artistProfile ? {

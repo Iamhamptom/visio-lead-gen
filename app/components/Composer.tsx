@@ -299,7 +299,7 @@ export const Composer: React.FC<ComposerProps> = ({
                                 <button
                                     onClick={onStartVoiceCall}
                                     className="p-2 text-visio-teal/70 hover:text-visio-teal hover:bg-visio-teal/10 transition-colors rounded-full"
-                                    title="Call V-Prai — voice conversation"
+                                    title="Talk to Spectre — voice assistant"
                                 >
                                     <Phone size={18} />
                                 </button>
@@ -319,7 +319,7 @@ export const Composer: React.FC<ComposerProps> = ({
                 </div>
 
                 <p className="text-center text-[10px] text-white/20 mt-3 font-medium flex items-center justify-center gap-4">
-                    <span>V-Prai can make mistakes. Please verify important contact information.</span>
+                    <span>AI can make mistakes. Please verify important contact information.</span>
                     <button
                         onClick={() => {
                             const data = prompt("Paste your Artist Portal JSON/Text here:");

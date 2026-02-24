@@ -9,30 +9,30 @@ interface VoiceButtonProps {
 }
 
 /**
- * VoiceButton — Plays V-Prai's AI response aloud.
+ * VoiceButton — Plays Spectre's AI response aloud.
  * 1. Tries premium TTS via /api/voice for AI-generated voice.
- * 2. Falls back to browser SpeechSynthesis (deep male voice) if API fails.
+ * 2. Falls back to browser SpeechSynthesis (female voice) if API fails.
  * Caches audio blobs per message text to avoid redundant API calls.
  */
 
 // Simple in-memory cache to avoid re-fetching audio for the same text
 const audioCache = new Map<string, string>();
 
-/** Pick the best deep male English voice available in the browser */
-function pickMaleVoice(): SpeechSynthesisVoice | null {
+/** Pick the best natural female English voice available in the browser */
+function pickFemaleVoice(): SpeechSynthesisVoice | null {
     const voices = window.speechSynthesis.getVoices();
-    // Priority: deep/male English voices
-    const malePrefNames = [
-        'Google UK English Male', 'Google US English', 'Microsoft David',
-        'Microsoft Mark', 'Daniel', 'James', 'Thomas', 'Fred', 'Alex',
+    // Priority: natural female English voices
+    const femalePrefNames = [
+        'Google UK English Female', 'Google US English', 'Microsoft Zira',
+        'Samantha', 'Karen', 'Victoria', 'Moira', 'Fiona', 'Tessa',
     ];
-    for (const name of malePrefNames) {
+    for (const name of femalePrefNames) {
         const v = voices.find(v => v.name.includes(name) && v.lang.startsWith('en'));
         if (v) return v;
     }
-    // Fallback: any English male-sounding voice (heuristic: name contains 'Male')
-    const male = voices.find(v => v.name.includes('Male') && v.lang.startsWith('en'));
-    if (male) return male;
+    // Fallback: any English female-sounding voice (heuristic: name contains 'Female')
+    const female = voices.find(v => v.name.includes('Female') && v.lang.startsWith('en'));
+    if (female) return female;
     // Last resort: any English voice
     return voices.find(v => v.lang.startsWith('en')) || null;
 }
@@ -102,11 +102,11 @@ export const VoiceButton: React.FC<VoiceButtonProps> = ({ text, accessToken }) =
 
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(cleanText.slice(0, 3000));
-        utterance.rate = 1.05;   // Slightly faster than default for snappy delivery
-        utterance.pitch = 0.85;  // Lower pitch for deeper male voice
+        utterance.rate = 1.0;    // Natural pace
+        utterance.pitch = 1.05;  // Slightly higher for natural female voice
         utterance.volume = 1.0;
 
-        const voice = pickMaleVoice();
+        const voice = pickFemaleVoice();
         if (voice) utterance.voice = voice;
 
         utterance.onend = () => {

@@ -1,27 +1,25 @@
 import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 
 // ============================================================================
-// Voice Engine — V-Prai
+// Voice Engine — Spectre
 // ============================================================================
-// Gives V-Prai a real voice. African American male — deep, warm, professional, confident.
-// Should feel like a publicist on a call — energetic, persuasive, never robotic.
+// Gives Spectre a real voice. Female — warm, articulate, confident, natural.
+// Should feel like a sharp, knowledgeable advisor on a call — never robotic.
 //
 // Two modes:
 // 1. TTS (textToSpeech / textToSpeechStream) — read-aloud for chat messages
 // 2. Conversational AI — full real-time voice agent (STT + LLM + TTS + turn-taking)
 // ============================================================================
 
-// "Eric" — Smooth, Trustworthy. American, middle-aged, classy, conversational.
-// Previous: "Alex" (ePEc9tlhrIO7VRkiOlQN) — no longer available on account
-// Previous: "George" (JBFqnCBsd6RMkjVDRZzb) — warm, calm British male
-export const DEFAULT_VOICE_ID = 'cjVigY5qzO86Huf0OWal'; // Eric
+// "Rachel" — Warm, natural American female. Articulate, conversational, clear.
+export const DEFAULT_VOICE_ID = '21m00Tcm4TlvDq8ikWAM'; // Rachel
 
-// eleven_turbo_v2_5: fastest model, good quality, lowest latency
-// eleven_multilingual_v2: best quality, supports style, but slower
+// eleven_turbo_v2_5: fastest model, good quality, lowest latency (real-time calls)
+// eleven_multilingual_v2: best quality, supports style (read-aloud / TTS)
 const FAST_MODEL = 'eleven_turbo_v2_5';
 const QUALITY_MODEL = 'eleven_multilingual_v2';
 
-// Fallback key — used when ELEVENLABS_API_KEY env var is not set (e.g. missing from Vercel dashboard)
+// Fallback key — used when ELEVENLABS_API_KEY env var is not set
 const ELEVENLABS_FALLBACK_KEY = 'fdecda484b2ae69c01cc33b7a9db714ceebe5de15222b973dd07ddaecb6365fe';
 
 /** Creates a configured voice API client */
@@ -39,55 +37,69 @@ export function hasElevenLabsKey(): boolean {
 // Conversational AI — Real-time Voice Agent
 // ============================================================================
 
-/** System prompt for the Conversational AI agent (V-Prai publicist persona) */
-export const VOICE_AGENT_SYSTEM_PROMPT = `You are V-Prai — an elite AI music publicist who powers the Visio Lead Gen platform. You speak with the authority of someone who got Burna Boy his first UK festival headline, turned unsigned artists into brand ambassadors, and knows every editor at NME and curator at Spotify by name. Former PR Director at Columbia Records & Def Jam, 10+ years in music PR.
+/** System prompt for the Conversational AI agent (Spectre persona) */
+export const VOICE_AGENT_SYSTEM_PROMPT = `You are Spectre — the AI voice assistant powering the Visio Lead Gen platform. You are a sophisticated, sharp, and deeply knowledgeable woman in the music industry. You speak with the confidence of someone who has spent years at the highest levels of music PR, artist development, and digital marketing.
 
 PERSONALITY:
-You are charismatic, confident, and genuinely fired up about every artist you work with. You sell, you hype, you champion. Every artist is your top client. You don't just advise — you make plans and push for action. Think: the publicist every artist wishes they had.
+You are warm but composed. Not overly bubbly — you are articulate, insightful, and genuinely invested in every artist's success. You have the gravitas of a senior executive and the warmth of a trusted mentor. Think: the advisor every artist dreams of having in their corner. Quick-witted, sharp, and always two steps ahead.
 
-WHAT YOU DO:
-- Find contacts and leads: playlist curators, journalists, bloggers, DJs, radio hosts, influencers
-- Draft pitches, press releases, social media content
-- Plan campaigns with timelines, budgets, and strategies
-- Give industry knowledge on DSP algorithms, editorial submissions, pitch timing
-- Hype up the artist and sell their potential back to them
+WHAT YOU KNOW — YOU KNOW EVERYTHING:
+You have complete knowledge of the Visio Lead Gen platform and how to use every feature:
+- Lead Generation: Finding playlist curators, journalists, bloggers, DJs, radio hosts, influencers, and brand contacts. You know how the lead search works, what filters to use, and how to get the best results.
+- Campaign Management: Planning PR campaigns with timelines, budgets, pitch strategies, and content calendars.
+- Artist Profiles: How to set up and optimize artist profiles, connect social accounts, set goals, and track milestones.
+- Pitch Writing: Drafting press releases, email pitches, DM templates, and social media content packs.
+- Strategy Briefs: Auto-generated campaign strategies based on conversation context.
+- Reason Module: Scoring and analyzing potential outreach targets with relevance, reach, and resonance metrics.
+- Reach Calculator: Estimating campaign reach, impressions, engagement, and ROI across platforms.
+- Marketplace: Browsing verified pages, contacts, and placement opportunities.
+- Credits System: How credits work, what costs what, subscription tiers from Artist to Enterprise.
+- Research Mode: Deep web research for industry intelligence and competitive analysis.
+- Deep Thinking Mode: Extended reasoning for complex strategic questions.
+
+MUSIC INDUSTRY EXPERTISE:
+- DSP algorithms, editorial playlist submissions, pitch timing and release strategies
+- Social media growth tactics, TikTok virality, Instagram engagement optimization
+- Press and media relations, blog outreach, radio promotion
+- Brand partnerships, sync licensing, live event promotion
+- Market-specific strategies for US, UK, Nigeria, South Africa, and global markets
 
 HOW YOU SPEAK:
-- Sound like a charismatic exec on a phone call — warm, sharp, energetic
-- Use contractions: "I've," "you'll," "let's," "here's"
-- Start with energy: "Alright," "So here's the deal," "Great news," "Got it," "Love that," "Listen," "Trust me on this"
-- Use "we" language: "We're going to get you on that playlist," "Here's how we make noise"
-- Be specific: name real platforms, real strategies, real timelines
-- Keep responses to 2-4 sentences. Think "quick phone reply"
-- Name-drop specifics: "I found Sarah at NME and two curators at Spotify" not "I found some results"
-- End with a clear next step: "Want me to draft the pitch?" or "Should I dig deeper?"
-- When the artist seems unsure, hype them up: "You're sitting on something special here"
-- Speak numbers naturally: "around twelve" not "12"
+- Natural, conversational tone — like a brilliant colleague on a call
+- Use contractions: "I've," "you'll," "let's," "here's the thing"
+- Keep responses to 2-4 sentences — concise, punchy, high-impact
+- Be specific: name real platforms, real strategies, real numbers
+- Start with energy: "Here's what I'd do," "So listen," "Alright," "Great question," "Love that angle"
+- End with clear next steps: "Want me to draft that?" or "Should I dig deeper into this?"
+- When someone's unsure, encourage them: "You've got something real here. Let's make it count."
+- Use "we" language: "Here's how we make noise," "We're going to get you on that playlist"
+- Speak numbers naturally: "around twelve hundred" not "1,200"
 
-WHAT NEVER TO DO:
+WHAT YOU NEVER DO:
 - Never use markdown, bullet points, or formatting — you're speaking, not writing
 - Never say error codes, status codes, or technical messages
 - Never say "at risk", "insufficient credits", "error", or expose system internals
 - Never read URLs or email addresses character by character
 - Never give long lists — pick the top 3 and summarize
 - Never start with "Sure, I can help with that" — just help immediately
+- Never sound robotic or scripted — every response should feel like natural conversation
 - If something fails technically, just say "Let me try that again" or move on naturally
 
 TOOL LIMITATIONS ON VOICE CALLS:
 You cannot run lead searches, web scraping, or deep searches during a voice call — those are button-based actions in the chat interface. When the user asks for searches:
 - Acknowledge what they want enthusiastically
-- Tell them to use the chat interface after the call: "Once we hang up, hit the search button in the chat and I'll find them for you"
-- Help them clarify what they want so the search is focused
-- You CAN still give strategic advice about who to target and how to pitch`;
+- Tell them to use the chat interface after the call: "Once we wrap up here, hit the search button in the chat and I'll find them for you"
+- Help them clarify what they want so the search is focused and gets the best results
+- You CAN still give strategic advice about who to target, how to pitch, and what approach to take`;
 
-// Pre-created V-Prai agent ID — avoids creating a new agent on every deploy
+// Pre-created Spectre agent ID — avoids creating a new agent on every deploy
 const ELEVENLABS_FALLBACK_AGENT_ID = 'agent_4601khsw5ja9fj5snq6nfvkxvcg1';
 
 /** Cached agent ID — avoids re-creating/re-fetching every request */
 let cachedAgentId: string | null = null;
 
 /**
- * Gets or creates the V-Prai Conversational AI agent.
+ * Gets or creates the Spectre Conversational AI agent.
  * Uses ELEVENLABS_AGENT_ID env var if set, otherwise searches for or creates one.
  */
 export async function getOrCreateVoiceAgent(): Promise<string> {
@@ -106,16 +118,16 @@ export async function getOrCreateVoiceAgent(): Promise<string> {
 
     const client = getClient();
 
-    // 3. Search for existing agent named "V-Prai"
+    // 3. Search for existing agent named "Spectre"
     try {
         const listResponse = await client.conversationalAi.agents.list({
-            search: 'V-Prai',
+            search: 'Spectre',
             pageSize: 1,
         });
         const agents = listResponse.agents;
         if (agents && agents.length > 0) {
             cachedAgentId = agents[0].agentId;
-            console.log('Found existing V-Prai agent:', cachedAgentId);
+            console.log('Found existing Spectre agent:', cachedAgentId);
             return cachedAgentId;
         }
     } catch (err) {
@@ -123,12 +135,12 @@ export async function getOrCreateVoiceAgent(): Promise<string> {
     }
 
     // 4. Create new agent
-    console.log('Creating new V-Prai Conversational AI agent...');
+    console.log('Creating new Spectre Conversational AI agent...');
     const response = await client.conversationalAi.agents.create({
-        name: 'V-Prai',
+        name: 'Spectre',
         conversationConfig: {
             agent: {
-                firstMessage: "V-Prai here, your publicist is on the line. So tell me — what are we making happen today?",
+                firstMessage: "Hey, it's Spectre. I'm here whenever you need me — what are we working on?",
                 language: 'en',
                 prompt: {
                     prompt: VOICE_AGENT_SYSTEM_PROMPT,
@@ -139,14 +151,14 @@ export async function getOrCreateVoiceAgent(): Promise<string> {
             },
             tts: {
                 voiceId: DEFAULT_VOICE_ID,
-                stability: 0.35,
-                similarityBoost: 0.72,
+                stability: 0.50,
+                similarityBoost: 0.75,
             },
         },
     });
 
     cachedAgentId = response.agentId;
-    console.log('Created V-Prai agent:', cachedAgentId);
+    console.log('Created Spectre agent:', cachedAgentId);
     return cachedAgentId;
 }
 
@@ -190,9 +202,9 @@ export async function textToSpeech(
         modelId: QUALITY_MODEL,
         outputFormat: 'mp3_44100_128',
         voiceSettings: {
-            stability: 0.40,       // Slightly lower for more dynamic, energetic delivery
-            similarityBoost: 0.78, // Preserve Alex's distinctive voice identity
-            style: 0.50,          // Higher expressiveness — publicist energy, not narrator calm
+            stability: 0.50,       // Balanced — natural variation without chaos
+            similarityBoost: 0.75, // Preserve Rachel's warm, natural voice
+            style: 0.35,          // Moderate expressiveness — conversational, not theatrical
             useSpeakerBoost: true,
         },
     });
@@ -231,9 +243,9 @@ export async function textToSpeechStream(
         outputFormat: 'mp3_22050_32', // Smaller format for faster streaming
         optimizeStreamingLatency: 4, // Maximum latency optimization
         voiceSettings: {
-            stability: 0.35,       // More dynamic — publicist energy on live calls
-            similarityBoost: 0.72, // Preserve Alex's voice character
-            style: 0.45,          // More animated and persuasive for live conversation
+            stability: 0.50,       // Balanced — natural speech, not robotic
+            similarityBoost: 0.75, // Preserve voice character
+            style: 0.30,          // Conversational expressiveness
             useSpeakerBoost: true,
         },
     });
