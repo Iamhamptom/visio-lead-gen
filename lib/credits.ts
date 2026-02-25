@@ -1,5 +1,6 @@
 import { createSupabaseAdminClient } from '@/lib/supabase/server';
 import { SubscriptionTier } from '@/app/types';
+import { logError as logErr } from '@/lib/error-logger';
 
 /** Credit cost per intent category */
 export const CREDIT_COSTS: Record<string, number> = {
@@ -63,7 +64,7 @@ export async function getUserCredits(userId: string): Promise<number> {
         .single();
 
     if (error || !data) {
-        console.error('getUserCredits error:', error);
+        if (error) logErr(error, 'credits:getUserCredits');
         return 0;
     }
 
@@ -93,7 +94,7 @@ export async function deductCredits(
         .single();
 
     if (fetchError || !profile) {
-        console.error('deductCredits fetch error:', fetchError);
+        if (fetchError) logErr(fetchError, 'credits:deductCredits:fetch');
         return false;
     }
 
@@ -117,7 +118,7 @@ export async function deductCredits(
         .select('id');
 
     if (updateError) {
-        console.error('deductCredits update error:', updateError);
+        logErr(updateError, 'credits:deductCredits:update');
         return false;
     }
 
@@ -128,7 +129,7 @@ export async function deductCredits(
     }
 
     // Log the transaction
-    const { error: logError } = await supabase
+    const { error: txLogError } = await supabase
         .from('credit_transactions')
         .insert({
             user_id: userId,
@@ -137,8 +138,8 @@ export async function deductCredits(
             metadata: {},
         });
 
-    if (logError) {
-        console.error('deductCredits log error:', logError);
+    if (txLogError) {
+        logErr(txLogError, 'credits:deductCredits:transaction-log');
         // Balance already deducted — don't revert, but flag the logging failure
     }
 

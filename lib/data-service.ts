@@ -1,5 +1,6 @@
 import { supabase } from './supabase/client';
 import { ArtistProfile, Session, Message, Subscription, SubscriptionTier, Role, StrategyBrief } from '@/app/types';
+import { logError } from './error-logger';
 
 /**
  * Supabase Data Service
@@ -63,7 +64,7 @@ export async function saveArtistProfile(profile: ArtistProfile): Promise<boolean
         .upsert(payload, { onConflict: 'id' });
 
     if (error) {
-        console.error('Error saving artist profile:', error);
+        logError(error, 'data-service:saveArtistProfile');
         return false;
     }
     return true;
@@ -139,7 +140,7 @@ export async function saveSessions(sessions: Session[]): Promise<SaveSessionsRes
         hadError = true;
         const formatted = `${label}: ${formatSupabaseError(error)}`;
         if (!firstError) firstError = formatted;
-        console.error(formatted, error);
+        logError(error, `data-service:${label}`);
     };
 
     // Batch upsert all sessions in one call
@@ -307,7 +308,7 @@ export async function updatePaymentMethod(method: { token: string; brand: string
         .eq('id', user.id);
 
     if (error) {
-        console.error('Error updating payment method:', error);
+        logError(error, 'data-service:updatePaymentMethod');
         return false;
     }
     return true;
@@ -324,7 +325,7 @@ export async function loadSubscription(): Promise<Subscription | null> {
         .maybeSingle();
 
     if (error || !data) {
-        console.error('Error loading subscription:', error);
+        if (error) logError(error, 'data-service:loadSubscription');
         return null;
     }
 
@@ -458,7 +459,7 @@ export async function saveStrategyBrief(brief: StrategyBrief): Promise<boolean> 
         }, { onConflict: 'session_id' });
 
     if (error) {
-        console.error('Error saving strategy brief:', error);
+        logError(error, 'data-service:saveStrategyBrief');
         return false;
     }
     return true;
@@ -501,7 +502,7 @@ export async function createFolder(name: string): Promise<{ id: string; name: st
         .insert({ user_id: user.id, name })
         .select('id, name')
         .single();
-    if (error) { console.error('Create folder error:', error); return null; }
+    if (error) { logError(error, 'data-service:createFolder'); return null; }
     return data;
 }
 
@@ -512,7 +513,7 @@ export async function loadFolders(): Promise<{ id: string; name: string; status:
         .from('campaign_folders')
         .select('id, name, status')
         .order('created_at', { ascending: false });
-    if (error) { console.error('Load folders error:', error); return []; }
+    if (error) { logError(error, 'data-service:loadFolders'); return []; }
     return data || [];
 }
 
@@ -555,7 +556,7 @@ export async function logLeadRequest(params: {
         .single();
 
     if (error) {
-        console.error('Error logging lead request:', error);
+        logError(error, 'data-service:logLeadRequest');
         return null;
     }
     return data?.id || null;
@@ -576,7 +577,7 @@ export async function updateLeadRequestStatus(
         .eq('id', requestId);
 
     if (error) {
-        console.error('Error updating lead request status:', error);
+        logError(error, 'data-service:updateLeadRequestStatus');
         return false;
     }
     return true;

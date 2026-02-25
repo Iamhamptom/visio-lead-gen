@@ -4,6 +4,8 @@ import { Outfit } from 'next/font/google';
 import { AuthProvider } from '@/lib/auth-context';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { GlobalErrorInit } from './components/GlobalErrorInit';
 
 const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit' });
 
@@ -34,9 +36,12 @@ export default function RootLayout({
         <script src="https://js.yoco.com/sdk/v1/yoco-sdk-web.js"></script>
       </head>
       <body suppressHydrationWarning>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <GlobalErrorInit />
+        <ErrorBoundary context="RootLayout">
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </ErrorBoundary>
         <Analytics />
         <SpeedInsights />
       </body>

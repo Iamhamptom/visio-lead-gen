@@ -31,6 +31,7 @@ import { CommandMenu, COMMAND_ACTIONS, ACTION_PROMPTS } from './components/ui/co
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase/client';
 import { trackEvent } from '@/lib/analytics';
+import { logError, sanitiseForUser } from '@/lib/error-logger';
 import {
   saveArtistProfile,
   loadArtistProfile,
@@ -235,8 +236,8 @@ export default function Home() {
       const data = await res.json().catch(() => ({}));
       throw new Error((data as any)?.error || res.statusText || 'Bootstrap failed');
     }).catch((err) => {
-      console.error('Profile bootstrap failed:', err);
-      setPersistenceWarning(`Supabase profile bootstrap failed: ${err?.message || 'unknown error'}`);
+      logError(err, 'profile-bootstrap');
+      setPersistenceWarning('Profile sync is temporarily unavailable. Your data is safe — we\'re looking into it.');
     });
   }, [user, session?.access_token]);
 
@@ -245,15 +246,15 @@ export default function Home() {
     try {
       const result = await saveSessions(nextSessions);
       if (!result.ok) {
-        // Show the actual error to make production setup issues (missing tables/RLS) diagnosable.
-        setPersistenceWarning(`Supabase sync failed: ${result.error}`);
+        logError(result.error, 'saveSessions');
+        setPersistenceWarning('Data sync is temporarily unavailable. Your work is saved locally.');
         return false;
       }
       setPersistenceWarning(null);
       return true;
     } catch (error) {
-      console.error('Supabase sync failed:', error);
-      setPersistenceWarning('Supabase sync failed (unexpected error).');
+      logError(error, 'saveSessions:unexpected');
+      setPersistenceWarning('Data sync is temporarily unavailable. Your work is saved locally.');
       return false;
     }
   }, [user]);
@@ -1146,7 +1147,7 @@ export default function Home() {
             }
           }
         } catch (streamError) {
-          console.error('Lead gen stream error:', streamError);
+          logError(streamError, 'lead-stream:sse');
           // On stream error, just finalize with initial results (remove isResearching)
           setSessions(prevSessions => {
             const idx = prevSessions.findIndex(s => s.id === activeSessionId);
@@ -1205,17 +1206,17 @@ export default function Home() {
       }
 
     } catch (error: any) {
-      console.error("Agent Error:", error);
+      const userMsg = sanitiseForUser(error, 'agent:chat');
       const finalMessages = sessionWithThinking.messages.map(msg => {
         if (msg.id === tempId) {
-          return { ...msg, content: `Error: ${error.message}`, isThinking: false };
+          return { ...msg, content: `I ran into an issue processing your request. Please try again.`, isThinking: false };
         }
         return msg;
       });
       const finalSession = { ...sessionWithThinking, messages: finalMessages };
       updatedSessions[activeSessionIndex] = finalSession;
       setSessions([...updatedSessions]);
-      setToastMessage("Failed to get response");
+      setToastMessage(userMsg);
     } finally {
       setIsLoading(false);
     }
@@ -1385,8 +1386,8 @@ export default function Home() {
         }
       }
     } catch (error) {
-      console.error('Load more error:', error);
-      setToastMessage('Error loading more contacts.');
+      logError(error, 'lead-gen:load-more');
+      setToastMessage('Could not load more contacts. Please try again.');
     } finally {
       setIsGeneratingLeads(false);
       setLeadGenProgress(null);
@@ -1514,8 +1515,8 @@ export default function Home() {
         }
       }
     } catch (error) {
-      console.error('Lead gen stream error:', error);
-      setToastMessage('Lead generation encountered an error.');
+      logError(error, 'lead-gen:wizard-stream');
+      setToastMessage('Lead generation encountered an issue. Please try again.');
     } finally {
       setIsGeneratingLeads(false);
       setLeadGenProgress(null);
@@ -1636,14 +1637,14 @@ export default function Home() {
         />
       )}
 
-      {/* Persistence Debug Banner */}
+      {/* Sync status notification */}
       {persistenceWarning && (
-        <div className="fixed top-4 right-4 z-50 max-w-sm bg-red-500/10 border border-red-500/30 text-red-200 text-xs px-4 py-3 rounded-xl backdrop-blur-md shadow-lg">
-          <div className="font-semibold mb-1">Sync Warning</div>
-          <div className="text-red-100/80">{persistenceWarning}</div>
+        <div className="fixed top-4 right-4 z-50 max-w-sm bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs px-4 py-3 rounded-xl backdrop-blur-md shadow-lg">
+          <div className="font-semibold mb-1">Sync Notice</div>
+          <div className="text-amber-100/70">{persistenceWarning}</div>
           <button
             onClick={() => setPersistenceWarning(null)}
-            className="mt-2 text-[10px] text-red-200/70 hover:text-red-100 underline underline-offset-2"
+            className="mt-2 text-[10px] text-amber-200/60 hover:text-amber-100 underline underline-offset-2"
           >
             Dismiss
           </button>

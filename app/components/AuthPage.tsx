@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { ArrowRight, Loader2, Mail, Lock, Github, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
+import { sanitiseForUser } from '@/lib/error-logger';
 import { saveArtistProfile } from '@/lib/data-service';
 import { ArtistProfile } from '../types';
 
@@ -80,8 +81,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onComplete, initialMode = 's
                 }
             }
         } catch (err: any) {
-            console.error('Auth error:', err);
-            setError(err.message || 'Authentication failed. Please try again.');
+            setError(sanitiseForUser(err, 'auth:email'));
         } finally {
             setIsLoading(false);
         }
@@ -101,8 +101,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onComplete, initialMode = 's
 
             if (error) throw error;
         } catch (err: any) {
-            console.error(`${provider} auth error:`, err);
-            setError(err.message || `${provider} authentication failed.`);
+            setError(sanitiseForUser(err, `auth:${provider}`));
             setIsLoading(false);
         }
     };

@@ -4,6 +4,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useConversation } from '@elevenlabs/react';
 import { Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX, X, Loader2 } from 'lucide-react';
 import { VisioOrb } from './VisioOrb';
+import { logError } from '@/lib/error-logger';
 
 interface VoiceCallModalProps {
     isOpen: boolean;
@@ -80,7 +81,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
             callStartTimeRef.current = 0;
         },
         onError: (message, context) => {
-            console.error('Voice agent error:', message, context);
+            logError({ message, context }, 'voice-agent:conversation');
             // Don't show raw error to user — keep it friendly
             if (message?.includes('microphone') || message?.includes('permission')) {
                 setErrorMessage('Microphone access denied. Please allow mic access and try again.');
@@ -112,7 +113,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
                 body: JSON.stringify({ durationSeconds }),
             });
         } catch (err) {
-            console.error('Failed to deduct call credits:', err);
+            logError(err, 'voice-agent:credit-deduction');
         }
     };
 

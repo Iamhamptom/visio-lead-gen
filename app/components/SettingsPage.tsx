@@ -4,6 +4,7 @@ import { Subscription, ArtistProfile, IdentityCheckResult } from '../types';
 import { saveArtistProfile } from '@/lib/data-service';
 import { ShinyButton } from './ui/ShinyButton';
 import { supabase } from '@/lib/supabase/client';
+import { logError } from '@/lib/error-logger';
 
 interface SettingsPageProps {
     subscription: Subscription;
@@ -104,7 +105,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             setIdentityQuery(data?.query || normalizedName);
             setShowIdentityModal(true);
         } catch (error) {
-            console.error('Identity lookup failed:', error);
+            logError(error, 'settings:identity-lookup');
             setIdentityError('Identity lookup failed. Please try again.');
         } finally {
             setIdentityLoading(false);

@@ -15,6 +15,7 @@ import { qualifyLeads, formatQualifiedLeadsForSynthesis, QualifiedLead } from '@
 import { detectAndExecuteAutomation, listAvailableAutomations } from '@/lib/automation-bank';
 import { requireUser, isAdminUser } from '@/lib/api-auth';
 import { getUserCredits, deductCredits, getCreditCost } from '@/lib/credits';
+import { logError } from '@/lib/error-logger';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 import { supabaseAdmin } from '@/lib/supabase/admin';
@@ -1179,7 +1180,7 @@ Format with markdown tables for top content, bullet points for insights. End wit
         });
 
     } catch (error: any) {
-        console.error('Agent Error:', error);
+        logError(error, 'api:agent:main');
         return NextResponse.json({
             error: 'Internal processing error',
             message: 'Sorry, I hit a snag. Can you rephrase that?',
