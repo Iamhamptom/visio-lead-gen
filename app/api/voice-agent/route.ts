@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireUser } from '@/lib/api-auth';
+import { requireUser, isAdminUser } from '@/lib/api-auth';
 import { hasElevenLabsKey, getVoiceAgentSignedUrl, VOICE_AGENT_SYSTEM_PROMPT, DEFAULT_VOICE_ID } from '@/lib/elevenlabs';
 import { getUserCredits, deductCredits, getCreditCost } from '@/lib/credits';
-import { isAdminUser } from '@/lib/api-auth';
+import { logError } from '@/lib/error-logger';
 
 /**
  * GET /api/voice-agent
@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
             systemPrompt: VOICE_AGENT_SYSTEM_PROMPT,
         });
     } catch (error: any) {
-        console.error('Voice agent error:', error?.message || error);
+        logError(error, 'voice-agent:get-signed-url');
         return NextResponse.json(
             { error: 'Failed to start voice agent' },
             { status: 500 }
@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
             deducted: true,
         });
     } catch (error: any) {
-        console.error('Voice call end error:', error?.message || error);
+        logError(error, 'voice-agent:post-call-end');
         return NextResponse.json(
             { error: 'Failed to process call end' },
             { status: 500 }

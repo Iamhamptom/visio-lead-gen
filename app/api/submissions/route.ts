@@ -1,5 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getYocoSecretKey } from '@/lib/yoco';
+import { requireAdmin } from '@/lib/api-auth';
+import { logError } from '@/lib/error-logger';
 
 const YOCO_API_BASE = 'https://payments.yoco.com/api';
 const SUBMISSION_FEE_CENTS = 18000; // R180 (~$10 USD)
@@ -95,8 +97,13 @@ export async function POST(request: Request) {
     }
 }
 
-// GET: Admin endpoint to list all submissions
-export async function GET(request: Request) {
+// GET: Admin endpoint to list all submissions (requires admin auth)
+export async function GET(request: NextRequest) {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: auth.status });
+    }
+
     try {
         const fs = await import('fs');
         const path = await import('path');
@@ -139,6 +146,6 @@ async function saveSubmissionToFile(submission: Record<string, any>, checkoutId:
 
         fs.writeFileSync(filePath, JSON.stringify(submissions, null, 2));
     } catch (e) {
-        console.error('Failed to save submission to file:', e);
+        logError(e, 'submissions:saveToFile');
     }
 }

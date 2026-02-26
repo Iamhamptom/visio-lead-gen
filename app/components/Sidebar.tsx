@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     Plus,
     Home,
@@ -50,13 +50,23 @@ const SessionItem: React.FC<SessionItemProps> = ({
     const [showMenu, setShowMenu] = useState(false);
     const [showMoveSubmenu, setShowMoveSubmenu] = useState(false);
 
-    // Close menu when clicking outside (simple implementation)
-    React.useEffect(() => {
-        const handleClickOutside = () => {
-            if (showMenu) setShowMenu(false);
+    // Close menu when clicking outside
+    const menuRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        if (!showMenu) return;
+        const handleClickOutside = (e: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+                setShowMenu(false);
+            }
         };
-        if (showMenu) window.addEventListener('click', handleClickOutside);
-        return () => window.removeEventListener('click', handleClickOutside);
+        // Use capture phase + next tick to avoid the opening click immediately closing
+        const id = requestAnimationFrame(() => {
+            document.addEventListener('click', handleClickOutside, true);
+        });
+        return () => {
+            cancelAnimationFrame(id);
+            document.removeEventListener('click', handleClickOutside, true);
+        };
     }, [showMenu]);
 
     return (
@@ -93,6 +103,7 @@ const SessionItem: React.FC<SessionItemProps> = ({
             {/* Dropdown Menu */}
             {showMenu && (
                 <div
+                    ref={menuRef}
                     className="absolute right-0 top-8 w-48 bg-[#111] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col p-1 animate-in fade-in zoom-in-95 duration-200"
                     onClick={(e) => e.stopPropagation()} // Prevent close on inner click
                 >

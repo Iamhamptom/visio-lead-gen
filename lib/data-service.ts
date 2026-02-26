@@ -512,6 +512,7 @@ export async function loadFolders(): Promise<{ id: string; name: string; status:
     const { data, error } = await supabase
         .from('campaign_folders')
         .select('id, name, status')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
     if (error) { logError(error, 'data-service:loadFolders'); return []; }
     return data || [];

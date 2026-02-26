@@ -63,7 +63,12 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onComplete, initialMode = 's
                         lifeHighlights: [],
                         desiredCommunities: []
                     };
-                    await saveArtistProfile(initialProfile);
+                    // Best-effort save — don't block sign-up if profile save fails
+                    try {
+                        await saveArtistProfile(initialProfile);
+                    } catch {
+                        // Profile will be auto-created on next login via bootstrap
+                    }
 
                     onComplete();
                 }

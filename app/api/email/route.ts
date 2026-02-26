@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateWelcomeEmail, generateInvoiceEmail } from '@/lib/email-templates';
 import { requireUser } from '@/lib/api-auth';
+import { logError } from '@/lib/error-logger';
 
 export async function POST(request: NextRequest) {
     try {
@@ -52,16 +53,15 @@ export async function POST(request: NextRequest) {
         });
 
         if (!response.ok) {
-            const error = await response.json();
-            console.error('Resend API Error:', error);
-            // Don't fail the request to client, just log
-            return NextResponse.json({ success: false, error: 'Failed to send' }, { status: 200 }); // Status 200 to prevent client errors
+            const error = await response.json().catch(() => ({}));
+            logError(error, 'email:resend-api');
+            return NextResponse.json({ success: false, error: 'Failed to send email' }, { status: 502 });
         }
 
         return NextResponse.json({ success: true });
 
     } catch (error: any) {
-        console.error('Email Route Error:', error);
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+        logError(error, 'email:route');
+        return NextResponse.json({ success: false, error: 'Something went wrong' }, { status: 500 });
     }
 }

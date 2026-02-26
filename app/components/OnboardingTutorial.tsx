@@ -20,6 +20,8 @@ import {
 import { trackEvent } from '@/lib/analytics';
 import { TIER_DETAILS } from '@/app/data/pricing';
 import { SubscriptionTier } from '@/app/types';
+import { supabase } from '@/lib/supabase/client';
+import { logError } from '@/lib/error-logger';
 
 interface OnboardingTutorialProps {
     userId?: string;
@@ -178,9 +180,14 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
         setProcessingTier(tier);
 
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const accessToken = session?.access_token;
             const response = await fetch('/api/payments/create-checkout', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+                },
                 body: JSON.stringify({ tier, email: userEmail })
             });
 
@@ -193,7 +200,7 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
             // Redirect to Yoco checkout page
             window.location.href = data.redirectUrl;
         } catch (err) {
-            console.error('Checkout error:', err);
+            logError(err, 'onboarding:checkout');
             setIsProcessing(false);
             setProcessingTier(null);
         }

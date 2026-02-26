@@ -8,6 +8,14 @@ import remarkGfm from 'remark-gfm';
 import { generateLeadListCSV, downloadCSV } from '@/lib/csv-export';
 import { VoiceButton } from './VoiceButton';
 
+/** Sanitise a URL — block javascript: and data: protocols to prevent XSS. */
+function safeHref(url: string | undefined | null): string | undefined {
+    if (!url) return undefined;
+    const trimmed = url.trim().toLowerCase();
+    if (trimmed.startsWith('javascript:') || trimmed.startsWith('data:') || trimmed.startsWith('vbscript:')) return undefined;
+    return url;
+}
+
 interface ChatMessageProps {
     message: Message;
     onSaveLead?: (lead: Lead) => void;
@@ -314,8 +322,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSaveLead, o
                                                     >
                                                         <td className="px-3 py-2 text-white/30 text-xs">{i + 1}</td>
                                                         <td className="px-3 py-2 text-white font-medium text-xs">
-                                                            {lead.url ? (
-                                                                <a href={lead.url} target="_blank" rel="noopener noreferrer" className="text-white hover:text-visio-teal transition-colors">
+                                                            {safeHref(lead.url) ? (
+                                                                <a href={safeHref(lead.url)} target="_blank" rel="noopener noreferrer" className="text-white hover:text-visio-teal transition-colors">
                                                                     {lead.name}
                                                                 </a>
                                                             ) : lead.name}

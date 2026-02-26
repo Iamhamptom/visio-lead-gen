@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { performGoogleSearch } from '@/lib/serper';
 import { requireUser } from '@/lib/api-auth';
+import { logError } from '@/lib/error-logger';
 
 export async function POST(request: NextRequest) {
     try {
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
             }))
         });
     } catch (error) {
-        console.error('Identity lookup failed:', error);
-        return NextResponse.json({ results: [] }, { status: 200 });
+        logError(error, 'identity-lookup');
+        return NextResponse.json({ results: [], error: 'Lookup failed' }, { status: 500 });
     }
 }

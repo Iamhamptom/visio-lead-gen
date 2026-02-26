@@ -78,8 +78,9 @@ export const Composer: React.FC<ComposerProps> = ({
         if (pendingPrompt) {
             setInput(pendingPrompt);
             onPromptUsed?.();
-            // Focus the textarea
-            setTimeout(() => textareaRef.current?.focus(), 100);
+            // Focus the textarea (cleanup timer on unmount)
+            const timer = setTimeout(() => textareaRef.current?.focus(), 100);
+            return () => clearTimeout(timer);
         }
     }, [pendingPrompt, onPromptUsed]);
 
