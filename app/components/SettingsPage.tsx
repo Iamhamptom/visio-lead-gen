@@ -32,6 +32,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     const [identityQuery, setIdentityQuery] = useState('');
     const [identityLoading, setIdentityLoading] = useState(false);
     const [identityError, setIdentityError] = useState<string | null>(null);
+    const [saveToast, setSaveToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
     // Sync state with profile prop
     React.useEffect(() => {
@@ -69,7 +70,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         // Trigger update event
         if (success) {
             window.dispatchEvent(new Event('artistProfileUpdated'));
-            alert('Settings saved successfully!');
+            setSaveToast({ type: 'success', message: 'Settings saved!' });
+            setTimeout(() => setSaveToast(null), 3000);
             const normalizedName = name.trim();
             const lastCheckedName = artistProfile.identityCheck?.lastQueriedName;
             const shouldCheckIdentity = normalizedName.length > 0 && normalizedName !== lastCheckedName;
@@ -77,7 +79,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 await runIdentityCheck(normalizedName);
             }
         } else {
-            alert('Failed to save settings. Please try again.');
+            setSaveToast({ type: 'error', message: 'Failed to save. Please try again.' });
+            setTimeout(() => setSaveToast(null), 4000);
         }
         setIsSaving(false);
     };
@@ -137,7 +140,17 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     };
 
     return (
-        <div className="flex-1 h-full overflow-y-auto bg-visio-bg text-white p-6 md:p-10 font-outfit">
+        <div className="flex-1 h-full overflow-y-auto bg-visio-bg text-white p-6 md:p-10 font-outfit relative">
+            {/* Save toast */}
+            {saveToast && (
+                <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-xl text-sm font-medium shadow-lg backdrop-blur-md border transition-all ${
+                    saveToast.type === 'success'
+                        ? 'bg-green-500/10 border-green-500/20 text-green-200'
+                        : 'bg-red-500/10 border-red-500/20 text-red-200'
+                }`}>
+                    {saveToast.message}
+                </div>
+            )}
             <div className="max-w-3xl mx-auto space-y-10 pb-20">
                 {/* Header */}
                 <div className="flex items-center justify-between">
@@ -281,7 +294,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                     <h2 className="text-xl font-bold border-b border-white/10 pb-4">Security</h2>
                     <div className="space-y-2">
                         <button
-                            onClick={() => alert("Password reset functionality is handled via your email provider for this beta.")}
+                            onClick={() => { setSaveToast({ type: 'success', message: 'Password reset is handled via your email provider for this beta.' }); setTimeout(() => setSaveToast(null), 4000); }}
                             className="flex items-center gap-3 text-white/70 hover:text-white transition-colors text-sm font-medium"
                         >
                             <Lock size={16} />
