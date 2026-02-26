@@ -6,6 +6,7 @@ import {
     upsertSubscriberByEmail
 } from '@/lib/database';
 import { requireAdmin } from '@/lib/api-auth';
+import { logError } from '@/lib/error-logger';
 
 // GET /api/subscribers - List all subscribers
 export async function GET(request: NextRequest) {
@@ -32,9 +33,9 @@ export async function GET(request: NextRequest) {
             total: subscribers.length
         });
     } catch (error: any) {
-        console.error('Get subscribers error:', error);
+        logError(error, 'subscribers:get');
         return NextResponse.json(
-            { error: error.message || 'Failed to fetch subscribers' },
+            { error: 'Failed to fetch subscribers' },
             { status: 500 }
         );
     }
@@ -70,9 +71,9 @@ export async function POST(request: NextRequest) {
             subscriber
         });
     } catch (error: any) {
-        console.error('Create subscriber error:', error);
+        logError(error, 'subscribers:create');
         return NextResponse.json(
-            { error: error.message || 'Failed to create subscriber' },
+            { error: 'Failed to create subscriber' },
             { status: 500 }
         );
     }

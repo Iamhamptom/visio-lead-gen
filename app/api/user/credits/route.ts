@@ -3,6 +3,7 @@ import { requireUser } from '@/lib/api-auth';
 import { getUserCredits, PLAN_CREDITS } from '@/lib/credits';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { SubscriptionTier } from '@/app/types';
+import { logError } from '@/lib/error-logger';
 
 export async function GET(request: NextRequest) {
     try {
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
             tier,
         });
     } catch (error: any) {
-        console.error('[Credits] Error:', error);
+        logError(error, 'user:credits');
         return NextResponse.json({ error: 'Failed to fetch credits' }, { status: 500 });
     }
 }

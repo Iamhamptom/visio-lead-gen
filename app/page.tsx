@@ -507,6 +507,20 @@ export default function Home() {
     return () => { cancelled = true; };
   }, [user, authLoading, session?.access_token, subscription.tier]);
 
+  // Helper to refresh credits balance after API calls that spend credits
+  const refreshCredits = useCallback(async () => {
+    if (!session?.access_token) return;
+    try {
+      const res = await fetch('/api/user/credits', {
+        headers: { Authorization: `Bearer ${session.access_token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setCreditsBalance(data.balance ?? 0);
+      }
+    } catch { /* best-effort */ }
+  }, [session?.access_token]);
+
   // Show upgrade banner for free-tier users after some usage
   useEffect(() => {
     if (!user || authLoading) return;
@@ -1192,7 +1206,7 @@ export default function Home() {
         const currentSess = sessions.find(s => s.id === activeSessionId) || { id: activeSessionId, messages: [] };
         fetch('/api/generate-brief', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}) },
           body: JSON.stringify({ sessionId: currentSess.id, messages: (currentSess.messages || []).slice(-20).map(m => ({ role: m.role, content: m.content })) })
         })
           .then(r => r.json())
@@ -1219,6 +1233,7 @@ export default function Home() {
       setToastMessage(userMsg);
     } finally {
       setIsLoading(false);
+      refreshCredits();
     }
   };
 
@@ -1520,6 +1535,7 @@ export default function Home() {
     } finally {
       setIsGeneratingLeads(false);
       setLeadGenProgress(null);
+      refreshCredits();
     }
   };
 

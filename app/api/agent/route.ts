@@ -178,7 +178,7 @@ End with 2-3 specific next steps (e.g., "Want me to draft a pitch to any of thes
         const result = await model.generateContent(prompt);
         return result.response.text().trim();
     } catch (e) {
-        console.error('AI enrichment failed:', e);
+        logError(e, 'agent:ai-enrichment');
         return '';
     }
 }
@@ -449,7 +449,7 @@ export async function POST(request: NextRequest) {
                 logs.push('⚪ Using general knowledge');
             }
         } catch (e) {
-            console.error('RAG Error', e);
+            logError(e, 'agent:rag');
             logs.push('⚠️ Brain offline — using general knowledge');
         }
 
@@ -638,7 +638,7 @@ export async function POST(request: NextRequest) {
                             leadRequestId = reqData?.id || null;
                             logs.push('📋 Lead request logged to admin');
                         } catch (e) {
-                            console.error('Failed to log lead request:', e);
+                            logError(e, 'agent:log-lead-request');
                         }
 
                         // Build contact types from queryPlan entity type, then intent category, then defaults
@@ -765,7 +765,7 @@ export async function POST(request: NextRequest) {
                                     })
                                     .eq('id', leadRequestId);
                             } catch (e) {
-                                console.error('Failed to update lead request status:', e);
+                                logError(e, 'agent:update-lead-status');
                             }
                         }
 
@@ -990,7 +990,7 @@ Format with markdown tables for top content, bullet points for insights. End wit
                                         }
                                     }
                                 } catch (e) {
-                                    console.error('Portal collection save error:', e);
+                                    logError(e, 'agent:portal-save');
                                     logs.push('⚠️ Could not save profile data');
                                 }
                             }

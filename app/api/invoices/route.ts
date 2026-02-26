@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { PLAN_NAMES, PLAN_PRICING, PlanTier } from '@/lib/yoco';
 import { isAdminUser, requireAdmin, requireUser } from '@/lib/api-auth';
+import { logError } from '@/lib/error-logger';
 
 function makeInvoiceNumber() {
     const year = new Date().getFullYear();
@@ -80,9 +81,9 @@ export async function GET(request: NextRequest) {
             total: invoices.length
         });
     } catch (error: any) {
-        console.error('Get invoices error:', error);
+        logError(error, 'invoices:get');
         return NextResponse.json(
-            { error: error.message || 'Failed to fetch invoices' },
+            { error: 'Failed to fetch invoices' },
             { status: 500 }
         );
     }
@@ -172,9 +173,9 @@ export async function POST(request: NextRequest) {
             invoice
         });
     } catch (error: any) {
-        console.error('Create invoice error:', error);
+        logError(error, 'invoices:create');
         return NextResponse.json(
-            { error: error.message || 'Failed to create invoice' },
+            { error: 'Failed to create invoice' },
             { status: 500 }
         );
     }

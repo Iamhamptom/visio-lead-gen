@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/api-auth';
+import { logError } from '@/lib/error-logger';
 
 export const dynamic = 'force-dynamic'; // Prevent static generation attempts
 
@@ -21,14 +22,14 @@ export async function GET(req: Request) {
             .from('profiles')
             .select('id, subscription_tier, subscription_status');
 
-        if (profileError) console.error('Error fetching profiles:', profileError);
+        if (profileError) logError(profileError, 'admin:users:profiles');
 
         // Fetch invoice/payment history for billing summaries.
         const { data: invoices, error: invoiceError } = await supabaseAdmin
             .from('invoices')
             .select('user_id, amount, status, tier, paid_at, created_at');
 
-        if (invoiceError) console.error('Error fetching invoices:', invoiceError);
+        if (invoiceError) logError(invoiceError, 'admin:users:invoices');
 
         // Map profiles by ID for easy lookup
         const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
@@ -83,6 +84,7 @@ export async function GET(req: Request) {
         return NextResponse.json({ users: sorted });
 
     } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        logError(error, 'admin:users');
+        return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 });
     }
 }

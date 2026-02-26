@@ -77,7 +77,7 @@ export async function POST(request: Request) {
             }
 
             // If Yoco fails, still save the submission
-            console.error('Yoco checkout failed, saving submission without payment');
+            logError('Yoco checkout failed, saving submission without payment', 'submissions:yoco-fallback');
         }
 
         // Fallback: save submission without payment (for dev/testing or if Yoco is not configured)
@@ -89,7 +89,7 @@ export async function POST(request: Request) {
         });
 
     } catch (err: any) {
-        console.error('Submission error:', err);
+        logError(err, 'submissions');
         return NextResponse.json(
             { error: 'Something went wrong. Please try again.' },
             { status: 500 }

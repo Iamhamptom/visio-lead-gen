@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { requireUser } from '@/lib/api-auth';
 import { performCascadingSearch } from '@/lib/lead-pipeline';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { logError } from '@/lib/error-logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -79,7 +80,7 @@ export async function GET(request: NextRequest) {
                             })
                             .eq('id', leadRequestId);
                     } catch (e) {
-                        console.error('Failed to persist SSE lead results:', e);
+                        logError(e, 'lead-stream:persist');
                     }
                 }
 

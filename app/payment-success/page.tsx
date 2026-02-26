@@ -13,6 +13,7 @@ function PaymentSuccessContent() {
     const searchParams = useSearchParams();
     const tier = searchParams.get('tier') as PlanTier | null;
     const [countdown, setCountdown] = useState(5);
+    const [verificationStatus, setVerificationStatus] = useState<'pending' | 'verified' | 'failed'>('pending');
 
     const checkoutId =
         searchParams.get('checkoutId') ||
@@ -22,11 +23,15 @@ function PaymentSuccessContent() {
     // Update Supabase with new subscription via secure server route
     useEffect(() => {
         const verifyAndSave = async () => {
-            if (!tier || !checkoutId) return;
+            if (!tier || !checkoutId) {
+                setVerificationStatus('failed');
+                return;
+            }
             try {
                 const accessToken = session?.access_token;
                 if (!accessToken) {
-                    throw new Error('Missing auth session');
+                    setVerificationStatus('failed');
+                    return;
                 }
 
                 const res = await fetch('/api/payments/confirm', {
@@ -41,8 +46,11 @@ function PaymentSuccessContent() {
                 const data = await res.json();
                 if (!res.ok) {
                     console.error('Payment verification failed:', data?.error || data);
+                    setVerificationStatus('failed');
                     return;
                 }
+
+                setVerificationStatus('verified');
 
                 // Trigger Invoice Email (best-effort)
                 await fetch('/api/email', {
@@ -62,6 +70,7 @@ function PaymentSuccessContent() {
                 });
             } catch (e) {
                 console.error('Failed to verify payment or send email', e);
+                setVerificationStatus('failed');
             }
         };
         void verifyAndSave();
@@ -116,11 +125,14 @@ function PaymentSuccessContent() {
 
                 {/* Text */}
                 <h1 className="text-3xl font-bold text-white mb-4">
-                    Payment Successful!
+                    {verificationStatus === 'failed' ? 'Payment Processing' : 'Payment Successful!'}
                 </h1>
                 <p className="text-white/60 mb-8">
-                    Welcome to <span className="text-visio-accent font-semibold">{planName}</span>!
-                    Your subscription is now active.
+                    {verificationStatus === 'failed' ? (
+                        <>Your payment is still being processed. Please refresh the page or check your <span className="text-visio-accent font-semibold">Settings</span> page in a few minutes. Contact support if the issue persists.</>
+                    ) : (
+                        <>Welcome to <span className="text-visio-accent font-semibold">{planName}</span>! Your subscription is now active.</>
+                    )}
                 </p>
 
                 {/* Features unlocked */}

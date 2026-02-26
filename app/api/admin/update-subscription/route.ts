@@ -5,6 +5,7 @@ import { requireAdmin } from '@/lib/api-auth';
 import { PLAN_CREDITS } from '@/lib/credits';
 import { SubscriptionTier } from '@/app/types';
 import { PLAN_PRICING, PlanTier } from '@/lib/yoco';
+import { logError } from '@/lib/error-logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,7 +50,7 @@ export async function POST(req: Request) {
             .maybeSingle();
 
         if (existingProfileError) {
-            console.error('Profile lookup error:', existingProfileError);
+            logError(existingProfileError, 'admin:update-sub:profile-lookup');
             return NextResponse.json({ error: 'Failed to verify profile' }, { status: 500 });
         }
 
@@ -80,7 +81,7 @@ export async function POST(req: Request) {
                 });
 
             if (createProfileError) {
-                console.error('Profile create error during subscription update:', createProfileError);
+                logError(createProfileError, 'admin:update-sub:profile-create');
                 return NextResponse.json({ error: 'Failed to create profile for user' }, { status: 500 });
             }
             createdProfile = true;
@@ -111,7 +112,7 @@ export async function POST(req: Request) {
             .select('id');
 
         if (updateError) {
-            console.error('Update subscription error:', updateError);
+            logError(updateError, 'admin:update-sub:update');
             return NextResponse.json({ error: 'Failed to update subscription' }, { status: 500 });
         }
         if (!updatedRows || updatedRows.length === 0) {
@@ -125,7 +126,7 @@ export async function POST(req: Request) {
                     app_metadata: { approved: true }
                 });
             } catch (approveErr) {
-                console.error('Failed to set approved flag during admin tier update:', approveErr);
+                logError(approveErr, 'admin:update-sub:set-approved');
             }
         }
 
@@ -166,7 +167,7 @@ export async function POST(req: Request) {
                     if (!invoiceError) {
                         manualInvoiceCreated = true;
                     } else {
-                        console.error('Manual invoice insert failed during admin plan update:', invoiceError);
+                        logError(invoiceError, 'admin:update-sub:invoice');
                     }
                 }
             }
@@ -175,6 +176,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: true, updates, createdProfile, manualInvoiceCreated });
 
     } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        logError(error, 'admin:update-sub');
+        return NextResponse.json({ error: 'Failed to update subscription' }, { status: 500 });
     }
 }
