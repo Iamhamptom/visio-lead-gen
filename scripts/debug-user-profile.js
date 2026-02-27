@@ -1,7 +1,13 @@
+require('dotenv').config({ path: '.env.local' });
 const { createClient } = require('@supabase/supabase-js');
 
-const supabaseUrl = 'https://nloihhezkwhwycztvfbd.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5sb2loaGV6a3dod3ljenR2ZmJkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDA1NTc4NSwiZXhwIjoyMDg1NjMxNzg1fQ.fD5edUNmeAdM28nlE8b6TWestK1lpNJ4at5E6bHSJlg';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+    console.error('Missing Supabase Environment Variables in .env.local');
+    process.exit(1);
+}
 
 console.log('Using Supabase URL:', supabaseUrl);
 console.log('Using Key Length:', supabaseKey.length);
@@ -55,4 +61,9 @@ async function checkUser(email) {
     }
 }
 
-checkUser('coolpixiemusic@gmail.com');
+const email = process.argv[2];
+if (!email) {
+    console.error('Usage: node scripts/debug-user-profile.js <email>');
+    process.exit(1);
+}
+checkUser(email);
