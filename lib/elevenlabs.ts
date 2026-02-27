@@ -21,18 +21,16 @@ export const DEFAULT_VOICE_ID = 'cjVigY5qzO86Huf0OWal'; // Eric
 const FAST_MODEL = 'eleven_turbo_v2_5';
 const QUALITY_MODEL = 'eleven_multilingual_v2';
 
-// Fallback key — used when ELEVENLABS_API_KEY env var is not set (e.g. missing from Vercel dashboard)
-const ELEVENLABS_FALLBACK_KEY = 'fdecda484b2ae69c01cc33b7a9db714ceebe5de15222b973dd07ddaecb6365fe';
-
 /** Creates a configured voice API client */
 function getClient(): ElevenLabsClient {
-    const apiKey = process.env.ELEVENLABS_API_KEY || ELEVENLABS_FALLBACK_KEY;
+    const apiKey = process.env.ELEVENLABS_API_KEY;
+    if (!apiKey) throw new Error('ELEVENLABS_API_KEY environment variable is not set');
     return new ElevenLabsClient({ apiKey });
 }
 
 /** Check if voice API is configured */
 export function hasElevenLabsKey(): boolean {
-    return !!(process.env.ELEVENLABS_API_KEY || ELEVENLABS_FALLBACK_KEY);
+    return !!process.env.ELEVENLABS_API_KEY;
 }
 
 // ============================================================================
@@ -80,9 +78,6 @@ You cannot run lead searches, web scraping, or deep searches during a voice call
 - Help them clarify what they want so the search is focused
 - You CAN still give strategic advice about who to target and how to pitch`;
 
-// Pre-created V-Prai agent ID — avoids creating a new agent on every deploy
-const ELEVENLABS_FALLBACK_AGENT_ID = 'agent_4601khsw5ja9fj5snq6nfvkxvcg1';
-
 /** Cached agent ID — avoids re-creating/re-fetching every request */
 let cachedAgentId: string | null = null;
 
@@ -94,11 +89,6 @@ export async function getOrCreateVoiceAgent(): Promise<string> {
     // 1. Use explicit env var if set
     if (process.env.ELEVENLABS_AGENT_ID) {
         return process.env.ELEVENLABS_AGENT_ID;
-    }
-
-    // 1b. Use fallback agent ID
-    if (ELEVENLABS_FALLBACK_AGENT_ID) {
-        return ELEVENLABS_FALLBACK_AGENT_ID;
     }
 
     // 2. Return cached

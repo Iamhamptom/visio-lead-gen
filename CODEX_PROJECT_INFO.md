@@ -182,7 +182,7 @@ node scripts/approve-user.js
 *(Edit the script to change the target email if needed)*
 
 ### 2. Verify Admin Access
-To ensure an admin email (like `tonydavidhampton@gmail.com`) has correct permissions:
+To ensure an admin email has correct permissions:
 ```bash
 node scripts/verify-admin-access.js
 ```
