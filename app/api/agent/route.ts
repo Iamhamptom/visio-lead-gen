@@ -587,24 +587,21 @@ export async function POST(request: NextRequest) {
                     }
 
                     case 'lead_generation': {
-                        toolsUsed.push('find_leads');
+                        // ═══ ADMIN-QUEUE MODE ═══
+                        // All lead generation requests are queued for admin processing
+                        // until PhantomBuster, scraper, and Apollo integrations are connected.
+                        // Admin processes requests via /admin dashboard → "Process" → "Send".
                         const leadQuery = intentResult.searchQuery || userMessage;
                         const country = normalizeCountry(intentResult.filters?.country || artistContext?.location?.country);
-
-                        // Respect the user's requested count from queryPlan, with sensible bounds
                         const queryPlan = intentResult.queryPlan || {};
                         const userRequestedCount = queryPlan.targetCount;
                         const targetCount = userRequestedCount
-                            ? Math.min(Math.max(userRequestedCount, 1), 100) // Clamp between 1 and 100
-                            : 20; // Sensible default instead of 100
-                        logs.push(`🎯 Lead Finder activated: "${leadQuery}" (target: ${targetCount}${userRequestedCount ? ` — user requested ${userRequestedCount}` : ''})`);
+                            ? Math.min(Math.max(userRequestedCount, 1), 100)
+                            : 20;
 
-                        if (!webSearchEnabled) {
-                            intent = { action: 'clarify', filters: {}, message: `I'd love to find those contacts for you, but web search is currently off. Toggle it on and I'll start searching!` };
-                            break;
-                        }
+                        logs.push(`🎯 Lead request received: "${leadQuery}" (target: ${targetCount})`);
 
-                        // Credit pre-check BEFORE running any searches to avoid wasting API calls
+                        // Credit pre-check BEFORE queueing
                         const leadCreditCost = getCreditCost('lead_generation');
                         if (leadCreditCost > 0 && !isAdminUser(auth.user)) {
                             const preBalance = await getUserCredits(auth.user.id);
@@ -619,28 +616,7 @@ export async function POST(request: NextRequest) {
                             }
                         }
 
-                        // Log lead request to admin dashboard
-                        try {
-                            const { data: reqData } = await supabaseAdmin
-                                .from('lead_requests')
-                                .insert({
-                                    user_id: auth.user.id,
-                                    query: leadQuery,
-                                    contact_types: intentResult.filters?.category ? [intentResult.filters.category] : [],
-                                    markets: [country],
-                                    genre: artistContext?.identity?.genre || '',
-                                    target_count: targetCount,
-                                    status: 'in_progress',
-                                })
-                                .select('id')
-                                .single();
-                            leadRequestId = reqData?.id || null;
-                            logs.push('📋 Lead request logged to admin');
-                        } catch (e) {
-                            console.error('Failed to log lead request:', e);
-                        }
-
-                        // Build contact types from queryPlan entity type, then intent category, then defaults
+                        // Build metadata for admin
                         const leadContactTypes = queryPlan.entityType
                             ? [queryPlan.entityType]
                             : intentResult.filters?.category
@@ -650,185 +626,106 @@ export async function POST(request: NextRequest) {
                         const leadMarkets = [country];
                         leadMeta = { contactTypes: leadContactTypes, genre: leadGenre, markets: leadMarkets };
 
-                        const pipelineStatus = getPipelineStatus();
-                        logs.push(`📡 Pipelines: Apollo=${pipelineStatus.apollo ? '🟢' : '⚪'} LinkedIn=${pipelineStatus.linkedin ? '🟢' : '⚪'} ZoomInfo=${pipelineStatus.zoominfo ? '🟢' : '⚪'}`);
-
-                        // Build a more specific search query incorporating location and platform
-                        let refinedQuery = leadQuery;
-                        if (queryPlan.specificLocation && !leadQuery.toLowerCase().includes(queryPlan.specificLocation.toLowerCase())) {
-                            refinedQuery = `${refinedQuery} ${queryPlan.specificLocation}`;
+                        // Log request as PENDING for admin to process
+                        try {
+                            const { data: reqData } = await supabaseAdmin
+                                .from('lead_requests')
+                                .insert({
+                                    user_id: auth.user.id,
+                                    query: leadQuery,
+                                    contact_types: leadContactTypes,
+                                    markets: leadMarkets,
+                                    genre: leadGenre,
+                                    target_count: targetCount,
+                                    status: 'pending',
+                                    metadata: {
+                                        platform: queryPlan.platform || null,
+                                        specificLocation: queryPlan.specificLocation || null,
+                                        searchDepth: 'full',
+                                        artistName: artistContext?.identity?.name || null,
+                                    },
+                                })
+                                .select('id')
+                                .single();
+                            leadRequestId = reqData?.id || null;
+                            logs.push('📋 Lead request queued for processing');
+                        } catch (e) {
+                            console.error('Failed to log lead request:', e);
                         }
 
-                        // Use cascading search (Tier 1 quick pass for fast initial results)
-                        const brief: PipelineBrief = {
-                            contactTypes: leadContactTypes,
-                            markets: leadMarkets,
-                            genre: leadGenre,
-                            query: refinedQuery,
-                            targetCount,
-                            searchDepth: 'quick',
-                            preferredPlatform: queryPlan.platform || undefined,
-                            specificLocation: queryPlan.specificLocation || undefined,
-                        };
-
-                        const cascadeResult = await performCascadingSearch(brief);
-                        logs.push(...cascadeResult.logs);
-
-                        // Filter results for relevance before qualification
-                        const filteredContacts = filterContactsForRelevance(
-                            cascadeResult.contacts,
-                            queryPlan.entityType || '',
-                            queryPlan.platform || '',
-                            queryPlan.specificLocation || ''
-                        );
-
-                        logs.push(`📊 ${filteredContacts.length} contacts after relevance filter (from ${cascadeResult.total} raw)`);
-
-                        // === QUALIFICATION PIPELINE ===
-                        // Verify profiles via Apify scrapers: check followers, activity, bio, location, niche
-                        const hasApifyToken = !!process.env.APIFY_API_TOKEN;
-                        let qualifiedLeads: QualifiedLead[] = [];
-                        let qualifiedContext = '';
-
-                        if (hasApifyToken && filteredContacts.length > 0) {
-                            logs.push('🔍 Qualifying leads — verifying profiles, followers, activity...');
-
-                            const qualResult = await qualifyLeads(filteredContacts, {
-                                entityType: queryPlan.entityType || '',
-                                niche: queryPlan.niche || leadGenre,
-                                targetLocation: queryPlan.specificLocation || '',
-                                platform: queryPlan.platform || '',
-                                maxToQualify: Math.min(targetCount + 5, 15), // Qualify slightly more than needed
-                            });
-                            qualifiedLeads = qualResult.qualified;
-                            logs.push(...qualResult.logs);
-
-                            // Build qualified context for AI synthesis
-                            qualifiedContext = formatQualifiedLeadsForSynthesis(
-                                qualifiedLeads.slice(0, targetCount)
-                            );
-                        } else {
-                            // No Apify — use basic filtered contacts
-                            qualifiedLeads = filteredContacts.slice(0, targetCount).map(c => ({
-                                ...c,
-                                isActive: false,
-                                qualityScore: c.confidence === 'high' ? 40 : c.confidence === 'medium' ? 25 : 10,
-                                qualityReasons: ['Basic scoring (profile verification unavailable)'],
-                                wasVerified: false,
-                            }));
+                        // Deduct credits for the queued request
+                        if (leadCreditCost > 0 && !isAdminUser(auth.user)) {
+                            await deductCredits(auth.user.id, leadCreditCost, `lead_request_queued: ${leadQuery.slice(0, 100)}`);
+                            const afterBalance = await getUserCredits(auth.user.id);
+                            logs.push(`💳 ${leadCreditCost} credit${leadCreditCost > 1 ? 's' : ''} used (${afterBalance} remaining)`);
                         }
 
-                        // Map qualified leads to response format
-                        leads = qualifiedLeads.slice(0, targetCount).map((c, i) => ({
-                            id: -(i + 1),
-                            name: c.name,
-                            company: c.company,
-                            title: c.title,
-                            email: c.email,
-                            url: c.url || '',
-                            snippet: c.wasVerified
-                                ? `Score: ${c.qualityScore}/100 | ${c.qualityReasons.slice(0, 2).join(', ')} | ${c.source}`
-                                : `${c.source} | Confidence: ${c.confidence}`,
-                            source: c.source,
-                            instagram: c.instagram,
-                            tiktok: c.tiktok,
-                            twitter: c.twitter,
-                            followers: c.followers,
-                            country
-                        }));
-
-                        const verifiedCount = qualifiedLeads.filter(q => q.wasVerified).length;
-                        const activeCount = qualifiedLeads.filter(q => q.isActive).length;
-                        logs.push(`✅ Total: ${leads.length} qualified contacts (${verifiedCount} verified, ${activeCount} active)`);
-
-                        // === AI SELF-REVIEW ===
-                        // Quick check: are these results actually useful?
-                        const reviewData = qualifiedLeads.slice(0, 15).map(l => ({
-                            name: l.name, source: l.source, email: l.email,
-                            tiktok: l.tiktok, instagram: l.instagram,
-                            followers: l.followers, qualityScore: l.qualityScore,
-                        }));
-                        const review = await reviewResultQuality(userMessage, reviewData);
-                        logs.push(`🔎 Self-review: ${review.verdict} (${review.relevant} relevant, ${review.irrelevant} irrelevant)`);
-
-                        // Update admin log with completion status + persist results
-                        if (leadRequestId) {
-                            try {
-                                await supabaseAdmin
-                                    .from('lead_requests')
-                                    .update({
-                                        status: 'completed',
-                                        results_count: leads.length,
-                                        results: leads,
-                                        completed_at: new Date().toISOString(),
-                                    })
-                                    .eq('id', leadRequestId);
-                            } catch (e) {
-                                console.error('Failed to update lead request status:', e);
-                            }
-                        }
-
-                        // === INTELLIGENT SYNTHESIS ===
-                        // Use qualified synthesis if we have verified data, otherwise fall back
-                        let enrichedMsg: string;
-                        if (qualifiedContext && verifiedCount > 0) {
-                            enrichedMsg = await synthesizeQualifiedResults(
-                                userMessage, qualifiedContext,
-                                validatedTier as any, artistContext,
-                                { total: leads.length, verified: verifiedCount, active: activeCount, avgScore: qualifiedLeads.length > 0 ? Math.round(qualifiedLeads.reduce((s, q) => s + q.qualityScore, 0) / qualifiedLeads.length) : 0 },
-                                isVoiceMode
-                            );
-                        } else {
-                            const allResultsForSynthesis = leads.map(l => ({
-                                name: l.name, url: l.url, snippet: l.snippet,
-                                source: l.source, email: l.email,
-                                instagram: l.instagram, twitter: l.twitter, tiktok: l.tiktok
-                            }));
-                            enrichedMsg = await generateWithSearchResults(userMessage, allResultsForSynthesis, validatedTier as any, artistContext, isVoiceMode);
-                        }
-
-                        // If self-review says poor quality, prepend an honest note
-                        if (review.verdict === 'poor' && review.recommendation) {
-                            enrichedMsg = `> Note: I found limited quality matches for your specific request. ${review.recommendation}\n\n${enrichedMsg}`;
-                        }
-
+                        // Return a confirmation message — no pipeline execution
                         intent = {
-                            action: 'find_leads',
-                            filters: { country },
-                            message: enrichedMsg || `Found ${leads.length} contacts across all sources.`
+                            action: 'clarify', filters: { country },
+                            message: `## Your Lead Request Has Been Submitted\n\nI've received your request for **${targetCount}** ${leadContactTypes.join(', ')} contacts${country ? ` in ${country}` : ''}${leadGenre ? ` (${leadGenre})` : ''}.\n\nOur team is now sourcing and verifying high-quality contacts for you. You'll be notified when your leads are ready — they'll appear right here in your chat.\n\n**What happens next:**\n1. Our team reviews your request and sources the best contacts\n2. Each contact is verified for accuracy and relevance\n3. Your results will be delivered to this conversation\n\nIn the meantime, feel free to ask me anything else — draft a pitch, plan a campaign, or research your market!`
                         };
-                        // Store totalAvailable for canLoadMore calculation (not in ParsedIntent type)
-                        (intent as any)._totalAvailable = cascadeResult.total;
-                        suggestedNextSteps = ['Draft a pitch to these contacts', 'Load more contacts', 'Export to CSV', 'Search for more in a different market'];
+                        suggestedNextSteps = ['Draft a pitch email while you wait', 'Plan your outreach campaign', 'Research your target market'];
                         break;
                     }
 
                     case 'deep_search': {
-                        toolsUsed.push('deep_search');
+                        // ═══ ADMIN-QUEUE MODE ═══
+                        // Deep search requests are queued for admin processing
+                        // until external integrations are connected.
                         const deepQuery = intentResult.searchQuery || userMessage;
                         const country = normalizeCountry(intentResult.filters?.country || artistContext?.location?.country);
-                        logs.push(`🚀 Deep Search activated: "${deepQuery}"`);
+                        logs.push(`🚀 Deep Search request received: "${deepQuery}"`);
 
-                        if (!webSearchEnabled) {
-                            intent = { action: 'clarify', filters: {}, message: 'Deep Search needs web access. Toggle Web Search on to use all pipelines!' };
-                            break;
+                        // Credit pre-check
+                        const deepCreditCost = getCreditCost('deep_search');
+                        if (deepCreditCost > 0 && !isAdminUser(auth.user)) {
+                            const preBalance = await getUserCredits(auth.user.id);
+                            if (preBalance < deepCreditCost) {
+                                logs.push(`💳 Insufficient credits (need ${deepCreditCost}, have ${preBalance})`);
+                                intent = {
+                                    action: 'clarify', filters: {},
+                                    message: `You need ${deepCreditCost} credit${deepCreditCost > 1 ? 's' : ''} for Deep Search, but you have ${preBalance}. Upgrade your plan for more credits!`
+                                };
+                                suggestedNextSteps = ['Upgrade your plan for more credits'];
+                                break;
+                            }
                         }
 
-                        const pipelineStatus = getPipelineStatus();
-                        logs.push(`📡 Pipelines: Apify=${pipelineStatus.apify ? '🟢' : '⚪'} Apollo=${pipelineStatus.apollo ? '🟢' : '⚪'} LinkedIn=${pipelineStatus.linkedin ? '🟢' : '⚪'} ZoomInfo=${pipelineStatus.zoominfo ? '🟢' : '⚪'} PhantomBuster=${pipelineStatus.phantombuster ? '🟢' : '⚪'}`);
+                        // Log as pending for admin
+                        try {
+                            const { data: reqData } = await supabaseAdmin
+                                .from('lead_requests')
+                                .insert({
+                                    user_id: auth.user.id,
+                                    query: deepQuery,
+                                    contact_types: ['deep_search'],
+                                    markets: [country],
+                                    genre: artistContext?.identity?.genre || '',
+                                    target_count: 50,
+                                    status: 'pending',
+                                    metadata: { searchDepth: 'full', type: 'deep_search' },
+                                })
+                                .select('id')
+                                .single();
+                            leadRequestId = reqData?.id || null;
+                            logs.push('📋 Deep Search request queued for processing');
+                        } catch (e) {
+                            console.error('Failed to log deep search request:', e);
+                        }
 
-                        const deepResult = await performDeepSearch(deepQuery, country);
-                        logs.push(...deepResult.logs);
+                        // Deduct credits
+                        if (deepCreditCost > 0 && !isAdminUser(auth.user)) {
+                            await deductCredits(auth.user.id, deepCreditCost, `deep_search_queued: ${deepQuery.slice(0, 100)}`);
+                            const afterBalance = await getUserCredits(auth.user.id);
+                            logs.push(`💳 ${deepCreditCost} credit${deepCreditCost > 1 ? 's' : ''} used (${afterBalance} remaining)`);
+                        }
 
-                        leads = deepResult.contacts.slice(0, 30).map((c, i) => ({
-                            id: -(i + 1), name: c.name, company: c.company, title: c.title, email: c.email,
-                            url: c.url || '', snippet: `${c.source} • Confidence: ${c.confidence}`, source: c.source,
-                            instagram: c.instagram, tiktok: c.tiktok, twitter: c.twitter, followers: c.followers, country
-                        }));
-
-                        const deepMsg = await generateWithSearchResults(userMessage, leads, validatedTier as any, artistContext, isVoiceMode);
-                        intent = { action: 'find_leads', filters: { country }, message: deepMsg || `Deep Search found ${deepResult.total} unique contacts.` };
-                        suggestedNextSteps = ['Draft a pitch to the top contacts', 'Scrape a specific result', 'Search social media profiles'];
+                        intent = {
+                            action: 'clarify', filters: { country },
+                            message: `## Deep Search Request Submitted\n\nYour deep search for **"${deepQuery}"** has been queued. Our team will run the full pipeline (Apollo, LinkedIn, ZoomInfo, and social platforms) to find the best results.\n\nYou'll be notified when your results are ready. In the meantime, feel free to keep working!`
+                        };
+                        suggestedNextSteps = ['Draft a pitch while you wait', 'Research your market', 'Plan your outreach campaign'];
                         break;
                     }
 
@@ -858,6 +755,24 @@ export async function POST(request: NextRequest) {
 
                     case 'content_creation':
                     case 'strategy': {
+                        // Credit check + deduction for paid actions
+                        const csCategory = intentResult.category === 'content_creation' ? 'content_creation' : 'strategy';
+                        const csCreditCost = getCreditCost(csCategory);
+                        if (csCreditCost > 0 && !isAdminUser(auth.user)) {
+                            const csBalance = await getUserCredits(auth.user.id);
+                            if (csBalance < csCreditCost) {
+                                logs.push(`💳 Insufficient credits (need ${csCreditCost}, have ${csBalance})`);
+                                intent = {
+                                    action: 'clarify', filters: {},
+                                    message: `You need ${csCreditCost} credit${csCreditCost > 1 ? 's' : ''} for this, but you have ${csBalance}. Upgrade your plan for more credits!`
+                                };
+                                suggestedNextSteps = ['Upgrade your plan for more credits'];
+                                break;
+                            }
+                            await deductCredits(auth.user.id, csCreditCost, `${csCategory}: ${userMessage.slice(0, 100)}`);
+                            logs.push(`💳 ${csCreditCost} credit${csCreditCost > 1 ? 's' : ''} used (${csBalance - csCreditCost} remaining)`);
+                        }
+
                         toolsUsed.push(intentResult.category === 'content_creation' ? 'draft_pitch' : 'campaign_plan');
                         const contentToolPrompt = toolInstruction || getToolInstruction(
                             intentResult.category === 'content_creation' ? 'draft_pitch' : 'campaign_plan'

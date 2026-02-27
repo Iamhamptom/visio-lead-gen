@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { requireUser } from '@/lib/api-auth';
+import { requireUser, isAdminUser } from '@/lib/api-auth';
 import { performCascadingSearch } from '@/lib/lead-pipeline';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
@@ -13,6 +13,19 @@ export async function GET(request: NextRequest) {
         return new Response(
             JSON.stringify({ message: 'Unauthorized' }),
             { status: auth.status, headers: { 'Content-Type': 'application/json' } }
+        );
+    }
+
+    // ── Admin-only gate ──────────────────────────────────────────────────
+    // Lead pipeline execution is admin-only until PhantomBuster, scrapers,
+    // and Apollo integrations are properly connected. Non-admin users have
+    // their requests queued via /api/agent → admin dashboard.
+    if (!isAdminUser(auth.user)) {
+        return new Response(
+            JSON.stringify({
+                message: 'Lead generation is being processed by our team. You will be notified when your results are ready.'
+            }),
+            { status: 202, headers: { 'Content-Type': 'application/json' } }
         );
     }
 

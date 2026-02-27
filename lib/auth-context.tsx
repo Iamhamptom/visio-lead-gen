@@ -27,6 +27,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [session, setSession] = useState<Session | null>(null);
     const [loading, setLoading] = useState(true);
     const [authStale, setAuthStale] = useState(false);
+    // Track intentional sign-outs to distinguish from spurious SIGNED_OUT events
+    // (e.g. token refresh race conditions, network blips) that Supabase may fire.
+    const intentionalSignOutRef = React.useRef(false);
 
     useEffect(() => {
         const storageKey = 'visio:lastSession';
@@ -101,6 +104,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 // prematurely set user=null and clear the backup before recovery runs.
                 if (event === 'INITIAL_SESSION') return;
 
+                // Guard against spurious SIGNED_OUT events. Supabase can fire these during
+                // token refresh race conditions or network blips. Only honour SIGNED_OUT if
+                // the user explicitly called signOut() (tracked via intentionalSignOutRef).
+                if (event === 'SIGNED_OUT' && !intentionalSignOutRef.current) {
+                    // Attempt to recover — if a valid session still exists, keep using it.
+                    try {
+                        const { data: { session: recovered } } = await supabase.auth.getSession();
+                        if (recovered) {
+                            setSession(recovered);
+                            setUser(recovered.user ?? null);
+                            storeSession(recovered);
+                            return;
+                        }
+                    } catch {
+                        // Network error during recovery — keep existing state, don't sign out.
+                        return;
+                    }
+                }
+                // Reset the flag after processing
+                intentionalSignOutRef.current = false;
+
                 setSession(session);
                 setUser(session?.user ?? null);
                 setAuthStale(false);
@@ -169,6 +193,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, []);
 
     const signOut = async () => {
+        intentionalSignOutRef.current = true;
         await supabase.auth.signOut();
         setUser(null);
         setSession(null);

@@ -48,15 +48,21 @@ export async function POST(req: NextRequest) {
                 })
                 .eq('id', auth.user.id);
 
-            // Try to seed credits if the column exists and balance is 0
+            // Seed credits only for genuinely new accounts (never used credits).
+            // Checking credits_used === 0 prevents re-seeding for users who
+            // legitimately spent all their credits.
             try {
                 const { data: creditCheck } = await supabaseAdmin
                     .from('profiles')
-                    .select('credits_balance')
+                    .select('credits_balance, credits_used')
                     .eq('id', auth.user.id)
                     .maybeSingle();
 
-                if (creditCheck && (creditCheck.credits_balance ?? 0) === 0) {
+                if (
+                    creditCheck &&
+                    (creditCheck.credits_balance ?? 0) === 0 &&
+                    (creditCheck.credits_used ?? 0) === 0
+                ) {
                     const tier = (existing.subscription_tier || 'artist') as SubscriptionTier;
                     const allocation = PLAN_CREDITS[tier];
                     const credits = allocation === Infinity ? 99999 : allocation;

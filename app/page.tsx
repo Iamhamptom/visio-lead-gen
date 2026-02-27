@@ -1218,6 +1218,21 @@ export default function Home() {
       setToastMessage("Failed to get response");
     } finally {
       setIsLoading(false);
+
+      // Refresh credits balance after any agent action (deductions happen server-side)
+      if (session?.access_token) {
+        fetch('/api/user/credits', {
+          headers: { Authorization: `Bearer ${session.access_token}` }
+        })
+          .then(res => res.ok ? res.json() : null)
+          .then(data => {
+            if (data) {
+              setCreditsBalance(data.balance ?? 0);
+              setCreditsAllocation(data.monthlyAllocation ?? 0);
+            }
+          })
+          .catch(() => {});
+      }
     }
   };
 
