@@ -109,7 +109,7 @@ function PaymentSuccessContent() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.5 }}
-                    className="absolute -top-2 -right-2"
+                    className="relative flex justify-center -mt-4 mb-2"
                 >
                     <Sparkles size={24} className="text-yellow-400" />
                 </motion.div>

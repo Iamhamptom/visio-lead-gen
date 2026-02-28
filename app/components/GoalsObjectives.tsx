@@ -232,7 +232,7 @@ export const GoalsObjectives: React.FC<GoalsObjectivesProps> = ({ profile, onUpd
                                 />
                                 <button
                                     onClick={addObjective}
-                                    className="p-2 bg-white/10 hover:bg-white/20 rounded-lg text-white transaction-colors"
+                                    className="p-2 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors"
                                 >
                                     <Plus size={18} />
                                 </button>

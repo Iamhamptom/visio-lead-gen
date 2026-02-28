@@ -95,9 +95,16 @@ export async function POST(request: Request) {
     }
 }
 
-// GET: Admin endpoint to list all submissions
+// GET: Admin endpoint to list all submissions (requires auth)
 export async function GET(request: Request) {
     try {
+        // Require admin authentication to access submissions data
+        const { requireUser } = await import('@/lib/api-auth');
+        const auth = await requireUser(request);
+        if (!auth.ok) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: auth.status });
+        }
+
         const fs = await import('fs');
         const path = await import('path');
         const filePath = path.join(process.cwd(), 'data', 'submissions.json');

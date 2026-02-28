@@ -508,6 +508,7 @@ export async function performDeepSearch(query: string, country: string = 'ZA'): 
     // Deduplicate by name (keep highest confidence)
     const seen = new Map<string, PipelineContact>();
     for (const contact of allContacts) {
+        if (!contact.name) continue;
         const key = contact.name.toLowerCase().trim();
         if (!key || key.length < 3) continue;
 

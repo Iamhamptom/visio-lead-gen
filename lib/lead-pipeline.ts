@@ -193,7 +193,7 @@ function deduplicateContacts(contacts: PipelineContact[]): PipelineContact[] {
 
 function mapDBLeadToContact(lead: DBLead, countryCode: string): PipelineContact {
     return {
-        name: lead.person || lead.company,
+        name: lead.person || lead.company || 'Unknown',
         email: lead.email || undefined,
         company: lead.company || undefined,
         title: lead.title || undefined,
