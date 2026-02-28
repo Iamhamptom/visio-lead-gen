@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { PLAN_NAMES, PlanTier } from '@/lib/yoco';
 import { isAdminUser, requireUser } from '@/lib/api-auth';
+import { logError } from '@/lib/error-logger';
 
 // GET /api/invoices/[id] - Get single invoice details
 export async function GET(
@@ -69,9 +70,9 @@ export async function GET(
                 : null
         });
     } catch (error: any) {
-        console.error('Get invoice error:', error);
+        logError(error, 'invoices:get-by-id');
         return NextResponse.json(
-            { error: error.message || 'Failed to fetch invoice' },
+            { error: 'Failed to fetch invoice' },
             { status: 500 }
         );
     }

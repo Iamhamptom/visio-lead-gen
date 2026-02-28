@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createGeminiClient } from '@/lib/gemini';
+import { requireUser } from '@/lib/api-auth';
+import { logError } from '@/lib/error-logger';
 
 export async function POST(request: NextRequest) {
     try {
+        const auth = await requireUser(request);
+        if (!auth.ok) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: auth.status });
+        }
+
         const { sessionId, messages } = await request.json();
 
         if (!sessionId || !messages?.length) {
@@ -59,7 +66,7 @@ Respond with ONLY a valid JSON object (no markdown, no code fences):
             generatedAt: Date.now(),
         });
     } catch (error: any) {
-        console.error('Brief generation error:', error);
+        logError(error, 'generate-brief');
         return NextResponse.json({ error: 'Failed to generate brief' }, { status: 500 });
     }
 }

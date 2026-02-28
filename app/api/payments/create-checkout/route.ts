@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createYocoCheckout, PlanTier, PLAN_PRICING } from '@/lib/yoco';
 import { requireUser } from '@/lib/api-auth';
+import { logError } from '@/lib/error-logger';
 
 export async function POST(request: NextRequest) {
     try {
@@ -57,9 +58,9 @@ export async function POST(request: NextRequest) {
         });
 
     } catch (error: any) {
-        console.error('Create checkout error:', error);
+        logError(error, 'payments:create-checkout');
         return NextResponse.json(
-            { error: error.message || 'Failed to create checkout session' },
+            { error: 'Failed to create checkout session' },
             { status: 500 }
         );
     }

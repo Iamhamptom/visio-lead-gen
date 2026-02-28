@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Exa from 'exa-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { requireUser } from '@/lib/api-auth';
+import { logError } from '@/lib/error-logger';
 
 // Lazily init in handler to avoid build-time errors if keys missing
 // const exa = new Exa(process.env.EXA_API_KEY || '');
@@ -82,10 +83,9 @@ ${sourcesContext}`;
         });
 
     } catch (error) {
-        console.error('Artist research error:', error);
+        logError(error, 'artist-research');
         return NextResponse.json({
-            summary: 'Research encountered an error. Please check your API keys and try again.',
-            error: String(error),
+            summary: 'Research encountered an error. Please try again.',
         }, { status: 500 });
     }
 }

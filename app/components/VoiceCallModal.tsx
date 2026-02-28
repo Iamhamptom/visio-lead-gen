@@ -4,6 +4,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { useConversation } from '@elevenlabs/react';
 import { Phone, PhoneOff, Mic, MicOff, Volume2, VolumeX, X, Loader2 } from 'lucide-react';
 import { VisioOrb } from './VisioOrb';
+import { logError } from '@/lib/error-logger';
 
 interface VoiceCallModalProps {
     isOpen: boolean;
@@ -80,7 +81,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
             callStartTimeRef.current = 0;
         },
         onError: (message, context) => {
-            console.error('Voice agent error:', message, context);
+            logError({ message, context }, 'voice-agent:conversation');
             // Don't show raw error to user — keep it friendly
             if (message?.includes('microphone') || message?.includes('permission')) {
                 setErrorMessage('Microphone access denied. Please allow mic access and try again.');
@@ -112,7 +113,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
                 body: JSON.stringify({ durationSeconds }),
             });
         } catch (err) {
-            console.error('Failed to deduct call credits:', err);
+            logError(err, 'voice-agent:credit-deduction');
         }
     };
 
@@ -184,7 +185,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
                 } : undefined,
             });
         } catch (err: any) {
-            console.error('Failed to start voice call:', err);
+            logError(err, 'voice-agent:startCall');
             if (err?.message?.includes('microphone') || err?.message?.includes('NotAllowed')) {
                 setErrorMessage('Microphone access denied. Please allow mic access in your browser settings.');
             } else {
@@ -200,7 +201,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
         try {
             await conversation.endSession();
         } catch (err) {
-            console.error('Error ending session:', err);
+            logError(err, 'voice-agent:endCall');
         }
         setCallPhase('idle');
     }, [conversation]);
@@ -227,11 +228,16 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
         }
     }, [isOpen, status, conversation]);
 
-    // Clean up on unmount
+    // Clean up on unmount — use refs to avoid stale closure
+    const statusRef = useRef(status);
+    statusRef.current = status;
+    const conversationRef = useRef(conversation);
+    conversationRef.current = conversation;
+
     useEffect(() => {
         return () => {
-            if (status === 'connected') {
-                conversation.endSession().catch(() => {});
+            if (statusRef.current === 'connected') {
+                conversationRef.current.endSession().catch(() => {});
             }
             stopDurationTimer();
         };

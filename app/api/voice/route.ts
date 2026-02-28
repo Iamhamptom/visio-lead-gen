@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { textToSpeech, textToSpeechStream, hasElevenLabsKey } from '@/lib/elevenlabs';
 import { requireUser } from '@/lib/api-auth';
+import { logError } from '@/lib/error-logger';
 
 /**
  * POST /api/voice
@@ -68,7 +69,7 @@ export async function POST(req: NextRequest) {
             },
         });
     } catch (error: any) {
-        console.error('Voice API error:', error?.message || error);
+        logError(error, 'voice');
 
         if (error?.message?.includes('API key') || error?.message?.includes('authentication')) {
             return NextResponse.json({ error: 'Voice service authentication failed' }, { status: 401 });

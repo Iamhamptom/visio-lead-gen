@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/api-auth';
 import { PLAN_CREDITS } from '@/lib/credits';
 import { SubscriptionTier } from '@/app/types';
+import { logError } from '@/lib/error-logger';
 
 export async function POST(req: Request) {
     try {
@@ -56,6 +57,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ user: data.user });
 
     } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        logError(error, 'admin:approve');
+        return NextResponse.json({ error: 'Failed to update approval status' }, { status: 500 });
     }
 }

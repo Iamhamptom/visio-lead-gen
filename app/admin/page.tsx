@@ -68,6 +68,7 @@ export default function AdminPage() {
     const [users, setUsers] = useState<AdminUser[]>([]);
     const [leads, setLeads] = useState<LeadRequest[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isAdmin, setIsAdmin] = useState<boolean | null>(null); // null = checking
     const [saving, setSaving] = useState(false);
     const [search, setSearch] = useState('');
     const [error, setError] = useState<string | null>(null);
@@ -122,6 +123,21 @@ export default function AdminPage() {
             if (!token) throw new Error("No session found");
 
             const headers = { 'Authorization': `Bearer ${token}` };
+
+            // Verify admin status before loading anything
+            const adminCheck = await fetch('/api/admin/check', { headers });
+            if (!adminCheck.ok) {
+                setIsAdmin(false);
+                setLoading(false);
+                return;
+            }
+            const adminData = await adminCheck.json().catch(() => ({}));
+            if (!adminData?.isAdmin) {
+                setIsAdmin(false);
+                setLoading(false);
+                return;
+            }
+            setIsAdmin(true);
 
             fetch('/api/debug-env', { headers })
                 .then(r => r.ok ? r.json() : null)
@@ -445,6 +461,20 @@ export default function AdminPage() {
         users.filter(u => u.app_metadata?.approved === true),
         [users]
     );
+
+    // Block non-admins from seeing the dashboard
+    if (isAdmin === false) {
+        return (
+            <div className="min-h-screen bg-visio-bg flex items-center justify-center text-white font-outfit">
+                <div className="text-center p-8 bg-white/5 rounded-2xl border border-white/10 max-w-md w-full">
+                    <Shield className="w-12 h-12 text-white/20 mx-auto mb-4" />
+                    <h1 className="text-xl font-bold mb-2">Access Denied</h1>
+                    <p className="text-white/50 mb-6 text-sm">This page is restricted to administrators.</p>
+                    <button onClick={() => window.location.href = '/'} className="px-6 py-3 bg-white/10 text-white/80 font-medium rounded-xl hover:bg-white/15 transition-colors">Return Home</button>
+                </div>
+            </div>
+        );
+    }
 
     // Error states
     if (error) {

@@ -5,6 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { requireUser } from '@/lib/api-auth';
 import { PLAN_CREDITS } from '@/lib/credits';
 import { SubscriptionTier } from '@/app/types';
+import { logError } from '@/lib/error-logger';
 
 function makeInvoiceNumber() {
     const year = new Date().getFullYear();
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
         try {
             checkout = await getYocoCheckout(checkoutId);
         } catch (err) {
-            console.error('Yoco verification failed:', err);
+            logError(err, 'payments:confirm:yoco-verify');
             return NextResponse.json({ error: 'Payment verification failed' }, { status: 400 });
         }
 
@@ -117,7 +118,7 @@ export async function POST(request: NextRequest) {
                 app_metadata: { approved: true }
             });
         } catch (approveErr) {
-            console.error('Failed to set approved flag after payment:', approveErr);
+            logError(approveErr, 'payments:confirm:set-approved');
             // Non-fatal: the client-side isRestricted check also considers paid tier
         }
 
@@ -164,14 +165,14 @@ export async function POST(request: NextRequest) {
             if (!invoiceError) {
                 invoiceCreated = true;
             } else {
-                console.error('Invoice create failed in confirm route:', invoiceError);
+                logError(invoiceError, 'payments:confirm:invoice-insert');
             }
         }
 
         return NextResponse.json({ success: true, tier, invoiceCreated });
 
     } catch (error: any) {
-        console.error('Payment confirm error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        logError(error, 'payments:confirm');
+        return NextResponse.json({ error: 'Payment confirmation failed' }, { status: 500 });
     }
 }

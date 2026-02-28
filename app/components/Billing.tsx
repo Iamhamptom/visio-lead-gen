@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { sanitiseForUser } from '@/lib/error-logger';
 import {
     CreditCard,
     Check,
@@ -96,7 +97,7 @@ export const Billing: React.FC<BillingProps> = ({
             // Redirect to Yoco checkout page
             window.location.href = data.redirectUrl;
         } catch (err: any) {
-            setError(err.message || 'Something went wrong');
+            setError(sanitiseForUser(err, 'billing:upgrade'));
             setIsProcessing(false);
             setProcessingTier(null);
         }

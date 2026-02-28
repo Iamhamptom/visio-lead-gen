@@ -23,8 +23,8 @@ export async function enrichLead(lead: Lead): Promise<Lead> {
             body: JSON.stringify({
                 email: lead.email,
                 organization_name: lead.company,
-                first_name: lead.name.split(' ')[0],
-                last_name: lead.name.split(' ').slice(1).join(' ')
+                first_name: (lead.name || '').split(' ')[0],
+                last_name: (lead.name || '').split(' ').slice(1).join(' ')
             })
         });
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { requireUser } from '@/lib/api-auth';
+import { logError } from '@/lib/error-logger';
 
 export async function POST(request: NextRequest) {
     try {
@@ -58,9 +59,9 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: true });
 
     } catch (error: any) {
-        console.error('Save Payment Method Error:', error);
+        logError(error, 'payments:save-method');
         return NextResponse.json(
-            { error: error.message || 'Failed to save payment method' },
+            { error: 'Failed to save payment method' },
             { status: 500 }
         );
     }

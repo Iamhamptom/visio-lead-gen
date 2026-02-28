@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getYocoPublicKey } from '@/lib/yoco';
+import { logError } from '@/lib/error-logger';
 
 export async function GET() {
     try {
@@ -11,6 +12,7 @@ export async function GET() {
 
         return NextResponse.json({ publicKey });
     } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        logError(error, 'payments:setup');
+        return NextResponse.json({ error: 'Failed to fetch payment config' }, { status: 500 });
     }
 }

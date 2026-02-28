@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { PLAN_PRICING, type PlanTier } from '@/lib/yoco';
 import { PLAN_CREDITS } from '@/lib/credits';
 import { SubscriptionTier } from '@/app/types';
+import { logError } from '@/lib/error-logger';
 
 function getSignatureHeader(req: NextRequest) {
     return (
@@ -78,8 +79,9 @@ export async function POST(req: NextRequest) {
         const email = typeof metadata?.email === 'string' ? metadata.email.trim() : '';
         const userId = typeof metadata?.userId === 'string' ? metadata.userId.trim() : '';
 
-        if (!tier) {
-            return NextResponse.json({ received: true, message: 'Ignored: missing tier' });
+        const validTiers = Object.keys(PLAN_PRICING);
+        if (!tier || !validTiers.includes(tier)) {
+            return NextResponse.json({ received: true, message: 'Ignored: missing or invalid tier' });
         }
 
         // Identify target user
@@ -140,7 +142,7 @@ export async function POST(req: NextRequest) {
                         updated_at: new Date().toISOString()
                     });
                 if (createProfileError) {
-                    console.error('[Yoco Webhook] Failed to create missing profile:', createProfileError);
+                    logError(createProfileError, 'webhook:create-profile');
                 }
             }
         }
@@ -162,7 +164,7 @@ export async function POST(req: NextRequest) {
             .select('id');
 
         if (profileError) {
-            console.error('[Yoco Webhook] Profile update failed:', profileError);
+            logError(profileError, 'webhook:profile-update');
             return NextResponse.json({ error: 'DB update failed' }, { status: 500 });
         }
         if (!updatedRows || updatedRows.length === 0) {
@@ -175,7 +177,7 @@ export async function POST(req: NextRequest) {
                 app_metadata: { approved: true }
             });
         } catch (approveErr) {
-            console.error('[Yoco Webhook] Failed to set approved flag:', approveErr);
+            logError(approveErr, 'webhook:set-approved');
             // Non-fatal: the client-side isRestricted check also considers paid tier
         }
 
@@ -223,7 +225,7 @@ export async function POST(req: NextRequest) {
                     });
 
                 if (invoiceError) {
-                    console.error('[Yoco Webhook] Invoice insert failed:', invoiceError);
+                    logError(invoiceError, 'webhook:invoice-insert');
                 }
             }
         }
@@ -231,8 +233,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ received: true, type });
 
     } catch (error: any) {
-        console.error('[Yoco Webhook] Error:', error);
-        return NextResponse.json({ error: error.message || 'Webhook error' }, { status: 500 });
+        logError(error, 'webhook');
+        return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
     }
 }
 

@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { sanitiseForUser } from '@/lib/error-logger';
 import {
     Search,
     Users,
@@ -177,7 +178,7 @@ const MusicSubmissionModal: React.FC<{ isOpen: boolean; onClose: () => void }> =
                 setSubmitted(true);
             }
         } catch (e: any) {
-            setError(e.message || 'Something went wrong. Please try again.');
+            setError(sanitiseForUser(e, 'marketplace:submit'));
         } finally {
             setSubmitting(false);
         }

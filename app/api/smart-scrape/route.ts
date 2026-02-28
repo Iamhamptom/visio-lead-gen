@@ -4,6 +4,7 @@ import { getUserCredits, deductCredits } from '@/lib/credits';
 import { performSmartScrape, formatScrapeForContext, SmartScrapeRequest } from '@/lib/smart-scrape';
 import { generateChatResponse, hasClaudeKey } from '@/lib/claude';
 import { getContextPack } from '@/lib/god-mode';
+import { logError } from '@/lib/error-logger';
 
 const SMART_SCRAPE_COST = 3;
 
@@ -107,7 +108,7 @@ Format with markdown. Be strategic and specific. Offer yes/no follow-up actions.
         });
 
     } catch (error: any) {
-        console.error('[Smart Scrape] Error:', error);
+        logError(error, 'smart-scrape');
         return NextResponse.json({
             error: 'Smart Scrape failed',
             message: 'Research scraping encountered an error. Please try again.',

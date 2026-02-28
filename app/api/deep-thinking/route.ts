@@ -6,6 +6,7 @@ import { searchKnowledgeBase } from '@/lib/rag';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { getClient, getModel } from '@/lib/claude';
 import Anthropic from '@anthropic-ai/sdk';
+import { logError } from '@/lib/error-logger';
 
 const DEEP_THINKING_BUDGET = 10000; // tokens for reasoning
 const DEEP_THINKING_COST = 5;
@@ -172,7 +173,7 @@ export async function POST(request: NextRequest) {
                     }
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`));
                 } catch (err: any) {
-                    console.error('[Deep Thinking] Stream error:', err?.message);
+                    logError(err, 'deep-thinking:stream');
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({
                         type: 'error',
                         content: 'Deep Thinking encountered an error. Your credits have been used.'
@@ -192,7 +193,7 @@ export async function POST(request: NextRequest) {
         });
 
     } catch (error: any) {
-        console.error('[Deep Thinking] Error:', error);
+        logError(error, 'deep-thinking');
         return NextResponse.json({
             error: 'Internal server error',
             message: 'Deep Thinking failed. Please try again.'

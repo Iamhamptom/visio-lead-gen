@@ -4,6 +4,7 @@ import { enrichLead } from '@/lib/enrichment';
 import { Lead } from '@/app/types';
 import { logSearchQuery } from '@/lib/data-service';
 import { requireUser } from '@/lib/api-auth';
+import { logError } from '@/lib/error-logger';
 
 export async function POST(request: NextRequest) {
     try {
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
         ];
 
         // Log query for analytics (fire and forget)
-        logSearchQuery(query, country || 'ZA', results.length).catch(e => console.error('Failed to log search:', e));
+        logSearchQuery(query, country || 'ZA', results.length).catch(e => logError(e, 'search-leads:log-query'));
 
         // Optional Enrichment (e.g. if query asks for "emails")
         // Basic heuristic: if query implies contact info, try to enrich top 3
@@ -84,11 +85,11 @@ export async function POST(request: NextRequest) {
         });
 
     } catch (error: any) {
-        console.error('Search error:', error);
+        logError(error, 'search-leads');
         return NextResponse.json({
-            error: error.message || 'Search failed',
+            error: 'Search failed',
             leads: [],
-            logs: [`> ERROR: ${error.message}`]
+            logs: ['> ERROR: Search encountered an issue']
         }, { status: 500 });
     }
 }

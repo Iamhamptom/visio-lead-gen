@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { logError } from '@/lib/error-logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,7 +38,8 @@ export async function POST(req: Request) {
             user: data.user
         });
     } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        logError(error, 'setup-admin');
+        return NextResponse.json({ error: 'Failed to promote user' }, { status: 500 });
     }
 }
 

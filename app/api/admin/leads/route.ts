@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/api-auth';
 import { performCascadingSearch } from '@/lib/lead-pipeline';
+import { logError } from '@/lib/error-logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -71,7 +72,8 @@ export async function GET(req: Request) {
         return NextResponse.json({ leads: enhancedRequests });
 
     } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        logError(error, 'admin:leads:get');
+        return NextResponse.json({ error: 'Failed to fetch leads' }, { status: 500 });
     }
 }
 
@@ -233,7 +235,7 @@ export async function PATCH(req: Request) {
                 return NextResponse.json({ error: `Unknown action: ${action}` }, { status: 400 });
         }
     } catch (error: any) {
-        console.error('Admin leads PATCH error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        logError(error, 'admin:leads:patch');
+        return NextResponse.json({ error: 'Failed to update lead' }, { status: 500 });
     }
 }

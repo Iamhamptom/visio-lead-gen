@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { createSupabaseAdminClient } from '@/lib/supabase/server';
 import { chargeYocoToken, PLAN_PRICING, PlanTier } from '@/lib/yoco';
+import { PLAN_CREDITS } from '@/lib/credits';
+import { SubscriptionTier } from '@/app/types';
+import { logError } from '@/lib/error-logger';
 
 // Vercel Cron protection
 // https://vercel.com/docs/cron-jobs
@@ -75,11 +78,16 @@ export async function GET(request: NextRequest) {
                 const newEnd = new Date(oldEnd);
                 newEnd.setMonth(newEnd.getMonth() + 1);
 
-                // Update Profile
+                // Update Profile — reset credits for the new billing cycle
+                const rawCredits = PLAN_CREDITS[tier as SubscriptionTier] ?? 20;
+                const creditsToSet = rawCredits === Infinity ? 999999 : rawCredits;
                 await supabase
                     .from('profiles')
                     .update({
                         subscription_period_end: newEnd.toISOString(),
+                        credits_balance: creditsToSet,
+                        credits_used: 0,
+                        credits_reset_at: newEnd.toISOString(),
                         updated_at: new Date().toISOString()
                     })
                     .eq('id', profile.id);
@@ -119,14 +127,14 @@ export async function GET(request: NextRequest) {
                             paid_at: new Date().toISOString()
                         });
                     if (invoiceError) {
-                        console.error(`Renewal invoice insert failed for user ${profile.id}:`, invoiceError);
+                        logError(invoiceError, `cron:renew-subs:invoice:${profile.id}`);
                     }
                 }
 
                 results.success++;
 
             } catch (chargeError) {
-                console.error(`Renewal failed for user ${profile.id}:`, chargeError);
+                logError(chargeError, `cron:renew-subs:charge:${profile.id}`);
 
                 // Mark as past_due
                 await supabase
@@ -144,9 +152,9 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ success: true, results });
 
     } catch (error: any) {
-        console.error('Cron Job Error:', error);
+        logError(error, 'cron:renew-subs');
         return NextResponse.json(
-            { error: error.message || 'Internal Server Error' },
+            { error: 'Internal Server Error' },
             { status: 500 }
         );
     }
