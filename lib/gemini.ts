@@ -295,6 +295,39 @@ export async function parseIntent(
         const response = result.response.text();
 
         if (isChatMode) {
+            // Parse tool trigger prefixes from Gemini's response.
+            // Without this, all tool triggers (LEAD_SEARCH:, SEARCH_REQUEST:, etc.) are dead
+            // because the action was hardcoded to 'clarify'.
+            const triggerMap: Record<string, ParsedIntent['action']> = {
+                'LEAD_SEARCH:': 'find_leads',
+                'DEEP_SEARCH:': 'find_leads',
+                'SEARCH_REQUEST:': 'search',
+                'SCRAPE_URL:': 'search',
+                'SOCIAL_SEARCH:': 'find_leads',
+                'LINKEDIN_SEARCH:': 'find_leads',
+                'APOLLO_SEARCH:': 'find_leads',
+                'PLAYLIST_SCOUT:': 'find_leads',
+                'VENUE_FINDER:': 'find_leads',
+            };
+
+            for (const [trigger, action] of Object.entries(triggerMap)) {
+                if (response.includes(trigger)) {
+                    const triggerLine = response.split('\n').find(l => l.includes(trigger));
+                    const searchTerm = triggerLine?.split(trigger)[1]?.trim() || '';
+                    // Strip the trigger line from the user-facing message
+                    const cleanMessage = response.split('\n')
+                        .filter(l => !l.includes(trigger))
+                        .join('\n').trim();
+
+                    return {
+                        action,
+                        filters: { searchTerm: searchTerm || userMessage },
+                        limit: 50,
+                        message: cleanMessage || undefined,
+                    };
+                }
+            }
+
             return {
                 action: 'clarify',
                 filters: {},

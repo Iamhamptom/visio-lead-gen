@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { parseIntent, ParsedIntent, createGeminiClient } from '@/lib/gemini';
-import { classifyIntent, generateChatResponse, generateWithSearchResults, synthesizeQualifiedResults, reviewResultQuality, extractPortalData, IntentResult, hasClaudeKey } from '@/lib/claude';
+import { classifyIntent, generateChatResponse, generateWithSearchResults, synthesizeQualifiedResults, reviewResultQuality, extractPortalData, IntentResult, IntentCategory, hasClaudeKey } from '@/lib/claude';
 import { getLeadsByCountry, filterLeads, getDatabaseSummary, DBLead, FilterOptions } from '@/lib/db';
 import { performSmartSearch, performLeadSearch } from '@/lib/search';
 import { getContextPack } from '@/lib/god-mode';
@@ -19,15 +19,17 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
-// Maps subscription tiers to allowed AI tiers
+// Maps subscription tiers to allowed AI tiers.
+// 'standard' was removed — it didn't map to any model in Claude's MODEL_MAP or Gemini,
+// so paying users on starter/artiste were silently getting the same AI (instant/Haiku) as free users.
 const TIER_TO_AI_TIER: Record<string, string[]> = {
     'artist': ['instant'],
-    'starter': ['instant', 'standard'],
-    'artiste': ['instant', 'standard'],
-    'starter_label': ['instant', 'standard', 'business'],
-    'label': ['instant', 'standard', 'business', 'enterprise'],
-    'agency': ['instant', 'standard', 'business', 'enterprise'],
-    'enterprise': ['instant', 'standard', 'business', 'enterprise']
+    'starter': ['instant', 'business'],
+    'artiste': ['instant', 'business'],
+    'starter_label': ['instant', 'business'],
+    'label': ['instant', 'business', 'enterprise'],
+    'agency': ['instant', 'business', 'enterprise'],
+    'enterprise': ['instant', 'business', 'enterprise']
 };
 
 interface LeadResponse {
@@ -325,6 +327,7 @@ export async function POST(request: NextRequest) {
         let webResults: WebResult[] = [];
         let toolsUsed: string[] = [];
         let suggestedNextSteps: string[] = [];
+        let creditsAlreadyCharged = false; // Track if credits were deducted in a switch case
         let intent: ParsedIntent;
         let leadRequestId: string | null = null;
         let leadMeta: { contactTypes: string[]; genre: string; markets: string[] } | null = null;
@@ -501,19 +504,26 @@ export async function POST(request: NextRequest) {
                 logs.push(`📋 Intent: ${intentResult.category} (${Math.round((intentResult.confidence || 0) * 100)}%)`);
 
                 // ═══ AUTOMATION BANK CHECK ═══
-                // Check if this message matches an automation trigger pattern.
-                // Credit check FIRST, then execute — avoids burning API calls when user can't pay.
-                const automationMatch = (() => {
-                    const lower = userMessage.toLowerCase();
-                    for (const skill of Object.values(
-                        require('@/lib/automation-bank').AUTOMATION_REGISTRY
-                    ) as { id: string; triggerPatterns: string[]; creditCost: number; name: string }[]) {
-                        if (skill.triggerPatterns.some((p: string) => lower.includes(p.toLowerCase()))) {
-                            return skill;
+                // Only trigger automations when Claude's intent classification agrees this is
+                // an actionable request (not just conversation/knowledge). Without this gate,
+                // casual messages like "what's trending?" would burn 3 credits on a scrape
+                // even though Claude correctly classified it as a knowledge question.
+                const AUTOMATION_ELIGIBLE_INTENTS: IntentCategory[] = [
+                    'lead_generation', 'deep_search', 'web_search', 'smart_scrape'
+                ];
+                const automationMatch = AUTOMATION_ELIGIBLE_INTENTS.includes(intentResult.category)
+                    ? (() => {
+                        const lower = userMessage.toLowerCase();
+                        for (const skill of Object.values(
+                            require('@/lib/automation-bank').AUTOMATION_REGISTRY
+                        ) as { id: string; triggerPatterns: string[]; creditCost: number; name: string }[]) {
+                            if (skill.triggerPatterns.some((p: string) => lower.includes(p.toLowerCase()))) {
+                                return skill;
+                            }
                         }
-                    }
-                    return null;
-                })();
+                        return null;
+                    })()
+                    : null;
 
                 if (automationMatch) {
                     const automationCost = getCreditCost(automationMatch.id) || automationMatch.creditCost || 3;
@@ -552,14 +562,34 @@ export async function POST(request: NextRequest) {
                         logs.push(`🤖 Automation executed: ${automationMatch.name}`);
                         logs.push(...automationResult.logs);
 
+                        // Synthesize raw automation results through V-Prai for a strategic response
+                        let synthesizedMessage = automationResult.summary;
+                        try {
+                            const automationContext = typeof automationResult.data === 'object'
+                                ? JSON.stringify(automationResult.data).slice(0, 3000)
+                                : String(automationResult.data || '').slice(0, 3000);
+
+                            synthesizedMessage = await generateChatResponse(
+                                userMessage,
+                                conversationHistory,
+                                artistContext,
+                                validatedTier as 'instant' | 'business' | 'enterprise',
+                                `## AUTOMATION RESULTS (${automationMatch.name})\n${automationContext}\n\nSummary: ${automationResult.summary}`,
+                                `You just executed the "${automationMatch.name}" automation for the user. The raw results are above. Synthesize into a strategic, actionable response with markdown tables where appropriate. End with 2-3 specific next steps.`,
+                                isVoiceMode
+                            );
+                        } catch (e) {
+                            console.error('Automation synthesis failed, using raw summary:', e);
+                        }
+
                         return NextResponse.json({
-                            message: automationResult.summary,
+                            message: synthesizedMessage,
                             leads: [],
                             webResults: [],
                             toolsUsed: [automationResult.data?.automationUsed || 'automation'],
                             suggestedNextSteps: automationResult.suggestedNextSteps || [],
                             logs,
-                            intent: { action: 'automation_executed', filters: {}, message: automationResult.summary },
+                            intent: { action: 'automation_executed', filters: {}, message: synthesizedMessage },
                             meta: {
                                 automation: automationResult.data?.automationName,
                                 automationData: automationResult.data
@@ -814,6 +844,24 @@ export async function POST(request: NextRequest) {
                             break;
                         }
 
+                        // Credit pre-check BEFORE running multi-pipeline search (Apollo, LinkedIn, etc.)
+                        const deepCreditCost = getCreditCost('deep_search');
+                        if (deepCreditCost > 0 && !isAdminUser(auth.user)) {
+                            const deepBalance = await getUserCredits(auth.user.id);
+                            if (deepBalance < deepCreditCost) {
+                                logs.push(`💳 Insufficient credits (need ${deepCreditCost}, have ${deepBalance})`);
+                                intent = {
+                                    action: 'clarify', filters: {},
+                                    message: `Deep Search requires ${deepCreditCost} credits, but you have ${deepBalance}. Upgrade your plan for more credits!`
+                                };
+                                suggestedNextSteps = ['Upgrade your plan for more credits'];
+                                break;
+                            }
+                            await deductCredits(auth.user.id, deepCreditCost, `deep_search: ${userMessage.slice(0, 100)}`);
+                            creditsAlreadyCharged = true;
+                            logs.push(`💳 ${deepCreditCost} credits used (${deepBalance - deepCreditCost} remaining)`);
+                        }
+
                         const pipelineStatus = getPipelineStatus();
                         logs.push(`📡 Pipelines: Apify=${pipelineStatus.apify ? '🟢' : '⚪'} Apollo=${pipelineStatus.apollo ? '🟢' : '⚪'} LinkedIn=${pipelineStatus.linkedin ? '🟢' : '⚪'} ZoomInfo=${pipelineStatus.zoominfo ? '🟢' : '⚪'} PhantomBuster=${pipelineStatus.phantombuster ? '🟢' : '⚪'}`);
 
@@ -842,6 +890,24 @@ export async function POST(request: NextRequest) {
                             break;
                         }
 
+                        // Credit pre-check BEFORE running Serper API + Claude synthesis
+                        const wsCreditCost = getCreditCost('web_search');
+                        if (wsCreditCost > 0 && !isAdminUser(auth.user)) {
+                            const wsBalance = await getUserCredits(auth.user.id);
+                            if (wsBalance < wsCreditCost) {
+                                logs.push(`💳 Insufficient credits (need ${wsCreditCost}, have ${wsBalance})`);
+                                intent = {
+                                    action: 'clarify', filters: {},
+                                    message: `Web search requires ${wsCreditCost} credit, but you have ${wsBalance}. Upgrade your plan for more credits!`
+                                };
+                                suggestedNextSteps = ['Upgrade your plan for more credits'];
+                                break;
+                            }
+                            await deductCredits(auth.user.id, wsCreditCost, `web_search: ${userMessage.slice(0, 100)}`);
+                            creditsAlreadyCharged = true;
+                            logs.push(`💳 ${wsCreditCost} credit used (${wsBalance - wsCreditCost} remaining)`);
+                        }
+
                         toolsUsed.push('web_search');
                         const searchQuery = intentResult.searchQuery || userMessage;
                         const country = normalizeCountry(intentResult.filters?.country || artistContext?.location?.country);
@@ -858,6 +924,26 @@ export async function POST(request: NextRequest) {
 
                     case 'content_creation':
                     case 'strategy': {
+                        // Credit pre-check BEFORE generating content/strategy (previously uncharged)
+                        const contentCreditCategory = intentResult.category === 'content_creation'
+                            ? 'content_creation' : 'strategy';
+                        const contentCreditCost = getCreditCost(contentCreditCategory);
+                        if (contentCreditCost > 0 && !isAdminUser(auth.user)) {
+                            const preBalance = await getUserCredits(auth.user.id);
+                            if (preBalance < contentCreditCost) {
+                                logs.push(`💳 Insufficient credits (need ${contentCreditCost}, have ${preBalance})`);
+                                intent = {
+                                    action: 'clarify', filters: {},
+                                    message: `This requires ${contentCreditCost} credit${contentCreditCost > 1 ? 's' : ''}, but you have ${preBalance}. Upgrade your plan for more credits!`
+                                };
+                                suggestedNextSteps = ['Upgrade your plan for more credits'];
+                                break;
+                            }
+                            await deductCredits(auth.user.id, contentCreditCost, `${contentCreditCategory}: ${userMessage.slice(0, 100)}`);
+                            creditsAlreadyCharged = true;
+                            logs.push(`💳 ${contentCreditCost} credit${contentCreditCost > 1 ? 's' : ''} used (${preBalance - contentCreditCost} remaining)`);
+                        }
+
                         toolsUsed.push(intentResult.category === 'content_creation' ? 'draft_pitch' : 'campaign_plan');
                         const contentToolPrompt = toolInstruction || getToolInstruction(
                             intentResult.category === 'content_creation' ? 'draft_pitch' : 'campaign_plan'
@@ -882,6 +968,24 @@ export async function POST(request: NextRequest) {
                         if (!webSearchEnabled) {
                             intent = { action: 'clarify', filters: {}, message: 'Smart Scrape needs web access. Toggle Web Search on to research social media content!' };
                             break;
+                        }
+
+                        // Credit pre-check BEFORE running Apify scrapes
+                        const scrapeCreditCost = getCreditCost('smart_scrape');
+                        if (scrapeCreditCost > 0 && !isAdminUser(auth.user)) {
+                            const scrapeBalance = await getUserCredits(auth.user.id);
+                            if (scrapeBalance < scrapeCreditCost) {
+                                logs.push(`💳 Insufficient credits (need ${scrapeCreditCost}, have ${scrapeBalance})`);
+                                intent = {
+                                    action: 'clarify', filters: {},
+                                    message: `Smart Scrape requires ${scrapeCreditCost} credits, but you have ${scrapeBalance}. Upgrade your plan for more credits!`
+                                };
+                                suggestedNextSteps = ['Upgrade your plan for more credits'];
+                                break;
+                            }
+                            await deductCredits(auth.user.id, scrapeCreditCost, `smart_scrape: ${userMessage.slice(0, 100)}`);
+                            creditsAlreadyCharged = true;
+                            logs.push(`💳 ${scrapeCreditCost} credits used (${scrapeBalance - scrapeCreditCost} remaining)`);
                         }
 
                         // Scrape YouTube, TikTok, Twitter in parallel
@@ -943,48 +1047,58 @@ Format with markdown tables for top content, bullet points for insights. End wit
                                 try {
                                     const supabaseRls = auth.accessToken ? createRlsSupabaseClient(auth.accessToken) : null;
                                     if (supabaseRls) {
-                                        // Build the profile update object
+                                        // Build profile patch for artist_profiles table
+                                        // Schema: name, genre, bio, socials (JSONB), metrics (JSONB)
                                         const profilePatch: Record<string, any> = {};
-                                        if (nonNullUpdates.name) profilePatch.artist_name = nonNullUpdates.name;
+                                        if (nonNullUpdates.name) profilePatch.name = nonNullUpdates.name;
                                         if (nonNullUpdates.genre) profilePatch.genre = nonNullUpdates.genre;
-                                        if (nonNullUpdates.description) profilePatch.description = nonNullUpdates.description;
-                                        if (nonNullUpdates.city || nonNullUpdates.country) {
-                                            profilePatch.location = JSON.stringify({
-                                                city: nonNullUpdates.city || artistContext?.location?.city || '',
-                                                country: nonNullUpdates.country || artistContext?.location?.country || '',
-                                            });
-                                        }
-                                        if (nonNullUpdates.promotionalFocus) profilePatch.promotional_focus = nonNullUpdates.promotionalFocus;
+                                        if (nonNullUpdates.description) profilePatch.bio = nonNullUpdates.description;
 
-                                        // Build socials object
-                                        const socialsUpdate: Record<string, string> = {};
+                                        // Build socials JSONB (god-mode.ts reads socials.location, socials.goals, socials.instagram, etc.)
+                                        const socialsUpdate: Record<string, any> = {};
                                         if (nonNullUpdates.instagram) socialsUpdate.instagram = nonNullUpdates.instagram;
                                         if (nonNullUpdates.tiktok) socialsUpdate.tiktok = nonNullUpdates.tiktok;
                                         if (nonNullUpdates.twitter) socialsUpdate.twitter = nonNullUpdates.twitter;
                                         if (nonNullUpdates.youtube) socialsUpdate.youtube = nonNullUpdates.youtube;
-                                        if (nonNullUpdates.spotify) socialsUpdate.website = nonNullUpdates.spotify;
+                                        if (nonNullUpdates.spotify) socialsUpdate.spotify = nonNullUpdates.spotify;
                                         if (nonNullUpdates.website) socialsUpdate.website = nonNullUpdates.website;
+                                        if (nonNullUpdates.city || nonNullUpdates.country) {
+                                            socialsUpdate.location = {
+                                                city: nonNullUpdates.city || artistContext?.location?.city || '',
+                                                country: nonNullUpdates.country || artistContext?.location?.country || '',
+                                            };
+                                        }
+                                        if (nonNullUpdates.primaryGoal) {
+                                            socialsUpdate.goals = {
+                                                primaryGoal: nonNullUpdates.primaryGoal,
+                                                ...(nonNullUpdates.promotionalFocus ? { promotionalFocus: nonNullUpdates.promotionalFocus } : {}),
+                                            };
+                                        }
                                         if (Object.keys(socialsUpdate).length > 0) {
-                                            profilePatch.socials = JSON.stringify(socialsUpdate);
+                                            profilePatch.socials = socialsUpdate; // JSONB column — pass object directly
                                         }
 
-                                        // Build metadata for extended fields
-                                        const metadata: Record<string, any> = {};
-                                        if (nonNullUpdates.instagramFollowers) metadata.instagramFollowers = nonNullUpdates.instagramFollowers;
-                                        if (nonNullUpdates.monthlyListeners) metadata.monthlyListeners = nonNullUpdates.monthlyListeners;
-                                        if (nonNullUpdates.similarArtists) metadata.similarArtists = nonNullUpdates.similarArtists;
-                                        if (nonNullUpdates.careerHighlights) metadata.careerHighlights = nonNullUpdates.careerHighlights;
-                                        if (nonNullUpdates.desiredCommunities) metadata.desiredCommunities = nonNullUpdates.desiredCommunities;
-                                        if (nonNullUpdates.primaryGoal) metadata.primaryGoal = nonNullUpdates.primaryGoal;
-                                        if (Object.keys(metadata).length > 0) {
-                                            profilePatch.metadata = JSON.stringify(metadata);
+                                        // Build metrics JSONB for numeric/extended data
+                                        const metricsUpdate: Record<string, any> = {};
+                                        if (nonNullUpdates.instagramFollowers) metricsUpdate.instagramFollowers = nonNullUpdates.instagramFollowers;
+                                        if (nonNullUpdates.monthlyListeners) metricsUpdate.monthlyListeners = nonNullUpdates.monthlyListeners;
+                                        if (nonNullUpdates.similarArtists) metricsUpdate.similarArtists = nonNullUpdates.similarArtists;
+                                        if (nonNullUpdates.careerHighlights) metricsUpdate.careerHighlights = nonNullUpdates.careerHighlights;
+                                        if (nonNullUpdates.desiredCommunities) metricsUpdate.desiredCommunities = nonNullUpdates.desiredCommunities;
+                                        if (Object.keys(metricsUpdate).length > 0) {
+                                            profilePatch.metrics = metricsUpdate;
                                         }
 
                                         if (Object.keys(profilePatch).length > 0) {
+                                            // Upsert into artist_profiles (not profiles!) so data
+                                            // appears in getContextPack() on the next message.
                                             await supabaseRls
-                                                .from('profiles')
-                                                .update(profilePatch)
-                                                .eq('id', auth.user.id);
+                                                .from('artist_profiles')
+                                                .upsert({
+                                                    user_id: auth.user.id,
+                                                    ...profilePatch,
+                                                    updated_at: new Date().toISOString(),
+                                                }, { onConflict: 'user_id' });
                                             logs.push(`✅ Updated ${Object.keys(nonNullUpdates).length} profile fields`);
                                         }
                                     }
@@ -1021,7 +1135,7 @@ Format with markdown tables for top content, bullet points for insights. End wit
                 }
 
             } else if (hasGemini) {
-                // Fallback to Gemini with fixed error handling
+                // Gemini-powered chat — uses parseIntent which now detects tool triggers
                 logs.push('🧠 V-Prai is thinking (Gemini)...');
                 intent = await parseIntent(
                     toolInstruction ? `${toolInstruction}\n\nUser request: ${userMessage}` : userMessage,
@@ -1031,6 +1145,83 @@ Format with markdown tables for top content, bullet points for insights. End wit
                     'chat',
                     knowledgeContext
                 );
+
+                // ═══ AUTOMATION BANK CHECK (Gemini path) ═══
+                // Only trigger automations when Gemini detected an actionable intent
+                // (find_leads or search), not for plain conversation (clarify).
+                const GEMINI_AUTOMATION_ELIGIBLE: ParsedIntent['action'][] = ['find_leads', 'search'];
+                if (GEMINI_AUTOMATION_ELIGIBLE.includes(intent.action)) {
+                    const geminiAutomationMatch = (() => {
+                        const lower = userMessage.toLowerCase();
+                        for (const skill of Object.values(
+                            require('@/lib/automation-bank').AUTOMATION_REGISTRY
+                        ) as { id: string; triggerPatterns: string[]; creditCost: number; name: string }[]) {
+                            if (skill.triggerPatterns.some((p: string) => lower.includes(p.toLowerCase()))) {
+                                return skill;
+                            }
+                        }
+                        return null;
+                    })();
+
+                    if (geminiAutomationMatch) {
+                        const automationCost = getCreditCost(geminiAutomationMatch.id) || geminiAutomationMatch.creditCost || 3;
+
+                        if (automationCost > 0 && !isAdminUser(auth.user)) {
+                            const balance = await getUserCredits(auth.user.id);
+                            if (balance < automationCost) {
+                                logs.push(`💳 Insufficient credits for ${geminiAutomationMatch.name} (need ${automationCost}, have ${balance})`);
+                                return NextResponse.json({
+                                    message: `This automation requires ${automationCost} credit${automationCost > 1 ? 's' : ''}, but you have ${balance}. Upgrade your plan for more credits!`,
+                                    leads: [], webResults: [], toolsUsed: [],
+                                    suggestedNextSteps: ['Upgrade your plan for more credits'],
+                                    logs,
+                                    intent: { action: 'clarify', filters: {}, message: `Insufficient credits for ${geminiAutomationMatch.name}` }
+                                });
+                            }
+                            await deductCredits(auth.user.id, automationCost, `automation: ${geminiAutomationMatch.name}`);
+                            logs.push(`💳 ${automationCost} credit${automationCost > 1 ? 's' : ''} used (${balance - automationCost} remaining)`);
+                        }
+
+                        const automationResult = await detectAndExecuteAutomation(userMessage, {
+                            userMessage,
+                            query: intent.filters?.searchTerm || userMessage,
+                            country: normalizeCountry(intent.filters?.country || artistContext?.location?.country),
+                            genre: artistContext?.identity?.genre,
+                            artistContext,
+                            conversationHistory
+                        });
+
+                        if (automationResult) {
+                            logs.push(`🤖 Automation executed: ${geminiAutomationMatch.name}`);
+                            logs.push(...automationResult.logs);
+
+                            // Synthesize automation results through Gemini for V-Prai persona
+                            let synthesizedMessage = automationResult.summary;
+                            try {
+                                const geminiModel = createGeminiClient(validatedTier as any);
+                                const automationContext = typeof automationResult.data === 'object'
+                                    ? JSON.stringify(automationResult.data).slice(0, 3000)
+                                    : String(automationResult.data || '').slice(0, 3000);
+                                const synthResult = await geminiModel.generateContent(
+                                    `You are V-Prai, the AI publicist on Visio Lead Gen. You just executed the "${geminiAutomationMatch.name}" automation.\n\nRaw results:\n${automationContext}\n\nSummary: ${automationResult.summary}\n\nUser's original request: "${userMessage}"\n\nSynthesize these results into a strategic, actionable response with V-Prai's publicist energy. Use markdown tables where appropriate. End with 2-3 specific next steps.`
+                                );
+                                synthesizedMessage = synthResult.response.text().trim() || synthesizedMessage;
+                            } catch (e) {
+                                console.error('Automation synthesis failed, using raw summary:', e);
+                            }
+
+                            return NextResponse.json({
+                                message: synthesizedMessage,
+                                leads: [], webResults: [],
+                                toolsUsed: [automationResult.data?.automationUsed || 'automation'],
+                                suggestedNextSteps: automationResult.suggestedNextSteps || [],
+                                logs,
+                                intent: { action: 'automation_executed', filters: {}, message: synthesizedMessage },
+                                meta: { automation: automationResult.data?.automationName, automationData: automationResult.data }
+                            });
+                        }
+                    }
+                }
             } else {
                 logs.push('⚠️ AI offline — basic mode');
                 intent = parseBasicIntent(userMessage, lastSearchState);
@@ -1053,34 +1244,38 @@ Format with markdown tables for top content, bullet points for insights. End wit
         }
 
         // ─── CREDIT CHECK ─────────────────────────────
-        // Map intent action to credit cost category
-        const creditCategoryMap: Record<string, string> = {
-            'find_leads': 'lead_generation',   // 2 credits, not deep_search (5)
-            'search': 'web_search',            // 1 credit
-            'deep_search': 'deep_search',      // 5 credits
-            'smart_scrape': 'smart_scrape',    // 3 credits
-        };
-        const creditCategory = creditCategoryMap[intent.action] || 'chat_message';
-        const creditCost = getCreditCost(creditCategory);
+        // Skip if credits were already deducted in a switch case above (Claude path).
+        // This bottom check handles the Gemini/basic fallback paths where credits
+        // haven't been pre-deducted yet.
+        if (!creditsAlreadyCharged) {
+            const creditCategoryMap: Record<string, string> = {
+                'find_leads': 'lead_generation',   // 2 credits, not deep_search (5)
+                'search': 'web_search',            // 1 credit
+                'deep_search': 'deep_search',      // 5 credits
+                'smart_scrape': 'smart_scrape',    // 3 credits
+            };
+            const creditCategory = creditCategoryMap[intent.action] || 'chat_message';
+            const creditCost = getCreditCost(creditCategory);
 
-        if (creditCost > 0 && !isAdminUser(auth.user)) {
-            const balance = await getUserCredits(auth.user.id);
-            if (balance < creditCost) {
-                logs.push(`💳 Insufficient credits (need ${creditCost}, have ${balance})`);
-                return NextResponse.json({
-                    message: `You need ${creditCost} credit${creditCost > 1 ? 's' : ''} for this action, but you have ${balance}. Upgrade your plan for more credits!`,
-                    leads: [],
-                    webResults: [],
-                    toolsUsed,
-                    suggestedNextSteps: ['Upgrade your plan for more credits'],
-                    logs,
-                    intent: { ...intent, action: 'clarify' },
-                    meta: { total: 0, source: 'Credits' }
-                });
+            if (creditCost > 0 && !isAdminUser(auth.user)) {
+                const balance = await getUserCredits(auth.user.id);
+                if (balance < creditCost) {
+                    logs.push(`💳 Insufficient credits (need ${creditCost}, have ${balance})`);
+                    return NextResponse.json({
+                        message: `You need ${creditCost} credit${creditCost > 1 ? 's' : ''} for this action, but you have ${balance}. Upgrade your plan for more credits!`,
+                        leads: [],
+                        webResults: [],
+                        toolsUsed,
+                        suggestedNextSteps: ['Upgrade your plan for more credits'],
+                        logs,
+                        intent: { ...intent, action: 'clarify' },
+                        meta: { total: 0, source: 'Credits' }
+                    });
+                }
+                // Deduct credits
+                await deductCredits(auth.user.id, creditCost, `${intent.action}: ${userMessage.slice(0, 100)}`);
+                logs.push(`💳 ${creditCost} credit${creditCost > 1 ? 's' : ''} used (${balance - creditCost} remaining)`);
             }
-            // Deduct credits
-            await deductCredits(auth.user.id, creditCost, `${intent.action}: ${userMessage.slice(0, 100)}`);
-            logs.push(`💳 ${creditCost} credit${creditCost > 1 ? 's' : ''} used (${balance - creditCost} remaining)`);
         }
 
         // ─── ACTION HANDLERS ───────────────────────────
