@@ -15,6 +15,7 @@ import { DashboardOverview } from './components/DashboardOverview';
 import { OnboardingTutorial } from './components/OnboardingTutorial';
 import { HowToUsePage } from './components/HowToUsePage';
 import { Marketplace } from './components/Marketplace';
+import { CampaignTemplates } from './components/CampaignTemplates';
 import ReasonPage from './reason/page';
 import ReachPage from './reach/page';
 import { Toast } from './components/Toast';
@@ -754,6 +755,11 @@ export default function Home() {
     setSessions([newSession, ...sessions]);
     setActiveSessionId(newSession.id);
     navigateTo('dashboard');
+  };
+
+  const handleUseTemplate = (prompt: string) => {
+    handleNewChat();
+    setPendingPrompt(prompt);
   };
 
   // Helper Handlers
@@ -1737,7 +1743,8 @@ export default function Home() {
               <div className="flex items-center gap-3">
                 <h2 className="text-lg font-medium text-white/80">
                   {currentView === 'dashboard' ? (sessions.find(s => s.id === activeSessionId)?.title || 'New Research') :
-                    currentView === 'leads' ? 'Lead Database' : 'Artist Portal'}
+                    currentView === 'leads' ? 'Lead Database' :
+                    currentView === 'templates' ? 'Campaign Templates' : 'Artist Portal'}
                 </h2>
                 {isLoading && <span className="text-xs text-visio-accent animate-pulse">Processing...</span>}
               </div>
@@ -1975,6 +1982,8 @@ export default function Home() {
                 onNavigateHome={() => navigateTo('overview')}
                 onLogout={handleLogout}
               />
+            ) : currentView === 'templates' ? (
+              <CampaignTemplates onUseTemplate={handleUseTemplate} />
             ) : currentView === 'marketplace' ? (
               <Marketplace
                 onNewChat={handleNewChat}

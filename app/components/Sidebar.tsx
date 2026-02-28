@@ -18,7 +18,8 @@ import {
     Calculator,
     HelpCircle,
     Coins,
-    Store
+    Store,
+    LayoutTemplate
 } from 'lucide-react';
 import { Campaign, ViewMode, Session, Subscription, ArtistProfile } from '../types';
 import { PLAN_LIMITS } from '../config/plans';
@@ -291,6 +292,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         label="Home"
                         active={activeView === 'overview'}
                         onClick={() => onNavigate('overview')}
+                    />
+                    <NavItem
+                        icon={<LayoutTemplate size={18} />}
+                        label="Templates"
+                        active={activeView === 'templates'}
+                        onClick={() => onNavigate('templates')}
                     />
                     <NavItem
                         icon={<Store size={18} />}
