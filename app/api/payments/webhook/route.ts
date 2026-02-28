@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { PLAN_PRICING, type PlanTier } from '@/lib/yoco';
 import { PLAN_CREDITS } from '@/lib/credits';
 import { SubscriptionTier } from '@/app/types';
+import { logPaymentError } from '@/lib/error-tracker';
 
 function getSignatureHeader(req: NextRequest) {
     return (
@@ -232,6 +233,7 @@ export async function POST(req: NextRequest) {
 
     } catch (error: any) {
         console.error('[Yoco Webhook] Error:', error);
+        logPaymentError('webhook', error).catch(() => { /* best effort */ });
         return NextResponse.json({ error: error.message || 'Webhook error' }, { status: 500 });
     }
 }
