@@ -11,19 +11,17 @@ if (!supabaseUrl || !serviceRoleKey) {
 
 const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-const ADMIN_EMAILS = ['tonydavidhampton@gmail.com', 'hamptonmusicgroup@gmail.com'];
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '')
+    .split(',')
+    .map(s => s.trim().toLowerCase())
+    .filter(Boolean);
 
 async function verifyAdmin(email) {
     console.log(`Verifying admin status for: ${email}`);
 
-    // 1. Check Built-in List (Simulating lib/api-auth.ts)
-    const isBuiltIn = ADMIN_EMAILS.includes(email);
-    console.log(`- Is in Built-in Admin List? ${isBuiltIn ? 'YES' : 'NO'}`);
-
-    if (isBuiltIn) {
-        console.log("SUCCESS: User is a built-in admin.");
-        return;
-    }
+    // 1. Check env-based allowlist (mirrors lib/api-auth.ts)
+    const isInAllowlist = ADMIN_EMAILS.includes(email.toLowerCase());
+    console.log(`- Is in ADMIN_EMAILS allowlist? ${isInAllowlist ? 'YES' : 'NO'}`);
 
     // 2. Check Database Role
     const { data: { users }, error } = await supabase.auth.admin.listUsers();
@@ -37,12 +35,11 @@ async function verifyAdmin(email) {
     const role = user.app_metadata?.role;
     console.log(`- App Metadata Role: ${role || 'None'}`);
 
-    if (role === 'admin') {
-        console.log("SUCCESS: User has 'admin' role in database.");
+    if (isInAllowlist || role === 'admin') {
+        console.log("SUCCESS: User has admin access.");
     } else {
-        console.log("FAILURE: User is NOT an admin (needs 'admin' role or be in built-in list).");
+        console.log("FAILURE: User is NOT an admin (needs 'admin' role or be in ADMIN_EMAILS env var).");
 
-        // Auto-fix?
         console.log("Attempting to grant admin role...");
         const { error: updateError } = await supabase.auth.admin.updateUserById(
             user.id,
@@ -54,4 +51,9 @@ async function verifyAdmin(email) {
     }
 }
 
-verifyAdmin('tonydavidhampton@gmail.com');
+const email = process.argv[2];
+if (!email) {
+    console.error('Usage: node scripts/verify-admin-access.js <email>');
+    process.exit(1);
+}
+verifyAdmin(email);

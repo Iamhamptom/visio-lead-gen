@@ -157,7 +157,7 @@ GEMINI_API_KEY=your_gemini_api_key
 EXA_API_KEY=your_exa_api_key
 
 # Supabase (Core & Admin)
-NEXT_PUBLIC_SUPABASE_URL=https://nloihhezkwhwycztvfbd.supabase.co
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_...
 SUPABASE_SERVICE_ROLE_KEY=sb_secret_...
 
@@ -182,7 +182,7 @@ node scripts/approve-user.js
 *(Edit the script to change the target email if needed)*
 
 ### 2. Verify Admin Access
-To ensure an admin email (like `tonydavidhampton@gmail.com`) has correct permissions:
+To ensure an admin email has correct permissions:
 ```bash
 node scripts/verify-admin-access.js
 ```
