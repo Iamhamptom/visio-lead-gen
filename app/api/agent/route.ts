@@ -18,6 +18,9 @@ import { getUserCredits, deductCredits, getCreditCost } from '@/lib/credits';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { getRelevantSkills, formatSkillsForPrompt } from '@/lib/knowledge-base';
+import { getPatternInsights, formatPatternsForPrompt, recordSuccessfulSearch, recordLearningEvent } from '@/lib/learning-engine';
+import { logApiError } from '@/lib/error-tracker';
 
 // Maps subscription tiers to allowed AI tiers
 const TIER_TO_AI_TIER: Record<string, string[]> = {
@@ -434,10 +437,12 @@ export async function POST(request: NextRequest) {
             ? await getContextPack({ userId: auth.user.id, accessToken: auth.accessToken })
             : null;
 
-        // 2. FETCH KNOWLEDGE BASE (RAG)
+        // 2. FETCH KNOWLEDGE BASE (RAG + Skills + Pattern Memory)
         let knowledgeContext = '';
         try {
             logs.push('🧠 Scanning V-Prai Brain...');
+
+            // a) Vector search (existing RAG)
             const relevantChunks = await searchKnowledgeBase(userMessage, 3);
             if (relevantChunks && relevantChunks.length > 0) {
                 knowledgeContext = relevantChunks.map(c =>
@@ -447,8 +452,32 @@ export async function POST(request: NextRequest) {
             } else {
                 logs.push('⚪ Using general knowledge');
             }
+
+            // b) Skill-based knowledge (from growing knowledge base)
+            const genre = artistContext?.identity?.genre || undefined;
+            const country = artistContext?.location?.country || undefined;
+            const skills = await getRelevantSkills(genre, country, undefined, 3);
+            if (skills.length > 0) {
+                const skillsPrompt = formatSkillsForPrompt(skills);
+                knowledgeContext = knowledgeContext
+                    ? `${knowledgeContext}\n\n${skillsPrompt}`
+                    : skillsPrompt;
+                logs.push(`📚 Loaded ${skills.length} learned skills`);
+            }
+
+            // c) Pattern insights (from reinforcement learning)
+            const patternInsight = await getPatternInsights({ genre, country });
+            if (patternInsight) {
+                const patternPrompt = formatPatternsForPrompt(patternInsight);
+                if (patternPrompt) {
+                    knowledgeContext = knowledgeContext
+                        ? `${knowledgeContext}\n\n${patternPrompt}`
+                        : patternPrompt;
+                    logs.push(`🔄 Applied pattern insight (${Math.round(patternInsight.confidence * 100)}% confidence)`);
+                }
+            }
         } catch (e) {
-            console.error('RAG Error', e);
+            console.error('RAG/Knowledge Error', e);
             logs.push('⚠️ Brain offline — using general knowledge');
         }
 
@@ -1180,6 +1209,13 @@ Format with markdown tables for top content, bullet points for insights. End wit
 
     } catch (error: any) {
         console.error('Agent Error:', error);
+
+        // Log to centralized error tracker (non-blocking)
+        logApiError('/api/agent', error, {
+            method: 'POST',
+            status: 500,
+        }).catch(() => { /* best effort */ });
+
         return NextResponse.json({
             error: 'Internal processing error',
             message: 'Sorry, I hit a snag. Can you rephrase that?',
