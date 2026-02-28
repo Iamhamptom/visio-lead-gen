@@ -63,6 +63,10 @@ const nextConfig: NextConfig = {
         source: '/reach',
         destination: '/',
       },
+      {
+        source: '/templates',
+        destination: '/',
+      },
     ];
   },
   async headers() {
@@ -78,7 +82,7 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: '/(dashboard|billing|settings|leads|auth|onboarding|overview|reason|reach)',
+        source: '/(dashboard|billing|settings|leads|auth|onboarding|overview|reason|reach|templates)',
         headers: [
           {
             key: 'Cache-Control',
