@@ -297,25 +297,25 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                         {/* Artist Plan */}
                         <div className="p-8 rounded-3xl bg-white/5 border border-white/10 hover:border-visio-teal/50 transition-colors relative group">
                             <h3 className="text-2xl font-bold text-white mb-2">Artist</h3>
-                            <div className="text-4xl font-bold text-white mb-6">R150<span className="text-lg text-white/40 font-normal">/mo</span></div>
+                            <div className="text-4xl font-bold text-white mb-6">Free</div>
                             <ul className="space-y-4 mb-8">
-                                <li className="flex gap-3 text-white/70"><Check size={18} className="text-visio-teal" /> 5 AI Searches / mo</li>
+                                <li className="flex gap-3 text-white/70"><Check size={18} className="text-visio-teal" /> 20 Credits / mo</li>
                                 <li className="flex gap-3 text-white/70"><Check size={18} className="text-visio-teal" /> Basic Pitch Drafting</li>
                                 <li className="flex gap-3 text-white/70"><Check size={18} className="text-visio-teal" /> 1 Artist Profile</li>
                             </ul>
-                            <button onClick={onGetStarted} className="w-full py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold transition-colors">Start Free Trial</button>
+                            <button onClick={onGetStarted} className="w-full py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold transition-colors">Get Started Free</button>
                         </div>
 
-                        {/* Label Plan (Featured) */}
+                        {/* Starter Label Plan (Featured) */}
                         <div className="p-8 rounded-3xl bg-gradient-to-b from-visio-teal/10 to-visio-bg border border-visio-teal/50 relative group shadow-2xl shadow-visio-teal/10 scale-105 z-10">
                             <div className="absolute top-0 right-0 bg-visio-teal text-black text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl">MOST POPULAR</div>
-                            <h3 className="text-2xl font-bold text-white mb-2">Label</h3>
-                            <div className="text-4xl font-bold text-white mb-6">R850<span className="text-lg text-white/40 font-normal">/mo</span></div>
+                            <h3 className="text-2xl font-bold text-white mb-2">Starter Label</h3>
+                            <div className="text-4xl font-bold text-white mb-6">R950<span className="text-lg text-white/40 font-normal">/mo</span></div>
                             <ul className="space-y-4 mb-8">
-                                <li className="flex gap-3 text-white"><Check size={18} className="text-visio-teal" /> 50 AI Searches / mo</li>
-                                <li className="flex gap-3 text-white"><Check size={18} className="text-visio-teal" /> Advanced Enrichment</li>
-                                <li className="flex gap-3 text-white"><Check size={18} className="text-visio-teal" /> 5 Artist Profiles</li>
-                                <li className="flex gap-3 text-white"><Check size={18} className="text-visio-teal" /> Priority Support</li>
+                                <li className="flex gap-3 text-white"><Check size={18} className="text-visio-teal" /> 250 Credits / mo</li>
+                                <li className="flex gap-3 text-white"><Check size={18} className="text-visio-teal" /> Business AI + Smart Scrape</li>
+                                <li className="flex gap-3 text-white"><Check size={18} className="text-visio-teal" /> 3 Artist Profiles</li>
+                                <li className="flex gap-3 text-white"><Check size={18} className="text-visio-teal" /> CSV Export + Priority Support</li>
                             </ul>
                             <button onClick={onGetStarted} className="w-full py-3 rounded-xl bg-visio-teal text-black font-bold hover:shadow-lg hover:shadow-visio-teal/20 transition-all">Get Started</button>
                         </div>

@@ -37,7 +37,7 @@ export function generateLeadListCSV(list: LeadList): string {
             csvEscape(lead.company || ''),
             csvEscape(lead.email || ''),
             csvEscape(lead.phone || ''),
-            csvEscape(lead.followers || ''),
+            csvEscape(String(lead.followers || '')),
             csvEscape(lead.country || ''),
             (lead.matchScore || 0).toString(),
             csvEscape(lead.socials?.instagram || ''),

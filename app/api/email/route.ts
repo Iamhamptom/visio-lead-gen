@@ -54,8 +54,7 @@ export async function POST(request: NextRequest) {
         if (!response.ok) {
             const error = await response.json();
             console.error('Resend API Error:', error);
-            // Don't fail the request to client, just log
-            return NextResponse.json({ success: false, error: 'Failed to send' }, { status: 200 }); // Status 200 to prevent client errors
+            return NextResponse.json({ success: false, error: 'Failed to send email' }, { status: 502 });
         }
 
         return NextResponse.json({ success: true });

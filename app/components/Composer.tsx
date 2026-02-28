@@ -143,7 +143,7 @@ export const Composer: React.FC<ComposerProps> = ({
                             <Lock size={10} />
                             <span className="font-medium uppercase tracking-wide">Preview Mode Active</span>
                             <span className="opacity-50 mx-1">|</span>
-                            <span>Full research capabilties are locked pending approval.</span>
+                            <span>Full research capabilities are locked pending approval.</span>
                         </div>
                     )}
 

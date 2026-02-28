@@ -40,7 +40,7 @@ export const InvoiceReceipt: React.FC<InvoiceReceiptProps> = ({
     compact = false,
     onDownload
 }) => {
-    const statusConfig = STATUS_CONFIG[invoice.status];
+    const statusConfig = STATUS_CONFIG[invoice.status] || STATUS_CONFIG.draft;
     const StatusIcon = statusConfig.icon;
 
     const formatAmount = (amount: number, currency: string) => {

@@ -190,7 +190,10 @@ export const Billing: React.FC<BillingProps> = ({
                     </div>
 
                     <div className="flex items-center gap-4 relative z-10">
-                        <button className="bg-white text-black px-6 py-3 rounded-xl font-bold hover:scale-105 transition-transform">
+                        <button
+                            onClick={() => document.getElementById('plans')?.scrollIntoView({ behavior: 'smooth' })}
+                            className="bg-white text-black px-6 py-3 rounded-xl font-bold hover:scale-105 transition-transform"
+                        >
                             Manage Subscription
                         </button>
                         {currentSubscription.tier !== 'enterprise' && (
@@ -356,7 +359,12 @@ export const Billing: React.FC<BillingProps> = ({
                         <p className="text-white/50 text-sm">View and download your payment receipts.</p>
                     </div>
                     {invoices.length > 0 && (
-                        <button className="text-sm font-medium text-visio-accent hover:text-white transition-colors flex items-center gap-2">
+                        <button
+                            onClick={() => {
+                                invoices.forEach((inv) => window.open(`/api/invoices/${inv.id}`, '_blank'));
+                            }}
+                            className="text-sm font-medium text-visio-accent hover:text-white transition-colors flex items-center gap-2"
+                        >
                             <Download size={14} />
                             Download All
                         </button>
