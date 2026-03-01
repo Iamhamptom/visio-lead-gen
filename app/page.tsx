@@ -1602,7 +1602,7 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-[100dvh] w-full bg-visio-bg overflow-hidden text-white font-outfit relative">
+    <div className="flex h-[100dvh] w-full bg-premium-mesh overflow-hidden text-white font-outfit relative">
 
       {toastMessage && (
         <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
@@ -1725,37 +1725,56 @@ export default function Home() {
           )}
 
           {/* Main Content */}
-          <main className="flex-1 flex flex-col md:ml-64 relative z-10 h-full min-h-0 bg-visio-bg/50 overflow-y-auto overflow-x-hidden">
+          <main className="flex-1 flex flex-col md:ml-64 relative z-10 h-full min-h-0 bg-transparent overflow-y-auto overflow-x-hidden">
 
             {/* Mobile Header */}
-            <header className="md:hidden flex items-center justify-between p-4 border-b border-white/5 bg-black/40 backdrop-blur-md sticky top-0 z-20">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded bg-gradient-to-br from-visio-teal to-visio-sage flex items-center justify-center text-black font-bold text-xs">V</div>
-                <span className="font-bold">Visio AI</span>
+            <header className="md:hidden flex items-center justify-between p-4 border-b border-white/10 bg-black/60 backdrop-blur-2xl sticky top-0 z-20 shadow-[0_4px_30px_rgba(0,0,0,0.3)]">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-visio-teal to-visio-sage p-[1px] shadow-lg shadow-visio-teal/20">
+                  <div className="w-full h-full rounded-[10px] bg-black/50 backdrop-blur-sm flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">V</span>
+                  </div>
+                </div>
+                <span className="font-semibold text-lg tracking-tight bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">Visio AI</span>
               </div>
-              <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-white">
-                <Menu />
+              <button 
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
+                className="p-2 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-colors"
+              >
+                <Menu size={20} />
               </button>
             </header>
 
-            {/* Desktop Header / Status Bar - Fixes "floating" feel */}
-            <header className="hidden md:flex items-center justify-between px-8 py-4 border-b border-white/5 bg-black/20 backdrop-blur-sm sticky top-0 z-20">
-              <div className="flex items-center gap-3">
-                <h2 className="text-lg font-medium text-white/80">
+            {/* Desktop Header / Status Bar - Premium */}
+            <header className="hidden md:flex items-center justify-between px-8 py-5 border-b border-white/5 bg-black/40 backdrop-blur-2xl sticky top-0 z-20 shadow-[0_4px_30px_rgba(0,0,0,0.1)] transition-all duration-300">
+              <div className="flex items-center gap-4">
+                <div className="h-8 w-1 bg-gradient-to-b from-visio-teal to-visio-sage rounded-full" />
+                <h2 className="text-xl font-semibold text-white/90 tracking-wide">
                   {currentView === 'dashboard' ? (sessions.find(s => s.id === activeSessionId)?.title || 'New Research') :
                     currentView === 'leads' ? 'Lead Database' :
                     currentView === 'templates' ? 'Campaign Templates' : 'Artist Portal'}
                 </h2>
-                {isLoading && <span className="text-xs text-visio-accent animate-pulse">Processing...</span>}
+                {isLoading && (
+                  <div className="flex items-center gap-2 ml-3 px-3 py-1 rounded-full bg-visio-accent/10 border border-visio-accent/20">
+                    <span className="w-1.5 h-1.5 rounded-full bg-visio-accent animate-pulse" />
+                    <span className="text-xs font-medium text-visio-accent">Processing</span>
+                  </div>
+                )}
               </div>
-              <div className="flex items-center gap-4 text-xs text-white/30">
-                <span>v1.2.0</span>
-                {buildInfo?.commit ? (
-                  <span className="font-mono text-white/20">
-                    {String(buildInfo.commit).slice(0, 7)}
-                  </span>
-                ) : null}
-                <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]"></div>
+              <div className="flex items-center gap-5 text-sm font-medium">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.02] border border-white/5 text-white/40">
+                  <span>v1.2.0</span>
+                  {buildInfo?.commit && (
+                    <>
+                      <span className="w-px h-3 bg-white/10" />
+                      <span className="font-mono text-white/30">{String(buildInfo.commit).slice(0, 7)}</span>
+                    </>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400">
+                  <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.6)] animate-pulse"></div>
+                  <span className="text-xs">Systems Operational</span>
+                </div>
               </div>
             </header>
 

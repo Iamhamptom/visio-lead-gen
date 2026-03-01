@@ -54,21 +54,39 @@
   --font-outfit: 'Outfit', sans-serif;
 
   --animate-float: float 6s ease-in-out infinite;
+  --animate-blob: blob 10s infinite;
+  --animate-blob-slow: blob 15s infinite;
+  --animate-text-shimmer: text-shimmer 3s ease-in-out infinite alternate;
+  --animate-pulse-slow: pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 
   @keyframes float {
-
     0%,
     100% {
       transform: translateY(0px);
     }
-
     50% {
       transform: translateY(-10px);
     }
   }
+
+  @keyframes blob {
+    0% { transform: translate(0px, 0px) scale(1); }
+    33% { transform: translate(30px, -50px) scale(1.1); }
+    66% { transform: translate(-20px, 20px) scale(0.9); }
+    100% { transform: translate(0px, 0px) scale(1); }
+  }
+
+  @keyframes text-shimmer {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+  }
+
+  @keyframes pulse-slow {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
 }
 
-/* Custom Utilities that might not be in v4 automatic map yet but used in skin */
 @utility text-visio-teal {
   color: var(--color-visio-teal);
 }
@@ -77,16 +95,25 @@
   background-color: var(--color-visio-bg);
 }
 
-/* Glassmorphism Utilities */
 /* Glassmorphism Utilities - Premium "Lunaris" Style */
 @utility glass-panel {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow:
+    0 8px 32px -4px rgba(0, 0, 0, 0.3),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+@utility glass-panel-premium {
+  background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);
   backdrop-filter: blur(40px);
   -webkit-backdrop-filter: blur(40px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow:
-    0 4px 24px -1px rgba(0, 0, 0, 0.2),
-    0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+    0 24px 48px -12px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
 }
 
 @utility glass-input {
@@ -114,7 +141,19 @@
   text-shadow: 0 0 20px rgba(182, 240, 156, 0.3);
 }
 
-/* ... add others if strict mapping fails, but Tailwind v4 usually maps colors automatically to classes like text-visio-teal */
+@utility text-gradient-premium {
+  background: linear-gradient(to right, #ffffff, #a3a3a3);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@utility bg-premium-mesh {
+  background-color: var(--color-visio-bg);
+  background-image: 
+    radial-gradient(circle at 15% 50%, rgba(96, 138, 148, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 85% 30%, rgba(107, 143, 95, 0.08) 0%, transparent 50%);
+}
 
 
 html,
@@ -124,66 +163,52 @@ body {
   background-color: var(--color-visio-bg);
   color: #ffffff;
   font-family: var(--font-outfit), system-ui, sans-serif;
-  /* Lock body scroll - content scrolls internally via app shell */
   overflow: hidden;
 }
-
-/* Custom Scrollbar - Handled in utilities layer below */
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
 
-  /* HIGH VISIBILITY SCROLLBAR - FORCED */
   html,
   body,
   .overflow-y-auto {
     scrollbar-width: auto;
-    scrollbar-color: rgba(255, 255, 255, 0.4) transparent;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
   }
 
-  /* For Chrome, Safari, Edge */
   ::-webkit-scrollbar {
-    width: 14px;
-    height: 14px;
+    width: 10px;
+    height: 10px;
     background: transparent;
   }
 
   @media (max-width: 767px) {
     ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-  }
-
-  @media (max-width: 767px) {
-    html,
-    body,
-    .overflow-y-auto {
-      scrollbar-width: thin;
+      width: 4px;
+      height: 4px;
     }
   }
 
   ::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
+    background: transparent;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.4);
-    border: 3px solid transparent;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid transparent;
     background-clip: content-box;
     border-radius: 99px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.7);
-    border: 3px solid transparent;
+    background: rgba(255, 255, 255, 0.4);
+    border: 2px solid transparent;
     background-clip: content-box;
   }
 }
 
-/* Smooth Chat Scroll */
 .visio-chat-scroll {
   overscroll-behavior: contain;
   scroll-behavior: smooth;
@@ -195,7 +220,6 @@ body {
   }
 }
 
-/* Force Text Selection - High Specificity */
 .select-text,
 .allow-select,
 .markdown-content,
@@ -205,7 +229,6 @@ body {
   cursor: text;
 }
 
-/* Selection Highlight Color */
 ::selection {
   background-color: rgba(96, 138, 148, 0.4);
   color: white;

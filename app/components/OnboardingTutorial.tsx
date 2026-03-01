@@ -206,38 +206,41 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
             {/* Backdrop */}
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-black/80 backdrop-blur-xl"
+                className="absolute inset-0 bg-neutral-950/80 backdrop-blur-xl z-0"
                 onClick={handleComplete}
             />
 
             {/* Modal */}
             <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                className={`relative w-full ${(step as any).isPricingStep ? 'max-w-4xl' : 'max-w-lg'} bg-[#0A0A0A] border border-white/10 rounded-3xl shadow-2xl shadow-black/50 overflow-hidden transition-all duration-500`}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                transition={{ type: 'spring', damping: 30, stiffness: 300, mass: 0.8 }}
+                className={`relative z-10 w-full ${(step as any).isPricingStep ? 'max-w-4xl' : 'max-w-xl'} bg-[#0A0A0A]/95 backdrop-blur-2xl border border-white/[0.08] rounded-[2rem] shadow-[0_0_80px_rgba(0,0,0,0.8)] overflow-hidden transition-all duration-500`}
             >
+                {/* Inner Glow Border */}
+                <div className="absolute inset-0 rounded-[2rem] ring-1 ring-white/[0.02] pointer-events-none" />
+
                 {/* Gradient Header */}
-                <div className={`h-2 w-full bg-gradient-to-r ${step.color}`} />
+                <div className={`h-1.5 w-full bg-gradient-to-r ${step.color} opacity-90`} />
 
                 {/* Close Button */}
                 <button
                     onClick={handleComplete}
-                    className="absolute top-5 right-5 p-2 rounded-full text-white/30 hover:text-white hover:bg-white/10 transition-colors z-10"
+                    className="absolute top-6 right-6 p-2.5 rounded-full text-white/40 hover:text-white hover:bg-white/10 transition-all duration-300 z-10"
                     aria-label="Skip tutorial"
                 >
-                    <X size={18} />
+                    <X size={20} />
                 </button>
 
                 {/* Content */}
-                <div className="p-8 pt-6 min-h-[420px] flex flex-col">
+                <div className="p-8 sm:p-10 pt-8 min-h-[460px] flex flex-col relative">
                     <AnimatePresence mode="wait" custom={direction}>
                         <motion.div
                             key={currentStep}
@@ -250,33 +253,44 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
                             className="flex-1 flex flex-col"
                         >
                             {/* Step Subtitle */}
-                            <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/30 mb-6">
+                            <motion.p 
+                                initial={{ opacity: 0, y: 5 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="text-[11px] font-bold uppercase tracking-[0.25em] text-white/40 mb-8"
+                            >
                                 {step.subtitle}
-                            </p>
+                            </motion.p>
 
                             {/* Icon */}
-                            <div className={`w-16 h-16 rounded-2xl ${step.iconBg} flex items-center justify-center mb-6`}>
-                                <step.icon size={28} className={step.iconColor} />
+                            <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl sm:rounded-[1.25rem] ${step.iconBg} flex items-center justify-center mb-6 border border-white/10 shadow-lg relative overflow-hidden group-hover:scale-105 transition-transform duration-500`}>
+                                <div className="absolute inset-0 opacity-50 bg-gradient-to-br from-white/20 to-transparent mix-blend-overlay pointer-events-none" />
+                                <step.icon size={28} className={`${step.iconColor} relative z-10`} />
                             </div>
 
                             {/* Title */}
-                            <h2 className="text-2xl md:text-3xl font-bold text-white mb-3 tracking-tight">
+                            <h2 className="text-3xl md:text-4xl font-semibold text-white mb-4 tracking-tight">
                                 {step.title}
                             </h2>
 
                             {/* Description */}
-                            <p className="text-white/60 leading-relaxed mb-6 text-[15px]">
+                            <p className="text-white/60 leading-relaxed mb-8 text-[15px] sm:text-base max-w-lg">
                                 {step.description}
                             </p>
 
                             {/* Tip Box */}
-                            <div className="bg-white/5 border border-white/5 rounded-xl p-4 mb-6">
-                                <p className="text-sm text-white/50">{step.tip}</p>
+                            <div className="bg-gradient-to-br from-white/[0.05] to-white/[0.02] border border-white/[0.08] rounded-2xl p-5 mb-8 flex items-start gap-4 backdrop-blur-md">
+                                <div className="p-2 rounded-xl bg-white/5 border border-white/10 shrink-0">
+                                    <Sparkles size={16} className="text-amber-400" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium text-white/90 mb-1">Pro Tip</p>
+                                    <p className="text-sm text-white/60 leading-relaxed">{step.tip}</p>
+                                </div>
                             </div>
 
                             {/* How It Works Mini-Journey */}
                             {(step as any).isHowItWorksStep && (
-                                <div className="space-y-3 mt-2 mb-6">
+                                <div className="space-y-3 mt-2 mb-8">
                                     {[
                                         { num: 1, label: 'Sign Up & Set Profile', desc: 'Tell us about your music and goals' },
                                         { num: 2, label: 'Chat with AI Strategist', desc: 'Describe your campaign or release' },
@@ -284,13 +298,13 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
                                         { num: 4, label: 'Save & Manage Leads', desc: 'Build your contact database' },
                                         { num: 5, label: 'Launch Outreach', desc: 'Draft pitches and execute campaigns' },
                                     ].map(item => (
-                                        <div key={item.num} className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5">
-                                            <div className="w-8 h-8 rounded-lg bg-cyan-500/20 flex items-center justify-center text-cyan-400 font-bold text-sm shrink-0">
+                                        <div key={item.num} className="group flex items-center gap-4 p-4 bg-white/[0.02] rounded-2xl border border-white/[0.05] hover:bg-white/[0.04] hover:border-white/[0.08] transition-all duration-300">
+                                            <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-400 font-semibold text-sm shrink-0 border border-cyan-500/20 group-hover:scale-105 group-hover:bg-cyan-500/20 transition-all">
                                                 {item.num}
                                             </div>
                                             <div>
-                                                <div className="text-sm font-medium text-white">{item.label}</div>
-                                                <div className="text-xs text-white/40">{item.desc}</div>
+                                                <div className="text-[15px] font-medium text-white/90">{item.label}</div>
+                                                <div className="text-[13px] text-white/50 mt-0.5">{item.desc}</div>
                                             </div>
                                         </div>
                                     ))}
@@ -299,65 +313,72 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
 
                             {/* Action Button (optional) */}
                             {step.action && onNavigate && !(step as any).isPricingStep && (
-                                <button
-                                    onClick={handleAction}
-                                    className="self-start text-sm font-medium text-visio-teal hover:text-visio-teal/80 transition-colors flex items-center gap-2 group"
-                                >
-                                    {step.actionLabel}
-                                    <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                                </button>
+                                <div className="mt-2">
+                                    <button
+                                        onClick={handleAction}
+                                        className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white/[0.05] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-sm font-medium text-white transition-all duration-300 group"
+                                    >
+                                        {step.actionLabel}
+                                        <ArrowRight size={16} className="text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all" />
+                                    </button>
+                                </div>
                             )}
 
                             {/* Pricing Grid */}
                             {(step as any).isPricingStep && (
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-4">
                                     {(['artist', 'starter', 'starter_label'] as SubscriptionTier[]).map((tier) => {
                                         const details = TIER_DETAILS[tier];
+                                        const isRecommended = details.recommended;
                                         return (
                                             <div
                                                 key={tier}
                                                 className={`
-                                                    relative p-4 rounded-2xl border transition-all cursor-pointer group
-                                                    ${details.recommended
-                                                        ? 'bg-white/10 border-visio-accent/50 shadow-lg shadow-visio-accent/10'
-                                                        : 'bg-white/5 border-white/10 hover:bg-white/10'
+                                                    relative p-6 rounded-[1.5rem] border transition-all duration-300 cursor-pointer group flex flex-col
+                                                    ${isRecommended
+                                                        ? 'bg-gradient-to-b from-visio-teal/[0.08] to-transparent border-visio-teal/30 hover:border-visio-teal/50 shadow-2xl shadow-visio-teal/10'
+                                                        : 'bg-white/[0.02] border-white/[0.08] hover:bg-white/[0.04] hover:border-white/20'
                                                     }
                                                 `}
                                                 onClick={() => handleSelectPlan(tier)}
                                             >
-                                                {details.recommended && (
-                                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-visio-accent text-black text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-lg">
+                                                {isRecommended && (
+                                                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-visio-teal to-emerald-400 text-black text-[10px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full shadow-lg shadow-visio-teal/20 whitespace-nowrap">
                                                         Recommended
                                                     </div>
                                                 )}
 
-                                                <h3 className="font-bold text-white mb-1">{details.name}</h3>
-                                                <div className="mb-3">
-                                                    <span className="text-xl font-bold text-white">{details.price}</span>
-                                                    {tier !== 'artist' && <span className="text-white/40 text-xs">/mo</span>}
+                                                <h3 className="font-semibold text-white/90 mb-2">{details.name}</h3>
+                                                <div className="mb-6 flex items-baseline gap-1">
+                                                    <span className="text-3xl font-bold text-white tracking-tight">{details.price}</span>
+                                                    {tier !== 'artist' && <span className="text-white/40 text-sm font-medium">/mo</span>}
                                                 </div>
 
-                                                <ul className="space-y-2 mb-4">
+                                                <ul className="space-y-3 mb-8 flex-1">
                                                     {details.features.slice(0, 3).map((feat, i) => (
-                                                        <li key={i} className="flex items-start gap-2 text-xs text-white/60">
-                                                            <Check size={12} className="mt-0.5 text-visio-accent shrink-0" />
+                                                        <li key={i} className="flex items-start gap-3 text-[13px] text-white/60 leading-snug">
+                                                            <div className={`mt-0.5 rounded-full p-0.5 shrink-0 ${isRecommended ? 'bg-visio-teal/20 text-visio-teal' : 'bg-white/10 text-white/70'}`}>
+                                                                <Check size={10} strokeWidth={3} />
+                                                            </div>
                                                             {feat}
                                                         </li>
                                                     ))}
                                                 </ul>
 
                                                 <button
-                                                    onClick={() => handleSelectPlan(tier)}
+                                                    onClick={(e) => { e.stopPropagation(); handleSelectPlan(tier); }}
                                                     className={`
-                                                    w-full py-2 rounded-lg text-xs font-bold transition-colors
+                                                    w-full py-3 px-4 rounded-xl text-[13px] font-semibold transition-all duration-300
                                                     ${subscription?.tier === tier
-                                                            ? 'bg-green-500 text-black cursor-default'
-                                                            : details.recommended ? 'bg-visio-accent text-black' : 'bg-white text-black'
+                                                            ? 'bg-white/10 text-white cursor-default border border-white/10'
+                                                            : isRecommended 
+                                                                ? 'bg-visio-teal hover:bg-visio-teal/90 text-black shadow-lg shadow-visio-teal/20 hover:shadow-visio-teal/40 hover:-translate-y-0.5' 
+                                                                : 'bg-white/10 hover:bg-white/20 text-white border border-white/10 hover:border-white/20'
                                                         }
                                                 `}>
                                                     {isProcessing && processingTier === tier ? (
                                                         <span className="flex items-center justify-center gap-2">
-                                                            <Loader2 size={12} className="animate-spin" />
+                                                            <Loader2 size={14} className="animate-spin" />
                                                             Processing...
                                                         </span>
                                                     ) : subscription?.tier === tier ? (
@@ -366,7 +387,7 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
                                                             Current Plan
                                                         </span>
                                                     ) : (
-                                                        tier === 'artist' ? 'Select Free' : 'Select Plan'
+                                                        tier === 'artist' ? 'Select Free' : 'Choose Plan'
                                                     )}
                                                 </button>
                                             </div>
@@ -378,9 +399,9 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
                     </AnimatePresence>
 
                     {/* Footer */}
-                    <div className="flex items-center justify-between mt-auto pt-6 border-t border-white/5">
-                        {/* Progress Dots */}
-                        <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between mt-auto pt-8 border-t border-white/[0.06]">
+                        {/* Progress Dots / Lines */}
+                        <div className="flex items-center gap-1.5">
                             {STEPS.map((_, i) => (
                                 <button
                                     key={i}
@@ -388,11 +409,12 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
                                         setDirection(i > currentStep ? 1 : -1);
                                         setCurrentStep(i);
                                     }}
-                                    className={`h-2 rounded-full transition-all duration-300 ${i === currentStep
-                                        ? 'w-8 bg-white'
+                                    className={`h-1.5 rounded-full transition-all duration-500 ease-out ${
+                                        i === currentStep
+                                        ? 'w-8 bg-white shadow-[0_0_10px_rgba(255,255,255,0.5)]'
                                         : i < currentStep
-                                            ? 'w-2 bg-white/40'
-                                            : 'w-2 bg-white/15'
+                                            ? 'w-2 bg-white/40 hover:bg-white/60'
+                                            : 'w-2 bg-white/10 hover:bg-white/20'
                                         }`}
                                     aria-label={`Go to step ${i + 1}`}
                                 />
@@ -400,32 +422,35 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({
                         </div>
 
                         {/* Navigation Buttons */}
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 sm:gap-3">
                             {!isFirstStep && (
                                 <button
                                     onClick={handlePrev}
-                                    className="p-2.5 rounded-xl text-white/50 hover:text-white hover:bg-white/10 transition-colors"
+                                    className="p-3 rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-all duration-300 border border-transparent hover:border-white/10"
                                     aria-label="Previous step"
                                 >
-                                    <ChevronLeft size={20} />
+                                    <ChevronLeft size={18} />
                                 </button>
                             )}
                             <button
                                 onClick={handleNext}
-                                className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium text-sm transition-all ${isLastStep
-                                    ? 'bg-visio-teal text-black hover:bg-visio-teal/90'
-                                    : 'bg-white/10 text-white hover:bg-white/20'
+                                className={`flex items-center gap-2 px-6 py-3 rounded-full font-medium text-sm transition-all duration-300 ${
+                                    isLastStep
+                                    ? 'bg-visio-teal text-black hover:bg-visio-teal/90 shadow-lg shadow-visio-teal/20 hover:shadow-visio-teal/40 hover:-translate-y-0.5'
+                                    : (step as any).isPricingStep
+                                        ? 'bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/10 hover:border-white/20'
+                                        : 'bg-white hover:bg-white/90 text-black hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:-translate-y-0.5'
                                     }`}
                             >
                                 {isLastStep ? (
                                     <>
-                                        <Rocket size={16} />
+                                        <Rocket size={16} className="mr-1" />
                                         Let&apos;s Go!
                                     </>
                                 ) : (step as any).isPricingStep ? (
                                     <>
                                         Skip for Now
-                                        <ChevronRight size={16} />
+                                        <ChevronRight size={16} className="ml-1 opacity-50" />
                                     </>
                                 ) : (
                                     <>
