@@ -14,8 +14,6 @@ import {
     Inbox,
     CreditCard,
     Shield,
-    Lightbulb,
-    Calculator,
     HelpCircle,
     Coins,
     Store,
@@ -62,8 +60,11 @@ const SessionItem: React.FC<SessionItemProps> = ({
 
     return (
         <div
-            className={`group relative flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-colors ${isActive ? 'bg-white/10 text-white' : 'text-white/50 hover:bg-white/5 hover:text-white'
-                }`}
+            className={`group relative flex items-center justify-between px-2.5 py-1.5 rounded-md cursor-pointer transition-all duration-200 border ${
+                isActive 
+                    ? 'bg-white/[0.08] text-white border-white/[0.08] shadow-sm' 
+                    : 'border-transparent text-white/60 hover:bg-white/[0.04] hover:text-white'
+            }`}
             onClick={(e) => {
                 e.stopPropagation();
                 onClick();
@@ -71,51 +72,51 @@ const SessionItem: React.FC<SessionItemProps> = ({
             draggable
             onDragStart={(e) => onDragStart(e, session.id)}
         >
-            <div className="flex items-center gap-2 overflow-hidden">
-                <MessageSquare size={14} className={isActive ? 'text-visio-accent' : 'opacity-50'} />
-                <span className="truncate text-sm">{session.title}</span>
+            <div className="flex items-center gap-2.5 overflow-hidden">
+                <MessageSquare size={13} className={`${isActive ? 'text-visio-teal' : 'opacity-40 group-hover:opacity-70'} transition-colors shrink-0`} />
+                <span className="truncate text-sm font-medium">{session.title}</span>
                 {hasUnread && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)] shrink-0" />
                 )}
             </div>
 
             {/* Options Trigger */}
             <button
-                className={`p-1 rounded-md hover:bg-white/20 transition-opacity ${isActive || showMenu ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                className={`p-1 rounded-md hover:bg-white/10 transition-all ${isActive || showMenu ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                 onClick={(e) => {
                     e.stopPropagation();
                     setShowMenu(!showMenu);
                     setShowMoveSubmenu(false);
                 }}
             >
-                <MoreHorizontal size={14} />
+                <MoreHorizontal size={14} className="text-white/50 hover:text-white" />
             </button>
 
             {/* Dropdown Menu */}
             {showMenu && (
                 <div
-                    className="absolute right-0 top-8 w-48 bg-[#111] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col p-1 animate-in fade-in zoom-in-95 duration-200"
+                    className="absolute right-2 top-8 w-48 bg-[#0a0a0a]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.5)] z-50 overflow-hidden flex flex-col p-1.5 animate-in fade-in zoom-in-95 duration-200"
                     onClick={(e) => e.stopPropagation()} // Prevent close on inner click
                 >
                     {showMoveSubmenu ? (
                         <>
-                            <div className="px-2 py-1 text-[10px] text-white/30 font-bold uppercase border-b border-white/5 mb-1 flex justify-between items-center">
+                            <div className="px-2 py-1.5 text-[10px] text-white/40 font-semibold uppercase tracking-wider flex justify-between items-center mb-1">
                                 <span>Move to...</span>
-                                <button onClick={() => setShowMoveSubmenu(false)} className="hover:text-white">Back</button>
+                                <button onClick={() => setShowMoveSubmenu(false)} className="hover:text-white transition-colors">Back</button>
                             </div>
                             <button
                                 onClick={() => { onMove(session.id, null); setShowMenu(false); }}
-                                className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/10 text-xs text-white text-left"
+                                className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-white/10 text-xs text-white/80 hover:text-white text-left transition-colors"
                             >
-                                <Inbox size={12} /> Inbox (Unfiled)
+                                <Inbox size={12} className="opacity-70" /> Inbox (Unfiled)
                             </button>
                             {campaigns.map(c => (
                                 <button
                                     key={c.id}
                                     onClick={() => { onMove(session.id, c.id); setShowMenu(false); }}
-                                    className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/10 text-xs text-white text-left truncate"
+                                    className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-white/10 text-xs text-white/80 hover:text-white text-left truncate transition-colors"
                                 >
-                                    <FolderOpen size={12} /> {c.name}
+                                    <FolderOpen size={12} className="opacity-70" /> {c.name}
                                 </button>
                             ))}
                         </>
@@ -123,22 +124,22 @@ const SessionItem: React.FC<SessionItemProps> = ({
                         <>
                             <button
                                 onClick={() => setShowMoveSubmenu(true)}
-                                className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/10 text-xs text-white text-left"
+                                className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-white/10 text-xs text-white/80 hover:text-white text-left transition-colors"
                             >
-                                <FolderInput size={14} className="text-visio-teal" /> Move to Folder
+                                <FolderInput size={13} className="text-visio-teal" /> Move to Folder
                             </button>
                             <button
                                 onClick={() => { onShare(session.id); setShowMenu(false); }}
-                                className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/10 text-xs text-white text-left"
+                                className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-white/10 text-xs text-white/80 hover:text-white text-left transition-colors"
                             >
-                                <Share2 size={14} className="text-blue-400" /> Share Research
+                                <Share2 size={13} className="text-blue-400" /> Share Research
                             </button>
-                            <div className="h-px bg-white/5 my-1" />
+                            <div className="h-px bg-white/10 my-1 mx-1" />
                             <button
                                 onClick={() => { onDelete(session.id); setShowMenu(false); }}
-                                className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-red-500/10 text-xs text-red-400 text-left hover:text-red-300"
+                                className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-red-500/10 text-xs text-red-400 text-left hover:text-red-300 transition-colors"
                             >
-                                <Trash2 size={14} /> Delete
+                                <Trash2 size={13} /> Delete
                             </button>
                         </>
                     )}
@@ -163,12 +164,14 @@ const NavItem: React.FC<NavItemProps> = ({
 }) => (
     <button
         onClick={onClick}
-        className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all ${active
-            ? 'bg-white/10 text-white border border-white/5 shadow-inner'
-            : 'text-white/50 hover:text-white hover:bg-white/5'
-            }`}>
-        <span className={active ? 'text-visio-accent' : ''}>{icon}</span>
-        <span className="text-sm font-medium">{label}</span>
+        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative ${
+            active
+                ? 'bg-white/[0.08] text-white font-medium shadow-sm'
+                : 'text-white/60 hover:text-white hover:bg-white/[0.04]'
+        }`}>
+        <span className={`relative z-10 transition-colors duration-200 ${active ? 'text-white' : 'text-white/50 group-hover:text-white/90'}`}>{icon}</span>
+        <span className="relative z-10 text-sm tracking-wide">{label}</span>
+        {active && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-white rounded-r-full shadow-[0_0_8px_rgba(255,255,255,0.3)]" />}
     </button>
 );
 
@@ -206,7 +209,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     onNewChat,
     onMoveSession,
     onDeleteSession,
-
     onShareSession,
     onCreateFolder,
     subscription = { tier: 'artist', status: 'active', currentPeriodEnd: 0, interval: 'month' },
@@ -253,18 +255,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return (
         <aside
             className={`
-        fixed top-0 left-0 h-full w-64 max-w-[80vw] bg-black/40 backdrop-blur-xl border-r border-white/5 
-        transition-transform duration-300 z-50 flex flex-col
+        fixed top-0 left-0 h-full w-[280px] max-w-[85vw] bg-[#030303]/95 backdrop-blur-2xl border-r border-white/5 
+        transition-transform duration-500 ease-out z-50 flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.5)]
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}
         >
             {/* Brand Header */}
-            <div className="p-6 border-b border-white/5">
-                <div className="flex items-center gap-2 text-white">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-visio-teal to-visio-sage flex items-center justify-center text-black font-bold text-xl">V</div>
-                    <span className="font-outfit text-xl font-medium tracking-tight">Visio<span className="opacity-50 font-light">AI</span></span>
+            <div className="h-[72px] flex items-center px-5 border-b border-white/5 relative overflow-hidden shrink-0">
+                <div className="absolute inset-0 bg-gradient-to-r from-visio-teal/5 to-transparent" />
+                <div className="flex items-center gap-3 relative z-10 w-full">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-visio-teal to-visio-sage p-[1px] shadow-sm">
+                       <div className="w-full h-full rounded-[7px] bg-[#111] flex items-center justify-center">
+                          <span className="text-white font-bold text-sm">V</span>
+                       </div>
+                    </div>
+                    <div className="flex flex-col leading-tight flex-1">
+                      <span className="font-outfit text-lg font-semibold tracking-tight text-white">Visio<span className="text-visio-accent/90">AI</span></span>
+                    </div>
                     {isRestricted && (
-                        <div className="ml-2 px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-500 text-[9px] font-bold border border-yellow-500/20 uppercase tracking-widest">
+                        <div className="px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-500 text-[8px] font-bold border border-yellow-500/20 uppercase tracking-wider">
                             Preview
                         </div>
                     )}
@@ -272,83 +281,87 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
 
             {/* Main Nav */}
-            <div className="flex-1 overflow-y-auto py-6 px-3 space-y-6">
-
+            <div className="flex-1 overflow-y-auto">
                 {/* Quick Actions */}
-                <div className="px-3">
+                <div className="px-3 pb-2 pt-4">
                     <button
                         onClick={onNewChat}
-                        className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-visio-teal/20 to-visio-sage/20 border border-visio-teal/30 hover:border-visio-teal/50 text-visio-accent py-3 rounded-xl transition-all shadow-lg shadow-visio-teal/5 group"
+                        className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-visio-teal to-visio-sage text-black py-2.5 rounded-lg transition-all duration-300 hover:shadow-[0_0_20px_rgba(96,138,148,0.3)] hover:brightness-110 active:scale-[0.98] font-semibold text-sm"
                     >
-                        <Plus size={18} className="group-hover:rotate-90 transition-transform duration-300" />
-                        <span className="font-medium">Consult & Chat</span>
+                        <Plus size={16} className="transition-transform duration-300" />
+                        <span>New Research</span>
                     </button>
                 </div>
 
                 {/* Global Views */}
-                <div className="space-y-1">
+                <div className="px-3 space-y-0.5 mt-2">
                     <NavItem
-                        icon={<Home size={18} />}
+                        icon={<Home size={16} />}
                         label="Home"
                         active={activeView === 'overview'}
                         onClick={() => onNavigate('overview')}
                     />
                     <NavItem
-                        icon={<LayoutTemplate size={18} />}
+                        icon={<LayoutTemplate size={16} />}
                         label="Templates"
                         active={activeView === 'templates'}
                         onClick={() => onNavigate('templates')}
                     />
                     <NavItem
-                        icon={<Store size={18} />}
+                        icon={<Store size={16} />}
                         label="Marketplace"
                         active={activeView === 'marketplace'}
                         onClick={() => onNavigate('marketplace')}
                     />
-                    {/* Inbox / Unfiled Drop Zone */}
+                </div>
+
+                {/* Drafts / Inbox (Unfiled) */}
+                <div className="mt-6 px-3">
                     <div
                         onDragOver={handleDragOver}
                         onDrop={(e) => handleDrop(e, null)}
-                        className={`transition-colors rounded-xl ${activeView === 'dashboard' ? '' : ''}`}
+                        className="transition-colors rounded-xl"
                     >
-                        <div className="px-4 py-2 flex items-center justify-between text-white/40 text-xs font-semibold uppercase tracking-wider mt-4 mb-2">
+                        <div className="px-2 flex items-center justify-between text-white/40 text-[11px] font-semibold uppercase tracking-wider mb-2">
                             <span className="flex items-center gap-2">
                                 Drafts / Inbox
                                 {(unreadLeadSessions?.size || 0) > 0 && (
-                                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
+                                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
                                 )}
                             </span>
-                            <Inbox size={12} />
+                            <Inbox size={12} className="opacity-50" />
                         </div>
-                        {unfiledSessions.map(session => (
-                            <SessionItem
-                                key={session.id}
-                                session={session}
-                                isActive={activeSessionId === session.id && activeView === 'dashboard'}
-                                onClick={() => {
-                                    onSelectSession(session.id);
-                                    if (unreadLeadSessions?.has(session.id) && onClearUnread) {
-                                        onClearUnread(session.id);
-                                    }
-                                }}
-                                onDragStart={handleDragStart}
-                                campaigns={campaigns}
-                                onDelete={onDeleteSession}
-                                onMove={onMoveSession}
-                                onShare={onShareSession}
-                                hasUnread={unreadLeadSessions?.has(session.id) || false}
-                            />
-                        ))}
-                        {unfiledSessions.length === 0 && (
-                            <div className="px-4 py-2 text-xs text-white/20 italic">No unfiled research</div>
-                        )}
+                        <div className="space-y-0.5">
+                            {unfiledSessions.map(session => (
+                                <SessionItem
+                                    key={session.id}
+                                    session={session}
+                                    isActive={activeSessionId === session.id && activeView === 'dashboard'}
+                                    onClick={() => {
+                                        onSelectSession(session.id);
+                                        if (unreadLeadSessions?.has(session.id) && onClearUnread) {
+                                            onClearUnread(session.id);
+                                        }
+                                    }}
+                                    onDragStart={handleDragStart}
+                                    campaigns={campaigns}
+                                    onDelete={onDeleteSession}
+                                    onMove={onMoveSession}
+                                    onShare={onShareSession}
+                                    hasUnread={unreadLeadSessions?.has(session.id) || false}
+                                />
+                            ))}
+                            {unfiledSessions.length === 0 && (
+                                <div className="px-2 py-2 text-xs text-white/30 italic">No unfiled research</div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
                 {/* Campaigns Folders */}
-                <div className="space-y-1 mt-6">
-                    <div className="flex items-center justify-between px-4 mb-2">
-                        <h4 className="text-[10px] uppercase tracking-widest text-white/30 font-semibold">Campaign Folders</h4>
+                <div className="mt-6 px-3 mb-6">
+                    <div className="flex items-center justify-between px-2 mb-2">
+                        <h4 className="text-[11px] font-semibold text-white/40 uppercase tracking-wider">Campaign Folders</h4>
                         <button
                             onClick={() => {
                                 const name = prompt('Folder name:');
@@ -356,143 +369,152 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                     onCreateFolder(name.trim());
                                 }
                             }}
-                            className="text-white/30 hover:text-visio-teal transition-colors"
+                            className="text-white/40 hover:text-white transition-colors p-1 hover:bg-white/10 rounded-md"
                         >
-                            <Plus size={14} />
+                            <Plus size={12} />
                         </button>
                     </div>
 
-                    {campaigns.map(c => {
-                        const campaignSessions = sessions.filter(s => s.folderId === c.id);
-                        const isExpanded = expandedFolders[c.id];
+                    <div className="space-y-1">
+                        {campaigns.map(c => {
+                            const campaignSessions = sessions.filter(s => s.folderId === c.id);
+                            const isExpanded = expandedFolders[c.id];
 
-                        return (
-                            <div
-                                key={c.id}
-                                className="mb-1"
-                                onDragOver={handleDragOver}
-                                onDrop={(e) => handleDrop(e, c.id)}
-                            >
-                                {/* Folder Header */}
-                                <button
-                                    onClick={() => toggleFolder(c.id)}
-                                    className="w-full flex items-center justify-between px-4 py-2 text-sm text-white/60 hover:text-white hover:bg-white/5 rounded-lg transition-colors group"
+                            return (
+                                <div
+                                    key={c.id}
+                                    onDragOver={handleDragOver}
+                                    onDrop={(e) => handleDrop(e, c.id)}
+                                    className="flex flex-col gap-0.5"
                                 >
-                                    <div className="flex items-center gap-3 overflow-hidden">
-                                        <FolderOpen size={16} className="text-visio-teal/60 group-hover:text-visio-teal flex-shrink-0" />
-                                        <span className="truncate font-medium">{c.name}</span>
-                                    </div>
-                                    {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                                </button>
+                                    {/* Folder Header */}
+                                    <button
+                                        onClick={() => toggleFolder(c.id)}
+                                        className={`w-full flex items-center justify-between px-2 py-1.5 text-sm rounded-lg transition-colors group ${
+                                            isExpanded ? 'text-white' : 'text-white/60 hover:text-white hover:bg-white/[0.04]'
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-2.5 overflow-hidden">
+                                            <FolderOpen size={14} className={`${isExpanded ? 'text-visio-teal' : 'text-white/40 group-hover:text-white/70'} flex-shrink-0 transition-colors`} />
+                                            <span className="truncate font-medium">{c.name}</span>
+                                        </div>
+                                        {isExpanded ? <ChevronDown size={14} className="text-white/30" /> : <ChevronRight size={14} className="text-white/30" />}
+                                    </button>
 
-                                {/* Folder Contents */}
-                                {isExpanded && (
-                                    <div className="pl-2 mt-1 space-y-0.5 border-l border-white/5 ml-4">
-                                        {campaignSessions.length === 0 ? (
-                                            <div className="px-4 py-2 text-xs text-white/20">Empty folder</div>
-                                        ) : (
-                                            campaignSessions.map(session => (
-                                                <SessionItem
-                                                    key={session.id}
-                                                    session={session}
-                                                    isActive={activeSessionId === session.id && activeView === 'dashboard'}
-                                                    onClick={() => {
-                                                        onSelectSession(session.id);
-                                                        if (unreadLeadSessions?.has(session.id) && onClearUnread) {
-                                                            onClearUnread(session.id);
-                                                        }
-                                                    }}
-                                                    onDragStart={handleDragStart}
-                                                    campaigns={campaigns}
-                                                    onDelete={onDeleteSession}
-                                                    onMove={onMoveSession}
-                                                    onShare={onShareSession}
-                                                    hasUnread={unreadLeadSessions?.has(session.id) || false}
-                                                />
-                                            ))
-                                        )}
+                                    {/* Folder Contents */}
+                                    <div className={`grid transition-all duration-300 ease-in-out ${isExpanded ? 'grid-rows-[1fr] opacity-100 mt-0.5' : 'grid-rows-[0fr] opacity-0'}`}>
+                                        <div className="overflow-hidden">
+                                            <div className="pl-3 ml-3 border-l border-white/[0.08] space-y-0.5">
+                                                {campaignSessions.length === 0 ? (
+                                                    <div className="px-2 py-1.5 text-xs text-white/30 italic">Empty folder</div>
+                                                ) : (
+                                                    campaignSessions.map(session => (
+                                                        <SessionItem
+                                                            key={session.id}
+                                                            session={session}
+                                                            isActive={activeSessionId === session.id && activeView === 'dashboard'}
+                                                            onClick={() => {
+                                                                onSelectSession(session.id);
+                                                                if (unreadLeadSessions?.has(session.id) && onClearUnread) {
+                                                                    onClearUnread(session.id);
+                                                                }
+                                                            }}
+                                                            onDragStart={handleDragStart}
+                                                            campaigns={campaigns}
+                                                            onDelete={onDeleteSession}
+                                                            onMove={onMoveSession}
+                                                            onShare={onShareSession}
+                                                            hasUnread={unreadLeadSessions?.has(session.id) || false}
+                                                        />
+                                                    ))
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
-                                )}
-                            </div>
-                        );
-                    })}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Copyright info inside scrollable area before footer */}
+                <div className="px-3 pb-4">
+                    <p className="text-[10px] text-white/20 text-center leading-tight">
+                        Powered by: VisioCorp<br />Copyright @ 2026 & Touchline Agency
+                    </p>
                 </div>
             </div>
 
-            {/* Billing Link */}
-            <div className="px-3 mt-auto pt-4 space-y-2">
-                {isAdmin && (
+            {/* Bottom Section (Links & Plan) */}
+            <div className="px-3 pt-3 pb-3 space-y-4 border-t border-white/5 bg-[#030303]/80 backdrop-blur-xl shrink-0">
+                {/* Admin/Help/Billing Links */}
+                <div className="space-y-0.5">
+                    {isAdmin && (
+                        <button
+                            onClick={() => { window.location.href = '/admin'; }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-white/60 hover:text-white hover:bg-white/[0.04] text-sm font-medium"
+                        >
+                            <Shield size={16} className="text-white/40" />
+                            <span>Admin Dashboard</span>
+                        </button>
+                    )}
+                    <NavItem
+                        icon={<HelpCircle size={16} />}
+                        label="How to Use"
+                        active={activeView === 'help'}
+                        onClick={() => onNavigate('help')}
+                    />
                     <button
-                        onClick={() => { window.location.href = '/admin'; }}
-                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all border border-white/5 text-white/70 hover:text-white hover:bg-white/5"
-                        title="Admin Dashboard"
-                    >
-                        <div className="p-1 rounded-md bg-white/10">
-                            <Shield size={14} />
-                        </div>
-                        <span className="font-medium">Admin Dashboard</span>
-                    </button>
-                )}
-                <NavItem
-                    icon={<HelpCircle size={18} />}
-                    label="How to Use"
-                    active={activeView === 'help'}
-                    onClick={() => onNavigate('help')}
-                />
-                <button
-                    onClick={() => onNavigate('billing')}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all border ${activeView === 'billing'
-                        ? 'bg-visio-accent/10 border-visio-accent/20 text-visio-accent shadow-[0_0_15px_rgba(182,240,156,0.1)]'
-                        : 'border-white/5 text-white/50 hover:text-white hover:bg-white/5'
+                        onClick={() => onNavigate('billing')}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors relative text-sm font-medium ${
+                            activeView === 'billing'
+                                ? 'bg-white/[0.08] text-white shadow-sm'
+                                : 'text-white/60 hover:text-white hover:bg-white/[0.04]'
                         }`}
-                >
-                    <div className={`p-1 rounded-md ${activeView === 'billing' ? 'bg-visio-accent text-black' : 'bg-white/10'}`}>
-                        <CreditCard size={14} />
-                    </div>
-                    <span className="font-medium">Billing & Plans</span>
-                </button>
+                    >
+                        <CreditCard size={16} className={activeView === 'billing' ? 'text-visio-accent' : 'text-white/40'} />
+                        <span className="relative z-10">Billing & Plans</span>
+                        {activeView === 'billing' && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-visio-accent rounded-r-full shadow-[0_0_8px_rgba(182,240,156,0.5)]" />}
+                    </button>
+                </div>
 
-            </div>
-
-            {/* Plan Usage Widget */}
-            <div className="px-3 pb-2">
-                <div className="bg-white/5 border border-white/5 rounded-xl p-3">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-medium text-white/60 uppercase">{TIER_DETAILS[subscription.tier]?.name || subscription.tier}</span>
+                {/* Plan Usage Widget */}
+                <div className="bg-white/[0.02] border border-white/5 rounded-xl p-3.5 shadow-sm">
+                    <div className="flex items-center justify-between mb-3">
+                        <span className="text-xs font-semibold text-white/70 uppercase tracking-wider">{TIER_DETAILS[subscription.tier]?.name || subscription.tier}</span>
                         {subscription.tier !== 'enterprise' && (
-                            <button className="text-[10px] text-visio-accent hover:underline" onClick={() => onNavigate('billing')}>Upgrade</button>
+                            <button className="text-[10px] font-medium text-visio-accent hover:text-white transition-colors bg-visio-accent/10 px-2 py-0.5 rounded-full" onClick={() => onNavigate('billing')}>Upgrade</button>
                         )}
                     </div>
 
-                    {/* Credits Usage */}
-                    <div className="space-y-2">
-                        <div className="space-y-1">
-                            <div className="flex justify-between text-[10px] text-white/40">
-                                <span className="flex items-center gap-1"><Coins size={9} /> Credits</span>
+                    <div className="space-y-3">
+                        <div className="space-y-1.5">
+                            <div className="flex justify-between text-xs text-white/50 font-medium">
+                                <span className="flex items-center gap-1.5"><Coins size={12} className="text-amber-400/80" /> Credits</span>
                                 <span>{creditsBalance ?? 0} / {creditsAllocation === 'unlimited' ? '∞' : (creditsAllocation ?? TIER_DETAILS[subscription.tier]?.credits ?? 0)}</span>
                             </div>
-                            <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+                            <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
                                 {(() => {
                                     const bal = creditsBalance ?? 0;
                                     const alloc = creditsAllocation === 'unlimited' ? 1 : (typeof creditsAllocation === 'number' ? creditsAllocation : (typeof TIER_DETAILS[subscription.tier]?.credits === 'number' ? TIER_DETAILS[subscription.tier].credits as number : 1));
                                     const pct = typeof alloc === 'number' && alloc > 0 ? Math.min(100, (bal / alloc) * 100) : 100;
                                     return (
                                         <div
-                                            className={`h-full rounded-full ${pct > 50 ? 'bg-visio-teal' : pct > 20 ? 'bg-amber-400' : 'bg-red-400'}`}
+                                            className={`h-full rounded-full transition-all duration-500 ${pct > 50 ? 'bg-visio-teal' : pct > 20 ? 'bg-amber-400' : 'bg-red-400'}`}
                                             style={{ width: `${pct}%` }}
                                         />
                                     );
                                 })()}
                             </div>
                         </div>
-                        <div className="space-y-1">
-                            <div className="flex justify-between text-[10px] text-white/40">
+                        <div className="space-y-1.5">
+                            <div className="flex justify-between text-xs text-white/50 font-medium">
                                 <span>Profiles</span>
                                 <span>1 / {PLAN_LIMITS[subscription.tier].maxProfiles === Infinity ? '∞' : PLAN_LIMITS[subscription.tier].maxProfiles}</span>
                             </div>
-                            <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+                            <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
                                 <div
-                                    className="h-full bg-visio-teal"
+                                    className="h-full bg-white/20 transition-all duration-500"
                                     style={{ width: `${Math.min(100, (1 / (PLAN_LIMITS[subscription.tier].maxProfiles || 1)) * 100)}%` }}
                                 />
                             </div>
@@ -502,25 +524,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
 
             {/* Footer / Profile */}
-            <div className="p-4 border-t border-white/5 bg-black/20">
+            <div className="p-3 border-t border-white/5 bg-[#030303] shrink-0">
                 <button
                     onClick={() => onNavigate('settings')}
-                    className="flex items-center gap-3 w-full p-2 hover:bg-white/5 rounded-xl transition-colors text-left"
+                    className="flex items-center gap-3 w-full p-2 hover:bg-white/[0.04] rounded-lg transition-all duration-200 text-left group"
                 >
-                    <div className="w-8 h-8 rounded-full border border-white/20 bg-gradient-to-br from-visio-teal to-visio-sage flex items-center justify-center text-black font-bold text-sm">
-                        {artistProfile?.name?.charAt(0)?.toUpperCase() || 'G'}
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-visio-teal to-visio-sage p-[1.5px] shadow-sm">
+                       <div className="w-full h-full rounded-full bg-[#111] flex items-center justify-center text-white font-bold text-sm group-hover:bg-black transition-colors">
+                           {artistProfile?.name?.charAt(0)?.toUpperCase() || 'G'}
+                       </div>
                     </div>
                     <div className="flex-1 overflow-hidden">
-                        <p className="text-sm font-medium text-white truncate">{artistProfile?.name || 'Guest User'}</p>
-                        <p className="text-xs text-white/40 truncate">{TIER_DETAILS[subscription.tier]?.name || subscription.tier}</p>
+                        <p className="text-sm font-semibold text-white/90 truncate group-hover:text-white transition-colors">{artistProfile?.name || 'Guest User'}</p>
+                        <p className="text-xs text-white/40 truncate font-medium">{TIER_DETAILS[subscription.tier]?.name || subscription.tier}</p>
                     </div>
-                    <Settings size={16} className="text-white/40" />
+                    <Settings size={16} className="text-white/30 group-hover:text-white/70 transition-all group-hover:rotate-90 duration-300" />
                 </button>
-                <div className="mt-4 px-2">
-                    <p className="text-[10px] text-white/20 text-center leading-tight">
-                        Powered by: VisioCorp<br />Copyright @ 2026 & Touchline Agency
-                    </p>
-                </div>
             </div>
         </aside>
     );

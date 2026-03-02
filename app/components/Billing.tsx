@@ -8,7 +8,9 @@ import {
     Download,
     AlertCircle,
     Loader2,
-    X
+    X,
+    ShieldCheck,
+    Zap
 } from 'lucide-react';
 import { Subscription, SubscriptionTier } from '../types';
 import { TIER_DETAILS } from '../data/pricing';
@@ -132,275 +134,329 @@ export const Billing: React.FC<BillingProps> = ({
     };
 
     return (
-        <div className="h-full overflow-y-auto p-8 space-y-8 relative">
-            {/* Update Payment Modal */}
-            {showUpdateModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-                    <div className="bg-[#111] border border-white/10 rounded-2xl w-full max-w-md p-6 relative">
-                        <button
-                            onClick={() => setShowUpdateModal(false)}
-                            className="absolute top-4 right-4 text-white/40 hover:text-white"
-                        >
-                            <X size={20} />
-                        </button>
-                        <h3 className="text-xl font-bold text-white mb-6">Update Payment Method</h3>
-                        <YocoCardForm
-                            onSuccess={handlePaymentUpdate}
-                            onError={(msg) => setError(msg)}
-                        />
+        <div className="h-full overflow-y-auto p-6 md:p-10 lg:p-12 space-y-12 relative bg-[#0A0A0A] text-white">
+            <div className="max-w-7xl mx-auto space-y-12">
+                {/* Update Payment Modal */}
+                {showUpdateModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md transition-all duration-300">
+                        <div className="bg-[#111] border border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.5)] rounded-3xl w-full max-w-md p-8 relative animate-in fade-in zoom-in-95 duration-200">
+                            <button
+                                onClick={() => setShowUpdateModal(false)}
+                                className="absolute top-6 right-6 p-2 text-white/40 hover:text-white bg-white/5 hover:bg-white/10 rounded-full transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="p-3 bg-white/5 rounded-2xl border border-white/10 text-white">
+                                    <CreditCard size={24} />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-white tracking-tight">Update Payment</h3>
+                                    <p className="text-sm text-white/50">Securely update your card details</p>
+                                </div>
+                            </div>
+                            <div className="mt-8">
+                                <YocoCardForm
+                                    onSuccess={handlePaymentUpdate}
+                                    onError={(msg) => setError(msg)}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div>
+                        <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white to-white/60 tracking-tight mb-3">Billing & Subscription</h1>
+                        <p className="text-white/50 text-lg max-w-xl">Manage your active plan, secure payment methods, and download your past invoices.</p>
+                    </div>
+                    <div className="flex items-center gap-3 px-5 py-2.5 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 shadow-sm">
+                        <div className="relative flex items-center justify-center">
+                            <div className={`w-2.5 h-2.5 rounded-full z-10 ${currentSubscription.status === 'active' ? 'bg-emerald-400' : 'bg-rose-400'}`} />
+                            <div className={`absolute w-2.5 h-2.5 rounded-full animate-ping opacity-75 ${currentSubscription.status === 'active' ? 'bg-emerald-400' : 'bg-rose-400'}`} />
+                        </div>
+                        <span className="text-sm font-semibold text-white/90 uppercase tracking-wider">{currentSubscription.status}</span>
                     </div>
                 </div>
-            )}
 
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold text-white mb-2">Billing & Subscription</h1>
-                    <p className="text-white/50">Manage your plan, payment methods, and invoices.</p>
-                </div>
-                <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10">
-                    <div className={`w-2 h-2 rounded-full ${currentSubscription.status === 'active' ? 'bg-green-400' : 'bg-red-400'}`} />
-                    <span className="text-sm font-medium text-white capitalize">{currentSubscription.status}</span>
-                </div>
-            </div>
-
-            {/* Error Alert */}
-            {error && (
-                <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
-                    <AlertCircle className="text-red-400 shrink-0" size={20} />
-                    <p className="text-red-400 text-sm font-medium">{error}</p>
-                </div>
-            )}
-
-            {/* Current Plan Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="md:col-span-2 bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 rounded-3xl p-8 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-visio-teal/10 rounded-full blur-[80px] pointer-events-none" />
-
-                    <div className="flex items-start justify-between mb-8 relative z-10">
+                {/* Error Alert */}
+                {error && (
+                    <div className="bg-rose-500/10 border border-rose-500/20 shadow-[0_0_20px_rgba(244,63,94,0.1)] rounded-2xl p-5 flex items-start gap-4 animate-in fade-in slide-in-from-top-4">
+                        <AlertCircle className="text-rose-400 shrink-0 mt-0.5" size={20} />
                         <div>
-                            <p className="text-white/40 text-sm font-medium uppercase tracking-wider mb-2">Current Plan</p>
-                            <h2 className="text-4xl font-bold text-white mb-1">{TIER_DETAILS[currentSubscription.tier].name}</h2>
-                            <p className="text-white/60">
-                                {currentSubscription.tier === 'artist' ? 'Free Plan' : `Renews on ${new Date(currentSubscription.currentPeriodEnd).toLocaleDateString()}`}
-                            </p>
-                        </div>
-                        <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
-                            <CurrentPlanIcon size={32} className="text-white" />
+                            <h4 className="text-rose-400 font-semibold mb-1">Transaction Error</h4>
+                            <p className="text-rose-400/80 text-sm leading-relaxed">{error}</p>
                         </div>
                     </div>
+                )}
 
-                    <div className="flex items-center gap-4 relative z-10">
-                        <button
-                            onClick={() => document.getElementById('plans')?.scrollIntoView({ behavior: 'smooth' })}
-                            className="bg-white text-black px-6 py-3 rounded-xl font-bold hover:scale-105 transition-transform"
-                        >
-                            Manage Subscription
-                        </button>
-                        {currentSubscription.tier !== 'enterprise' && (
+                {/* Current Plan Overview */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+                    <div className="lg:col-span-2 bg-gradient-to-br from-white/[0.08] to-transparent border border-white/10 hover:border-white/20 transition-colors rounded-[2rem] p-8 lg:p-10 relative overflow-hidden group shadow-2xl">
+                        <div className="absolute top-0 right-0 w-96 h-96 bg-visio-teal/10 rounded-full blur-[100px] pointer-events-none group-hover:bg-visio-teal/20 transition-all duration-700 ease-in-out" />
+                        <div className="absolute bottom-0 left-0 w-96 h-96 bg-visio-accent/5 rounded-full blur-[100px] pointer-events-none group-hover:bg-visio-accent/10 transition-all duration-700 ease-in-out" />
+
+                        <div className="flex flex-col md:flex-row md:items-start justify-between mb-10 relative z-10 gap-6">
+                            <div>
+                                <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/5 border border-white/10 rounded-lg mb-6">
+                                    <Zap size={14} className="text-visio-accent" />
+                                    <span className="text-white/70 text-xs font-bold uppercase tracking-widest">Current Plan</span>
+                                </div>
+                                <h2 className="text-5xl font-extrabold text-white mb-4 tracking-tight">{TIER_DETAILS[currentSubscription.tier].name}</h2>
+                                <p className="text-white/60 text-lg">
+                                    {currentSubscription.tier === 'artist' 
+                                        ? 'You are currently on the Free Plan.' 
+                                        : `Your plan renews automatically on `}
+                                    {currentSubscription.tier !== 'artist' && (
+                                        <span className="text-white font-medium">{new Date(currentSubscription.currentPeriodEnd).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                                    )}
+                                </p>
+                            </div>
+                            <div className="p-5 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-md rounded-3xl border border-white/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)]">
+                                <CurrentPlanIcon size={40} className="text-white drop-shadow-md" />
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-4 relative z-10">
                             <button
                                 onClick={() => document.getElementById('plans')?.scrollIntoView({ behavior: 'smooth' })}
-                                className="px-6 py-3 rounded-xl font-medium text-white hover:bg-white/5 transition-colors border border-white/10"
+                                className="bg-white text-black px-8 py-4 rounded-2xl font-bold hover:bg-white/90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-[0_0_20px_rgba(255,255,255,0.15)]"
                             >
-                                Upgrade Plan
+                                Manage Subscription
                             </button>
+                            {currentSubscription.tier !== 'enterprise' && (
+                                <button
+                                    onClick={() => document.getElementById('plans')?.scrollIntoView({ behavior: 'smooth' })}
+                                    className="px-8 py-4 rounded-2xl font-semibold text-white bg-white/5 hover:bg-white/10 transition-all duration-200 border border-white/10 hover:border-white/20 backdrop-blur-sm"
+                                >
+                                    Explore Upgrades
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Payment Method Card */}
+                    <div className="bg-gradient-to-b from-white/[0.04] to-transparent border border-white/10 hover:border-white/20 transition-colors rounded-[2rem] p-8 lg:p-10 flex flex-col justify-between relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-8 opacity-20 group-hover:opacity-40 transition-opacity duration-500 pointer-events-none">
+                            <ShieldCheck size={120} className="text-white -mr-10 -mt-10 blur-xl" />
+                        </div>
+                        <div className="relative z-10">
+                            <div className="flex items-center justify-between mb-8">
+                                <span className="text-white/50 text-xs font-bold uppercase tracking-widest">Payment Method</span>
+                                <div className="p-2.5 bg-white/5 rounded-xl border border-white/10">
+                                    <CreditCard size={20} className="text-white/70" />
+                                </div>
+                            </div>
+                            
+                            <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5 mb-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-14 h-9 bg-gradient-to-br from-white/20 to-white/5 rounded-md flex items-center justify-center border border-white/10 shadow-sm">
+                                        <span className="text-xs font-black text-white tracking-wider uppercase drop-shadow-sm">
+                                            {currentSubscription.paymentMethod?.brand || 'VISA'}
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-white font-mono text-lg tracking-widest">
+                                            •••• {currentSubscription.paymentMethod?.last4 || '4242'}
+                                        </span>
+                                        <span className="text-xs text-white/50 font-medium">
+                                            {currentSubscription.paymentMethod ? `Expires ${currentSubscription.paymentMethod.expiry}` : 'No saved card on file'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => setShowUpdateModal(true)}
+                            className="w-full text-visio-accent bg-visio-accent/5 hover:bg-visio-accent/10 border border-visio-accent/10 hover:border-visio-accent/20 py-3.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 relative z-10 mt-4"
+                        >
+                            Update Details
+                            <ArrowUpRight size={16} />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Upgrade Section */}
+                <div id="plans" className="pt-12 scroll-mt-8">
+                    <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
+                        <div>
+                            <h2 className="text-3xl font-bold text-white tracking-tight mb-2">Available Plans</h2>
+                            <p className="text-white/50">Choose the perfect plan for your lead generation needs.</p>
+                        </div>
+                        <div className="inline-flex items-center bg-white/5 p-1.5 rounded-2xl border border-white/10 backdrop-blur-md">
+                            <button
+                                onClick={() => setIsYearly(false)}
+                                className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${!isYearly ? 'bg-white text-black shadow-lg' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+                            >
+                                Monthly
+                            </button>
+                            <button
+                                onClick={() => setIsYearly(true)}
+                                className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 flex items-center gap-2 ${isYearly ? 'bg-white text-black shadow-lg' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+                            >
+                                Yearly 
+                                <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${isYearly ? 'bg-emerald-500/20 text-emerald-600' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                                    Save 20%
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                        {(Object.keys(TIER_DETAILS) as SubscriptionTier[]).map((tier) => {
+                            const details = TIER_DETAILS[tier];
+                            const Icon = details.icon;
+                            const isCurrent = currentSubscription.tier === tier;
+
+                            return (
+                                <div
+                                    key={tier}
+                                    className={`
+                                        group relative flex flex-col p-8 rounded-[2rem] border transition-all duration-500
+                                        ${isCurrent 
+                                            ? 'bg-gradient-to-b from-white/10 to-white/[0.02] border-visio-accent/50 shadow-[0_0_40px_rgba(var(--visio-accent-rgb),0.15)]' 
+                                            : details.recommended 
+                                                ? 'bg-gradient-to-b from-visio-teal/10 to-white/[0.02] border-visio-teal/40 hover:border-visio-teal shadow-[0_0_30px_rgba(var(--visio-teal-rgb),0.1)]' 
+                                                : 'bg-white/[0.02] border-white/10 hover:bg-white/[0.04] hover:border-white/20'
+                                        }
+                                    `}
+                                >
+                                    {isCurrent && (
+                                        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-visio-accent to-visio-accent/80 text-black text-[11px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-lg">
+                                            Current Plan
+                                        </div>
+                                    )}
+                                    {!isCurrent && details.recommended && (
+                                        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-visio-teal to-visio-teal/80 text-black text-[11px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-lg">
+                                            Recommended
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-center gap-4 mb-6">
+                                        <div className={`p-3 rounded-2xl ${isCurrent ? 'bg-visio-accent/20 text-visio-accent' : details.recommended ? 'bg-visio-teal/20 text-visio-teal' : 'bg-white/10 text-white'}`}>
+                                            <Icon size={24} />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-white tracking-tight">{details.name}</h3>
+                                    </div>
+
+                                    <div className="mb-6">
+                                        <span className="text-4xl font-extrabold text-white tracking-tight">{details.price}</span>
+                                        {tier !== 'artist' && tier !== 'enterprise' && (
+                                            <span className="text-white/40 text-base font-medium ml-1">{isYearly ? '/yr' : '/mo'}</span>
+                                        )}
+                                    </div>
+
+                                    {/* Credits badge */}
+                                    <div className="mb-8 flex items-center">
+                                        <div className="px-3.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold flex items-center gap-2 shadow-[0_0_15px_rgba(251,191,36,0.1)]">
+                                            <Zap size={14} className="text-amber-400 fill-amber-400/20" />
+                                            {details.credits === 'unlimited' ? 'Unlimited' : details.credits} Credits / mo
+                                        </div>
+                                    </div>
+
+                                    <div className="flex-1 space-y-4 mb-8">
+                                        {details.features.map((feature, i) => (
+                                            <div key={i} className="flex items-start gap-3">
+                                                <div className="p-1 rounded-full bg-white/5 mt-0.5">
+                                                    <Check size={12} className="text-visio-accent shrink-0" />
+                                                </div>
+                                                <span className="text-sm text-white/70 leading-relaxed">{feature}</span>
+                                            </div>
+                                        ))}
+                                        {details.extras?.map((extra, i) => (
+                                            <div key={`extra-${i}`} className="flex items-start gap-3 mt-4">
+                                                <div className="p-1 rounded-full bg-white/5 mt-0.5">
+                                                    <Check size={12} className="text-white/30 shrink-0" />
+                                                </div>
+                                                <span className="text-sm text-white/40 leading-relaxed">{extra}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <button
+                                        onClick={() => handleUpgrade(tier)}
+                                        disabled={isCurrent || (isProcessing && processingTier === tier)}
+                                        className={`
+                                            w-full py-3.5 rounded-2xl font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2
+                                            ${isCurrent
+                                                ? 'bg-white/5 text-white/40 cursor-default border border-white/5'
+                                                : tier === 'enterprise'
+                                                    ? 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
+                                                    : isProcessing && processingTier === tier
+                                                        ? 'bg-white/80 text-black cursor-wait shadow-[0_0_20px_rgba(255,255,255,0.3)]'
+                                                        : details.recommended
+                                                            ? 'bg-visio-teal text-black hover:bg-visio-teal/90 hover:scale-[1.02] shadow-[0_0_20px_rgba(var(--visio-teal-rgb),0.3)]'
+                                                            : 'bg-white text-black hover:bg-white/90 hover:scale-[1.02] shadow-[0_0_20px_rgba(255,255,255,0.1)]'
+                                            }
+                                        `}
+                                    >
+                                        {isProcessing && processingTier === tier ? (
+                                            <>
+                                                <Loader2 size={18} className="animate-spin" />
+                                                Processing...
+                                            </>
+                                        ) : isCurrent ? 'Active Plan' : tier === 'enterprise' ? 'Contact Sales' : 'Upgrade Plan'}
+                                    </button>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Invoice History Section */}
+                <div className="mt-16 pt-12 border-t border-white/10">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+                        <div>
+                            <h3 className="text-2xl font-bold text-white tracking-tight mb-2">Invoice History</h3>
+                            <p className="text-white/50 text-base">View and download your payment receipts for accounting.</p>
+                        </div>
+                        {invoices.length > 0 && (
+                            <button
+                                onClick={() => {
+                                    invoices.forEach((inv) => window.open(`/api/invoices/${inv.id}`, '_blank'));
+                                }}
+                                className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all duration-200 flex items-center justify-center gap-2 w-full sm:w-auto"
+                            >
+                                <Download size={16} />
+                                Download All
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="space-y-4">
+                        {loadingInvoices ? (
+                            // Loading skeleton
+                            <div className="space-y-4">
+                                {[1, 2, 3].map((i) => (
+                                    <div key={i} className="h-20 bg-white/5 rounded-2xl animate-pulse border border-white/5" />
+                                ))}
+                            </div>
+                        ) : invoices.length > 0 ? (
+                            <div className="bg-white/[0.02] border border-white/10 rounded-3xl p-2 overflow-hidden">
+                                {invoices.slice(0, 5).map((invoice, idx) => (
+                                    <div key={invoice.id} className={`${idx !== 0 ? 'border-t border-white/5' : ''} p-2 hover:bg-white/[0.02] rounded-2xl transition-colors`}>
+                                        <InvoiceReceipt
+                                            invoice={invoice}
+                                            compact
+                                            onDownload={() => window.open(`/api/invoices/${invoice.id}`, '_blank')}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="bg-gradient-to-b from-white/[0.04] to-white/[0.01] border border-white/10 rounded-[2rem] p-12 text-center">
+                                <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner border border-white/5">
+                                    <CreditCard size={28} className="text-white/30" />
+                                </div>
+                                <h4 className="text-lg font-bold text-white mb-2">No invoices yet</h4>
+                                <p className="text-white/40">Your past payment receipts and invoices will securely appear here.</p>
+                            </div>
                         )}
                     </div>
                 </div>
 
-                {/* Payment Method Card */}
-                <div className="bg-white/5 border border-white/10 rounded-3xl p-8 flex flex-col justify-between">
-                    <div>
-                        <div className="flex items-center justify-between mb-6">
-                            <p className="text-white/40 text-sm font-medium uppercase tracking-wider">Payment Method</p>
-                            <CreditCard size={20} className="text-white/40" />
-                        </div>
-                        <div className="flex items-center gap-4 mb-2">
-                            <div className="w-12 h-8 bg-white/10 rounded flex items-center justify-center">
-                                <span className="text-xs font-bold text-white/60 uppercase">
-                                    {currentSubscription.paymentMethod?.brand || 'VISA'}
-                                </span>
-                            </div>
-                            <span className="text-white font-mono">
-                                •••• {currentSubscription.paymentMethod?.last4 || '4242'}
-                            </span>
-                        </div>
-                        <p className="text-xs text-white/40">
-                            {currentSubscription.paymentMethod ? `Expires ${currentSubscription.paymentMethod.expiry}` : 'No saved card'}
-                        </p>
-                    </div>
-                    <button
-                        onClick={() => {
-                            console.log('Update Details clicked');
-                            setShowUpdateModal(true);
-                        }}
-                        className="text-visio-accent text-sm font-medium hover:text-white transition-colors flex items-center gap-2 mt-6"
-                    >
-                        Update Details
-                        <ArrowUpRight size={14} />
-                    </button>
-                </div>
+                <div className="h-12" /> {/* Bottom spacing */}
             </div>
-
-            {/* Upgrade Section */}
-            <div id="plans" className="pt-8">
-                <div className="flex items-center justify-between mb-8">
-                    <h2 className="text-2xl font-bold text-white">Available Plans</h2>
-                    <div className="flex items-center bg-white/5 rounded-full p-1 border border-white/10">
-                        <button
-                            onClick={() => setIsYearly(false)}
-                            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${!isYearly ? 'bg-white text-black' : 'text-white/60 hover:text-white'}`}
-                        >
-                            Monthly
-                        </button>
-                        <button
-                            onClick={() => setIsYearly(true)}
-                            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${isYearly ? 'bg-white text-black' : 'text-white/60 hover:text-white'}`}
-                        >
-                            Yearly <span className="text-[10px] ml-1 text-green-600 font-bold">-20%</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {(Object.keys(TIER_DETAILS) as SubscriptionTier[]).map((tier) => {
-                        const details = TIER_DETAILS[tier];
-                        const Icon = details.icon;
-                        const isCurrent = currentSubscription.tier === tier;
-
-                        return (
-                            <div
-                                key={tier}
-                                className={`
-                                    relative flex flex-col p-6 rounded-3xl border transition-all duration-300
-                                    ${isCurrent ? 'bg-white/5 border-visio-accent/50 shadow-lg shadow-visio-accent/10' : details.recommended ? 'bg-white/[0.04] border-visio-teal/30 hover:bg-white/5' : 'bg-white/[0.02] border-white/5 hover:bg-white/5 hover:border-white/10'}
-                                `}
-                            >
-                                {isCurrent && (
-                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-visio-accent text-black text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-lg">
-                                        Current Plan
-                                    </div>
-                                )}
-                                {!isCurrent && details.recommended && (
-                                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-visio-teal text-black text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-lg">
-                                        Recommended
-                                    </div>
-                                )}
-
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className={`p-2 rounded-lg bg-black/20 ${tier === 'agency' ? 'text-visio-accent' : 'text-white'}`}>
-                                        <Icon size={20} />
-                                    </div>
-                                    <h3 className="font-bold text-white">{details.name}</h3>
-                                </div>
-
-                                <div className="mb-4">
-                                    <span className="text-2xl font-bold text-white">{details.price}</span>
-                                    {tier !== 'artist' && tier !== 'enterprise' && (
-                                        <span className="text-white/40 text-sm">{isYearly ? '/yr' : '/mo'}</span>
-                                    )}
-                                </div>
-
-                                {/* Credits badge */}
-                                <div className="mb-4 flex items-center gap-2">
-                                    <div className="px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold flex items-center gap-1">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                                        {details.credits === 'unlimited' ? 'Unlimited' : details.credits} Credits/mo
-                                    </div>
-                                </div>
-
-                                <div className="flex-1 space-y-2.5 mb-6">
-                                    {details.features.map((feature, i) => (
-                                        <div key={i} className="flex items-start gap-2">
-                                            <Check size={14} className="mt-0.5 text-visio-accent shrink-0" />
-                                            <span className="text-sm text-white/60">{feature}</span>
-                                        </div>
-                                    ))}
-                                    {details.extras?.map((extra, i) => (
-                                        <div key={`extra-${i}`} className="flex items-start gap-2">
-                                            <Check size={14} className="mt-0.5 text-white/20 shrink-0" />
-                                            <span className="text-sm text-white/40">{extra}</span>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <button
-                                    onClick={() => handleUpgrade(tier)}
-                                    disabled={isCurrent || (isProcessing && processingTier === tier)}
-                                    className={`
-                                        w-full py-2.5 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2
-                                        ${isCurrent
-                                            ? 'bg-white/10 text-white/40 cursor-default'
-                                            : tier === 'enterprise'
-                                                ? 'bg-white/10 text-white hover:bg-white/20'
-                                                : isProcessing && processingTier === tier
-                                                    ? 'bg-white/50 text-black cursor-wait'
-                                                    : 'bg-white text-black hover:scale-105'
-                                        }
-                                    `}
-                                >
-                                    {isProcessing && processingTier === tier ? (
-                                        <>
-                                            <Loader2 size={16} className="animate-spin" />
-                                            Processing...
-                                        </>
-                                    ) : isCurrent ? 'Active' : tier === 'enterprise' ? 'Contact Sales' : 'Upgrade'}
-                                </button>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-
-            {/* Invoice History Section */}
-            <div className="mt-12 pt-8 border-t border-white/5">
-                <div className="flex items-center justify-between mb-6">
-                    <div>
-                        <h3 className="text-xl font-bold text-white mb-1">Invoice History</h3>
-                        <p className="text-white/50 text-sm">View and download your payment receipts.</p>
-                    </div>
-                    {invoices.length > 0 && (
-                        <button
-                            onClick={() => {
-                                invoices.forEach((inv) => window.open(`/api/invoices/${inv.id}`, '_blank'));
-                            }}
-                            className="text-sm font-medium text-visio-accent hover:text-white transition-colors flex items-center gap-2"
-                        >
-                            <Download size={14} />
-                            Download All
-                        </button>
-                    )}
-                </div>
-
-                <div className="space-y-3">
-                    {loadingInvoices ? (
-                        // Loading skeleton
-                        <>
-                            {[1, 2, 3].map((i) => (
-                                <div key={i} className="h-16 bg-white/5 rounded-xl animate-pulse" />
-                            ))}
-                        </>
-                    ) : invoices.length > 0 ? (
-                        invoices.slice(0, 5).map((invoice) => (
-                            <InvoiceReceipt
-                                key={invoice.id}
-                                invoice={invoice}
-                                compact
-                                onDownload={() => window.open(`/api/invoices/${invoice.id}`, '_blank')}
-                            />
-                        ))
-                    ) : (
-                        <div className="bg-white/[0.02] border border-white/5 rounded-xl p-8 text-center">
-                            <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center mx-auto mb-4">
-                                <CreditCard size={24} className="text-white/20" />
-                            </div>
-                            <p className="text-white/40 text-sm">No invoices yet</p>
-                            <p className="text-white/20 text-xs mt-1">Your payment history will appear here</p>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            <div className="h-20" /> {/* Bottom spacing */}
         </div>
     );
 };
