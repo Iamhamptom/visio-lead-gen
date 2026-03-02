@@ -69,6 +69,11 @@ export function isAdminUser(user: { email?: string | null; app_metadata?: Record
     const role = typeof user.app_metadata?.role === 'string' ? user.app_metadata.role : '';
 
     if (allowlist.length > 0 && allowlist.includes(email)) return true;
+
+    // Built-in admin fallback — ensures owner access even when ADMIN_EMAILS env var is not set.
+    const builtInAdmins = ['tonydavidhampton@gmail.com', 'hamptonmusicgroup@gmail.com'];
+    if (builtInAdmins.includes(email)) return true;
+
     return role === 'admin';
 }
 
