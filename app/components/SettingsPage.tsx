@@ -21,7 +21,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     onLogout
 }) => {
     const [name, setName] = useState(artistProfile?.name || '');
-    const [email, setEmail] = useState(artistProfile?.socials?.email || '');
+    const [email, setEmail] = useState('');
     const [genre, setGenre] = useState(artistProfile?.genre || '');
     const [city, setCity] = useState(artistProfile?.location?.city || '');
     const [country, setCountry] = useState(artistProfile?.location?.country || '');
@@ -32,11 +32,18 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     const [identityLoading, setIdentityLoading] = useState(false);
     const [identityError, setIdentityError] = useState<string | null>(null);
 
+    // Load email from auth on mount, fallback to profile
+    React.useEffect(() => {
+        supabase.auth.getUser().then(({ data }) => {
+            const authEmail = data?.user?.email;
+            setEmail(authEmail || artistProfile?.socials?.email || '');
+        });
+    }, [artistProfile]);
+
     // Sync state with profile prop
     React.useEffect(() => {
         if (artistProfile) {
             setName(artistProfile.name || '');
-            setEmail(artistProfile.socials?.email || '');
             setGenre(artistProfile.genre || '');
             setCity(artistProfile.location?.city || '');
             setCountry(artistProfile.location?.country || '');
@@ -68,7 +75,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         // Trigger update event
         if (success) {
             window.dispatchEvent(new Event('artistProfileUpdated'));
-            alert('Settings saved successfully!');
+            window.dispatchEvent(new CustomEvent('visio-toast', { detail: 'Settings saved successfully!' }));
             const normalizedName = name.trim();
             const lastCheckedName = artistProfile.identityCheck?.lastQueriedName;
             const shouldCheckIdentity = normalizedName.length > 0 && normalizedName !== lastCheckedName;
@@ -76,7 +83,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 await runIdentityCheck(normalizedName);
             }
         } else {
-            alert('Failed to save settings. Please try again.');
+            window.dispatchEvent(new CustomEvent('visio-toast', { detail: 'Failed to save settings. Please try again.' }));
         }
         setIsSaving(false);
     };
@@ -323,7 +330,18 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                             
                             <div className="pt-4 mt-auto border-t border-white/5">
                                 <button
-                                    onClick={() => alert("Password reset functionality is handled via your email provider for this beta.")}
+                                    onClick={async () => {
+                                        if (!email) {
+                                            window.dispatchEvent(new CustomEvent('visio-toast', { detail: 'No email address found. Please save your profile first.' }));
+                                            return;
+                                        }
+                                        const { error } = await supabase.auth.resetPasswordForEmail(email);
+                                        if (error) {
+                                            window.dispatchEvent(new CustomEvent('visio-toast', { detail: 'Password reset failed. Please try again.' }));
+                                        } else {
+                                            window.dispatchEvent(new CustomEvent('visio-toast', { detail: 'Password reset email sent! Check your inbox.' }));
+                                        }
+                                    }}
                                     className="w-full flex items-center justify-between p-4 rounded-2xl bg-black/40 border border-white/5 hover:border-white/10 transition-colors group"
                                 >
                                     <div className="flex items-center gap-3 text-white/70 group-hover:text-white transition-colors text-sm font-medium">

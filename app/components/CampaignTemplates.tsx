@@ -28,6 +28,9 @@ import {
     X,
     ChevronDown,
     Coins,
+    Briefcase,
+    Tv,
+    GraduationCap,
 } from 'lucide-react';
 import {
     GlobalGeographySelector,
@@ -307,6 +310,54 @@ const GLOBAL_TEMPLATES: GlobalTemplate[] = [
         buildPrompt: (geo, listSize) =>
             `Help me create a comprehensive fan activation campaign targeted ${geo}. I need: 1) A "Help Me Reach the Charts" messaging framework with ${listSize} pre-written social posts and captions fans can share, 2) Step-by-step streaming instructions for fans, 3) A timeline for the push, 4) Share-to-win contest ideas, 5) Community group strategy. Make it feel organic and exciting, not desperate. Ask me about my specific release and goal.`,
     },
+    {
+        id: 'ar-label-outreach',
+        icon: Briefcase,
+        title: 'A&R / Label Outreach',
+        description: 'Get signed — distribute your EPK to A&R reps, submit demos to labels, and prepare for showcases that get you noticed.',
+        color: 'text-sky-400',
+        bg: 'bg-sky-500/10',
+        border: 'border-sky-500/20',
+        glowColor: 'sky',
+        category: 'growth_brand',
+        tags: ['A&R', 'Labels', 'Signed'],
+        roleType: 'A&R / Label',
+        baseCredits: 3,
+        buildPrompt: (geo, listSize) =>
+            `Find me ${listSize} A&R representatives, label scouts, and music industry managers ${geo} who are actively signing new artists in my genre. For each, provide their name, label/company, genres they sign, submission method (email, portal, DM), social handles, and any recent signings. Include both major and independent labels. Prioritize A&Rs who are known for discovering emerging talent.`,
+    },
+    {
+        id: 'sync-licensing',
+        icon: Tv,
+        title: 'Sync Licensing Outreach',
+        description: 'Get your music placed in TV shows, films, and advertisements by connecting with music supervisors and sync agencies.',
+        color: 'text-emerald-400',
+        bg: 'bg-emerald-500/10',
+        border: 'border-emerald-500/20',
+        glowColor: 'emerald',
+        category: 'media_press',
+        tags: ['Sync', 'TV', 'Film'],
+        roleType: 'Music Supervisor',
+        baseCredits: 3,
+        buildPrompt: (geo, listSize) =>
+            `Find me ${listSize} music supervisors, sync licensing agencies, and music libraries ${geo} that place music in TV shows, films, and advertisements. For each, provide the contact name, company, notable placements (shows/films), genres they seek, submission process, email, and website. Include both boutique supervisors and major sync agencies. Prioritize those who work with independent artists.`,
+    },
+    {
+        id: 'college-radio',
+        icon: GraduationCap,
+        title: 'College Radio Submission',
+        description: 'Chart on college radio — submit to university stations across the USA for CMJ/NACC charting and grassroots discovery.',
+        color: 'text-amber-400',
+        bg: 'bg-amber-500/10',
+        border: 'border-amber-500/20',
+        glowColor: 'amber',
+        category: 'media_press',
+        tags: ['College', 'Radio', 'CMJ'],
+        roleType: 'College Radio',
+        baseCredits: 2,
+        buildPrompt: (geo, listSize) =>
+            `Find me ${listSize} college radio stations ${geo} that accept music submissions from independent artists. For each station, provide the station name, university, call sign, music director name, genres they play, submission method (email, portal, physical), mailing address if applicable, and social handles. Prioritize stations that report to CMJ/NACC charts. Include both large university stations and smaller college stations with active programming.`,
+    },
 ];
 
 // ─── Exported for use in suggestions ───────────────────────────────
@@ -378,7 +429,7 @@ export const CampaignTemplates: React.FC<CampaignTemplatesProps> = ({ onUseTempl
                         Campaign <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-white to-white/50">Blueprints</span>
                     </h1>
                     <p className="text-white/50 text-base md:text-lg max-w-3xl leading-relaxed">
-                        15 proven outreach frameworks that work anywhere in the world. Pick a role, choose your geography, set your list size — and launch.
+                        {GLOBAL_TEMPLATES.length} proven outreach frameworks that work anywhere in the world. Pick a role, choose your geography, set your list size — and launch.
                     </p>
                 </motion.div>
 

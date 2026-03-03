@@ -298,9 +298,9 @@ export const Composer: React.FC<ComposerProps> = ({
                     {/* Input Area */}
                     <div className="flex items-end px-4 pb-4 pt-2 gap-2">
                         <button
-                            onClick={() => alert("File attachments coming soon!")}
+                            onClick={() => window.dispatchEvent(new CustomEvent('visio-toast', { detail: 'File attachments coming soon' }))}
                             className="p-2.5 text-white/40 hover:text-white transition-colors rounded-xl hover:bg-white/10 active:scale-95 mb-1"
-                            title="Attach File"
+                            title="Attach File — Coming Soon"
                         >
                             <Paperclip size={20} />
                         </button>
@@ -347,12 +347,7 @@ export const Composer: React.FC<ComposerProps> = ({
                         V-Prai can make mistakes. Please verify important information.
                     </p>
                     <button
-                        onClick={() => {
-                            const data = prompt("Paste your Artist Portal JSON/Text here:");
-                            if (data) {
-                                onSend(`IMPORT_PORTAL_DATA: ${data}`, 'business', 'chat');
-                            }
-                        }}
+                        onClick={() => window.dispatchEvent(new CustomEvent('visio-toast', { detail: 'Portal data import is available from the Artist Portal' }))}
                         className="text-[11px] text-white/30 hover:text-visio-teal transition-colors underline decoration-dotted underline-offset-2"
                     >
                         Import Portal Data

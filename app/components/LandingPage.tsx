@@ -2,9 +2,32 @@ import React, { useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { ArrowRight, Check, Play, Menu, X, Sparkles, Zap, ChevronRight, Shield } from 'lucide-react';
 import Link from 'next/link';
+import VideoCard from './VideoCard';
 import AboutSection from './AboutSection';
 import FeaturesSection from './FeaturesSection';
 import HowItWorksSection from './HowItWorksSection';
+
+const VIDEOS = {
+    corporate: [
+        { id: 'corp-1', src: '/ads/Co-perate/The_Visio_AI_PR_Assistant.mp4', title: 'The Visio AI PR Assistant', thumbnail: '/ads/thumbnails/The_Visio_AI_PR_Assistant.jpg' },
+        { id: 'corp-2', src: '/ads/Co-perate/hf_20260208_174655_8b98b0a1-6dd6-4e29-9898-940dfbd3578b.mp4', title: 'Corporate Identity', thumbnail: '/ads/thumbnails/hf_20260208_174655_8b98b0a1-6dd6-4e29-9898-940dfbd3578b.jpg' },
+    ],
+    live: [
+        { id: 'live-1', src: '/ads/Live/hf_20260208_165317_5d0cf35e-7d61-4d3b-81c9-b95ac751d531.mp4', title: 'Live Session 1', thumbnail: '/ads/thumbnails/hf_20260208_165317_5d0cf35e-7d61-4d3b-81c9-b95ac751d531.jpg' },
+        { id: 'live-2', src: '/ads/Live/hf_20260208_165440_a0a596e9-401c-448a-a4be-db5cd684536c.mp4', title: 'Live Session 2', thumbnail: '/ads/thumbnails/hf_20260208_165440_a0a596e9-401c-448a-a4be-db5cd684536c.jpg' },
+        { id: 'live-3', src: '/ads/Live/hf_20260208_165506_022e7724-f7a7-408f-ab44-2037006d1a73 (1).mp4', title: 'Live Session 3', thumbnail: '/ads/thumbnails/hf_20260208_165506_022e7724-f7a7-408f-ab44-2037006d1a73_-1-.jpg' },
+        { id: 'live-4', src: '/ads/Live/hf_20260208_165907_0ddd917a-575a-45c1-a100-5597cddfd99b.mp4', title: 'Live Session 4', thumbnail: '/ads/thumbnails/hf_20260208_165907_0ddd917a-575a-45c1-a100-5597cddfd99b.jpg' },
+        { id: 'live-5', src: '/ads/Live/hf_20260208_165925_fdfeb3ca-2385-432b-8cc4-5e9fc4dbd666.mp4', title: 'Live Session 5', thumbnail: '/ads/thumbnails/hf_20260208_165925_fdfeb3ca-2385-432b-8cc4-5e9fc4dbd666.jpg' },
+        { id: 'live-6', src: '/ads/Live/hf_20260208_170538_fd58205b-8499-4050-a1ee-cbb84b0fa5da.mp4', title: 'Live Session 6', thumbnail: '/ads/thumbnails/hf_20260208_170538_fd58205b-8499-4050-a1ee-cbb84b0fa5da.jpg' },
+    ],
+    tv: [
+        { id: 'tv-1', src: '/ads/TV AD/hf_20260208_170124_2de6bca5-6b09-4cf2-b941-4272fd2b8871 (1).mp4', title: 'TV Spot 1', thumbnail: '/ads/thumbnails/hf_20260208_170124_2de6bca5-6b09-4cf2-b941-4272fd2b8871_-1-.jpg' },
+        { id: 'tv-2', src: '/ads/TV AD/hf_20260208_171017_4f65375d-1f82-43f8-9d7c-7fafa0d12a55 (1).mp4', title: 'TV Spot 2', thumbnail: '/ads/thumbnails/hf_20260208_171017_4f65375d-1f82-43f8-9d7c-7fafa0d12a55_-1-.jpg' },
+        { id: 'tv-3', src: '/ads/TV AD/hf_20260208_191001_10b31258-cd9e-4994-9604-eba3e948c70d.mp4', title: 'TV Spot 3', thumbnail: '/ads/thumbnails/hf_20260208_191001_10b31258-cd9e-4994-9604-eba3e948c70d.jpg' },
+        { id: 'tv-4', src: '/ads/TV AD/hf_20260208_191921_e7967494-e9a6-4e5e-8d47-d3e62268f27e.mp4', title: 'TV Spot 4', thumbnail: '/ads/thumbnails/hf_20260208_191921_e7967494-e9a6-4e5e-8d47-d3e62268f27e.jpg' },
+        { id: 'tv-5', src: '/ads/TV AD/hf_20260208_201453_32859a77-46de-4c10-af29-8ac5d3836e03.mp4', title: 'TV Spot 5', thumbnail: '/ads/thumbnails/hf_20260208_201453_32859a77-46de-4c10-af29-8ac5d3836e03.jpg' },
+    ]
+};
 
 interface LandingPageProps {
     onGetStarted: () => void;
@@ -25,6 +48,7 @@ const staggerContainer = {
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin }) => {
     const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+    const [playingId, setPlayingId] = React.useState<string | null>(null);
     
     const heroRef = useRef(null);
     const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
@@ -227,6 +251,68 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin 
                     </div>
                 </motion.div>
             </main>
+
+            {/* Video Carousel 1 — Generated with Visio AI (Live, 9:16) */}
+            <div className="relative z-20 py-20 bg-visio-bg">
+                <div className="max-w-7xl mx-auto px-6">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6 }}
+                        className="mb-10"
+                    >
+                        <p className="text-visio-teal font-bold uppercase tracking-[0.2em] text-sm mb-3">Generated with Visio AI</p>
+                        <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight">Live Campaign Videos</h2>
+                    </motion.div>
+                    <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory -mx-2 px-2">
+                        {VIDEOS.live.map((video, index) => (
+                            <div key={video.id} className="snap-start shrink-0 w-[220px] sm:w-[260px]">
+                                <VideoCard
+                                    src={video.src}
+                                    title={video.title}
+                                    thumbnail={video.thumbnail}
+                                    index={index}
+                                    isPlaying={playingId === video.id}
+                                    onPlay={() => setPlayingId(playingId === video.id ? null : video.id)}
+                                    className="aspect-[9/16] rounded-2xl"
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* Video Carousel 2 — Campaign Assets (TV + Corporate, 16:9) */}
+            <div className="relative z-20 py-20 bg-visio-bg">
+                <div className="max-w-7xl mx-auto px-6">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6 }}
+                        className="mb-10"
+                    >
+                        <p className="text-visio-teal font-bold uppercase tracking-[0.2em] text-sm mb-3">Campaign Assets</p>
+                        <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight">TV & Corporate Spots</h2>
+                    </motion.div>
+                    <div className="flex gap-5 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory -mx-2 px-2">
+                        {[...VIDEOS.tv, ...VIDEOS.corporate].map((video, index) => (
+                            <div key={video.id} className="snap-start shrink-0 w-[320px] sm:w-[400px]">
+                                <VideoCard
+                                    src={video.src}
+                                    title={video.title}
+                                    thumbnail={video.thumbnail}
+                                    index={index}
+                                    isPlaying={playingId === video.id}
+                                    onPlay={() => setPlayingId(playingId === video.id ? null : video.id)}
+                                    className="aspect-video rounded-2xl"
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
 
             {/* Trusted By Section */}
             <div className="py-16 border-y border-white/[0.05] bg-black/40 backdrop-blur-md relative overflow-hidden">

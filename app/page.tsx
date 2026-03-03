@@ -117,7 +117,7 @@ export default function Home() {
   }, [isAdmin, subscription]);
 
   // Paid users with active subscriptions should never be restricted, even without manual approval.
-  const hasPaidSubscription = subscription.tier !== 'artist' && subscription.status === 'active';
+  const hasPaidSubscription = subscription.tier !== 'artist' && (subscription.status === 'active' || subscription.status === 'trialing');
   const isRestricted = !isApproved && !isAdmin && !hasPaidSubscription;
 
   const [isLoading, setIsLoading] = useState(false);
@@ -154,6 +154,16 @@ export default function Home() {
   // Initialize notification sound on client
   useEffect(() => {
     notificationSoundRef.current = new Audio('/sounds/ting.mp3');
+  }, []);
+
+  // Global toast listener — child components dispatch: window.dispatchEvent(new CustomEvent('visio-toast', { detail: 'message' }))
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const msg = (e as CustomEvent<string>).detail;
+      if (msg) setToastMessage(msg);
+    };
+    window.addEventListener('visio-toast', handler);
+    return () => window.removeEventListener('visio-toast', handler);
   }, []);
 
   // Lightweight build marker so we can confirm the live site is running the latest deployment.
@@ -814,11 +824,8 @@ export default function Home() {
     // Persist handled by effect
   };
 
-  const handleShareSession = (sessionId: string) => {
-    // Generate Share Link (Mock)
-    const url = `${window.location.origin}/share/${sessionId}`;
-    navigator.clipboard.writeText(url);
-    setToastMessage('Link copied to clipboard');
+  const handleShareSession = (_sessionId: string) => {
+    setToastMessage('Share links coming soon');
   };
 
   const handleSendMessage = async (text: string, tier: AITier = 'instant', mode: AgentMode = 'chat') => {
@@ -831,12 +838,12 @@ export default function Home() {
     // Label+ -> All
     const RESTRICTIONS = {
       'artist': ['instant'],
-      'starter': ['instant', 'standard'],
-      'artiste': ['instant', 'standard'],
-      'starter_label': ['instant', 'standard', 'business'],
-      'label': ['instant', 'standard', 'business', 'enterprise'],
-      'agency': ['instant', 'standard', 'business', 'enterprise'],
-      'enterprise': ['instant', 'standard', 'business', 'enterprise']
+      'starter': ['instant', 'business'],
+      'artiste': ['instant', 'business'],
+      'starter_label': ['instant', 'business'],
+      'label': ['instant', 'business', 'enterprise'],
+      'agency': ['instant', 'business', 'enterprise'],
+      'enterprise': ['instant', 'business', 'enterprise']
     };
 
     const allowedTiers = RESTRICTIONS[userTier] || ['instant']; // Fallback to instant
@@ -1531,12 +1538,9 @@ export default function Home() {
     }
   };
 
-  const handleUpgrade = (tier: SubscriptionTier) => {
-    // In real app, redirect to Stripe
-    updateSubscription({ tier });
-    setSubscription(prev => ({ ...prev, tier }));
-    setToastMessage(`Upgraded to ${tier.toUpperCase()} plan!`);
-    navigateTo('overview');
+  const handleUpgrade = (_tier: SubscriptionTier) => {
+    // Redirect to billing so users go through Yoco checkout
+    navigateTo('billing');
   };
 
   // --- Derived Data ---
@@ -1758,7 +1762,11 @@ export default function Home() {
                 <h2 className="text-xl font-semibold text-white/90 tracking-wide">
                   {currentView === 'dashboard' ? (sessions.find(s => s.id === activeSessionId)?.title || 'New Research') :
                     currentView === 'leads' ? 'Lead Database' :
-                    currentView === 'templates' ? 'Campaign Templates' : 'Artist Portal'}
+                    currentView === 'templates' ? 'Campaign Templates' :
+                    currentView === 'overview' ? 'Dashboard' :
+                    currentView === 'billing' ? 'Billing' :
+                    currentView === 'settings' ? 'Settings' :
+                    currentView === 'marketplace' ? 'Marketplace' : 'Artist Portal'}
                 </h2>
                 {isLoading && (
                   <div className="flex items-center gap-2 ml-3 px-3 py-1 rounded-full bg-visio-accent/10 border border-visio-accent/20">
@@ -1791,6 +1799,7 @@ export default function Home() {
                   artistProfile={artistProfile}
                   onNavigate={navigateTo}
                   onNewChat={handleNewChat}
+                  onStartChatWithPrompt={handleUseTemplate}
                   stats={{
                     leads: allLeads.length,
                     actions: sessions.reduce((acc, s) => acc + s.messages.length, 0),
