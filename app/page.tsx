@@ -566,6 +566,8 @@ export default function Home() {
       const cached = loadLocalSessions();
 
       if (!user) {
+        // Guest users: load any cached sessions but do NOT navigate.
+        // The auth guard useEffect handles routing guests to the landing page.
         if (cached.length > 0) {
           setSessions(cached);
           const lastSessionId = typeof window !== 'undefined'
@@ -575,9 +577,9 @@ export default function Home() {
             ? lastSessionId
             : cached[0].id;
           setActiveSessionId(preferred);
-          return;
         }
-        handleNewChat();
+        // Don't call handleNewChat() here — it navigates to dashboard,
+        // overriding the auth guard that routes guests to landing.
         return;
       }
 

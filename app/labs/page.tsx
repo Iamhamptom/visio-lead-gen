@@ -58,11 +58,11 @@ export default function LabsPage() {
                             </div>
                         </div>
                         <video
-                            poster="/hero-video-1.mp4" // Fallback using hero video as poster basically
+                            poster="/hero-poster.jpg"
                             className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity duration-700"
                             controls
                         >
-                            <source src="/demo.mp4" type="video/mp4" />
+                            <source src="/hero-video-1.mp4" type="video/mp4" />
                             Your browser does not support the video tag.
                         </video>
 

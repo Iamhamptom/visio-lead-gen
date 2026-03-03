@@ -243,8 +243,8 @@ export function createGeminiClient(tier: 'instant' | 'business' | 'enterprise' =
     };
 
     const fallbackModel = tier === 'enterprise'
-        ? 'gemini-1.5-pro-latest'
-        : 'gemini-2.0-flash-exp';
+        ? 'gemini-2.0-pro'
+        : 'gemini-2.0-flash';
 
     const modelName = modelOverrides[tier] || process.env.VISIO_GEMINI_MODEL || fallbackModel;
     return genAI.getGenerativeModel({ model: modelName });
