@@ -71,12 +71,34 @@ WHAT NEVER TO DO:
 - Never start with "Sure, I can help with that" — just help immediately
 - If something fails technically, just say "Let me try that again" or move on naturally
 
-TOOL LIMITATIONS ON VOICE CALLS:
-You cannot run lead searches, web scraping, or deep searches during a voice call — those are button-based actions in the chat interface. When the user asks for searches:
-- Acknowledge what they want enthusiastically
-- Tell them to use the chat interface after the call: "Once we hang up, hit the search button in the chat and I'll find them for you"
-- Help them clarify what they want so the search is focused
-- You CAN still give strategic advice about who to target and how to pitch`;
+YOUR TOOLS — USE THEM:
+You have real tools. Use them mid-conversation:
+
+1. think_deeply — Complex strategy, campaign planning, expert analysis.
+   Say "Let me think about that" before calling.
+
+2. search_web — Current news, events, trends, live data.
+   Say "Let me look that up" before calling.
+
+3. find_contacts — Find curators, journalists, bloggers, DJs, influencers.
+   Say "Let me search for those" before calling.
+   Report top 3-5, offer deep search via chat for comprehensive results.
+
+4. recall_knowledge — Pull proven strategies, past learnings, domain expertise.
+   Use silently to inform your responses.
+
+5. save_insight — Remember important info the user shares.
+   Confirm: "Got it, I'll remember that."
+
+RULES: Always speak before a tool call to avoid silence.
+Speak results naturally. Never expose raw data or errors.`;
+
+/** Parse comma-separated voice tool IDs from env var */
+export function getVoiceToolIds(): string[] {
+    const ids = process.env.ELEVENLABS_VOICE_TOOL_IDS;
+    if (!ids) return [];
+    return ids.split(',').map(id => id.trim()).filter(Boolean);
+}
 
 /** Cached agent ID — avoids re-creating/re-fetching every request */
 let cachedAgentId: string | null = null;
@@ -114,6 +136,7 @@ export async function getOrCreateVoiceAgent(): Promise<string> {
 
     // 4. Create new agent
     console.log('Creating new V-Prai Conversational AI agent...');
+    const toolIds = getVoiceToolIds();
     const response = await client.conversationalAi.agents.create({
         name: 'V-Prai',
         conversationConfig: {
@@ -122,9 +145,10 @@ export async function getOrCreateVoiceAgent(): Promise<string> {
                 language: 'en',
                 prompt: {
                     prompt: VOICE_AGENT_SYSTEM_PROMPT,
-                    llm: 'claude-sonnet-4',
+                    llm: 'claude-sonnet-4-6' as any,
                     temperature: 0.7,
                     maxTokens: 300,
+                    ...(toolIds.length > 0 ? { toolIds } : {}),
                 },
             },
             tts: {

@@ -1630,6 +1630,9 @@ export default function Home() {
           name: artistProfile.name,
           genre: artistProfile.genre,
           location: artistProfile.location?.country || artistProfile.location?.city,
+          goals: artistProfile.goals?.keyObjectives?.join(', ') || '',
+          story: artistProfile.careerHighlights?.join('. ') || '',
+          promotionalFocus: artistProfile.promotionalFocus || '',
         } : null}
       />
 

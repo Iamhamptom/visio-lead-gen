@@ -10,7 +10,14 @@ interface VoiceCallModalProps {
     onClose: () => void;
     onCallEnd?: (transcript: { role: 'user' | 'agent'; text: string }[], durationSeconds: number) => void;
     accessToken?: string;
-    artistContext?: { name?: string; genre?: string; location?: string } | null;
+    artistContext?: {
+        name?: string;
+        genre?: string;
+        location?: string;
+        goals?: string;
+        story?: string;
+        promotionalFocus?: string;
+    } | null;
 }
 
 type CallPhase = 'idle' | 'connecting' | 'active' | 'ending' | 'error';
@@ -160,12 +167,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
 
             const { signedUrl } = await res.json();
 
-            // Build dynamic overrides with artist context
-            const artistInfo = artistContext
-                ? `\n\nARTIST CONTEXT:\nName: ${artistContext.name || 'Unknown'}\nGenre: ${artistContext.genre || 'Not specified'}\nLocation: ${artistContext.location || 'Not specified'}\nUse this context to personalize your responses and recommendations.`
-                : '';
-
-            // Start the voice conversation session
+            // Start the voice conversation session with rich artist context
             await conversation.startSession({
                 signedUrl,
                 overrides: {
@@ -181,6 +183,9 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
                     artist_name: artistContext.name || '',
                     artist_genre: artistContext.genre || '',
                     artist_location: artistContext.location || '',
+                    artist_goals: artistContext.goals || '',
+                    artist_story: artistContext.story || '',
+                    artist_focus: artistContext.promotionalFocus || '',
                 } : undefined,
             });
         } catch (err: any) {
