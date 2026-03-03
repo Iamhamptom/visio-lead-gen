@@ -16,6 +16,7 @@ import { OnboardingTutorial } from './components/OnboardingTutorial';
 import { HowToUsePage } from './components/HowToUsePage';
 import { Marketplace } from './components/Marketplace';
 import { CampaignTemplates } from './components/CampaignTemplates';
+import { TemplateSuggestions } from './components/TemplateSuggestions';
 import ReasonPage from './reason/page';
 import ReachPage from './reach/page';
 import { Toast } from './components/Toast';
@@ -1846,34 +1847,11 @@ export default function Home() {
                             <div ref={messagesEndRef} className="h-4" />
                           </>
                         ) : (
-                          // Empty State with Suggested Actions -- Enhances UX for "stagnant" feeling
-                          <div className="flex flex-col items-center justify-center py-20 text-center space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-visio-teal/20 to-visio-sage/20 border border-visio-teal/30 flex items-center justify-center mb-2 shadow-[0_0_30px_rgba(182,240,156,0.1)]">
-                              <span className="text-2xl font-bold bg-gradient-to-br from-visio-teal to-visio-sage bg-clip-text text-transparent">V</span>
-                            </div>
-                            <div className="space-y-2 max-w-md px-4">
-                              <h3 className="text-2xl font-semibold text-white">How can I help today?</h3>
-                              <p className="text-white/40 text-sm">I can find industry contacts, draft pitches, plan campaigns, or research competitors for you.</p>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-lg px-6 sm:px-4">
-                              {[
-                                { label: "Find Playlist Curators", prompt: "Find playlist curators for my genre", icon: "🎵" },
-                                { label: "Draft a Pitch Email", prompt: "Help me draft a pitch email for a music blog", icon: "✉️" },
-                                { label: "Research Competitors", prompt: "Research similar artists in my genre and their strategy", icon: "🔍" },
-                                { label: "Plan a Release Campaign", prompt: "Create a 4-week release campaign plan for my next single", icon: "📅" }
-                              ].map((action, i) => (
-                                <button
-                                  key={i}
-                                  onClick={() => handleSendMessage(action.prompt)}
-                                  className="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-visio-teal/30 hover:scale-[1.02] active:scale-[0.98] transition-all text-left text-sm group"
-                                >
-                                  <span className="text-xl group-hover:scale-110 transition-transform duration-300">{action.icon}</span>
-                                  <span className="text-white/70 group-hover:text-white font-medium">{action.label}</span>
-                                </button>
-                              ))}
-                            </div>
-                          </div>
+                          // Empty State with Global Template Suggestions
+                          <TemplateSuggestions
+                            onUseTemplate={handleUseTemplate}
+                            onViewAll={() => navigateTo('templates')}
+                          />
                         )}
                       </div>
                     )}
