@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Message, Role, Lead, WebResult } from '../types';
 import { VisioOrb } from './VisioOrb';
-import { Bot, User, Brain, Search, Target, Sparkles, BarChart3, Download, ChevronDown, ChevronUp, Loader2, Globe, Wrench, CheckCircle2 } from 'lucide-react';
+import { Bot, User, Brain, Search, Target, Sparkles, BarChart3, Download, ChevronDown, ChevronUp, Loader2, Globe, Wrench, CheckCircle2, Star } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -13,7 +13,87 @@ interface ChatMessageProps {
     onSaveLead?: (lead: Lead) => void;
     onLoadMore?: (messageId: string, query: string, offset: number) => void;
     accessToken?: string;
+    sessionId?: string;
+    previousUserMessage?: string;
 }
+
+// ─── Feedback Stars ──────────────────────────────────
+const FeedbackStars: React.FC<{
+    messageId: string;
+    sessionId?: string;
+    aiResponseSnippet: string;
+    queryContext?: string;
+    accessToken?: string;
+}> = ({ messageId, sessionId, aiResponseSnippet, queryContext, accessToken }) => {
+    const [visible, setVisible] = useState(false);
+    const [rating, setRating] = useState(0);
+    const [hoveredStar, setHoveredStar] = useState(0);
+    const [submitted, setSubmitted] = useState(false);
+
+    // Show after 2s delay
+    useEffect(() => {
+        const timer = setTimeout(() => setVisible(true), 2000);
+        return () => clearTimeout(timer);
+    }, []);
+
+    if (!visible) return null;
+
+    if (submitted) {
+        return (
+            <span className="text-[10px] text-white/30 mt-2 inline-block animate-in fade-in duration-300">
+                Thanks for the feedback!
+            </span>
+        );
+    }
+
+    const handleRate = async (stars: number) => {
+        setRating(stars);
+        setSubmitted(true);
+
+        try {
+            await fetch('/api/feedback', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+                },
+                body: JSON.stringify({
+                    rating: stars,
+                    sessionId,
+                    messageId,
+                    aiResponseSnippet: aiResponseSnippet.slice(0, 500),
+                    queryContext,
+                }),
+            });
+        } catch {
+            // Best effort — don't disrupt UI
+        }
+    };
+
+    return (
+        <div className="flex items-center gap-1 mt-2 animate-in fade-in duration-500">
+            {[1, 2, 3, 4, 5].map(star => (
+                <button
+                    key={star}
+                    onClick={() => handleRate(star)}
+                    onMouseEnter={() => setHoveredStar(star)}
+                    onMouseLeave={() => setHoveredStar(0)}
+                    className="p-0.5 transition-all duration-150 hover:scale-110"
+                    aria-label={`Rate ${star} stars`}
+                >
+                    <Star
+                        size={14}
+                        className={`transition-colors duration-150 ${
+                            star <= (hoveredStar || rating)
+                                ? 'text-visio-teal fill-visio-teal'
+                                : 'text-white/15 hover:text-white/30'
+                        }`}
+                    />
+                </button>
+            ))}
+        </div>
+    );
+};
 
 // Reasoning steps for different tiers
 const REASONING_STEPS = {
@@ -35,7 +115,7 @@ const REASONING_STEPS = {
     ]
 };
 
-export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSaveLead, onLoadMore, accessToken }) => {
+export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSaveLead, onLoadMore, accessToken, sessionId, previousUserMessage }) => {
     const isUser = message.role === Role.USER;
     const [reasoningStep, setReasoningStep] = useState(0);
     const [showAllLeads, setShowAllLeads] = useState(false);
@@ -437,6 +517,19 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, onSaveLead, o
                     <div className={`text-[10px] font-medium tracking-wide text-white/30 ${isUser ? 'text-right' : 'text-left'} mt-3 px-1`}>
                         {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
+
+                    {/* Feedback Stars — agent messages only, after content is rendered */}
+                    {!isUser && !message.isThinking && !message.isResearching && parsedContent.text.length > 10 && (
+                        <div className="px-1">
+                            <FeedbackStars
+                                messageId={message.id}
+                                sessionId={sessionId}
+                                aiResponseSnippet={parsedContent.text}
+                                queryContext={previousUserMessage}
+                                accessToken={accessToken}
+                            />
+                        </div>
+                    )}
                 </div>
 
             </div>

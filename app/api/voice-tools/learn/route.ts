@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { verifyWebhookAuth, toolResponse, toolError } from '@/lib/voice-tools-auth';
 import { upsertSkill } from '@/lib/knowledge-base';
+import { storeUserMemory } from '@/lib/memory';
 
 export const maxDuration = 10;
 
@@ -19,12 +20,13 @@ export async function POST(req: NextRequest) {
         const insight = body.insight || body.content || '';
         const category = body.category || 'general';
         const tags = body.tags || [];
+        const userId = body.user_id || '';
 
         if (!insight) {
             return toolError("I didn't catch what you want me to remember. Say it again?");
         }
 
-        console.log(`[VoiceTool:Learn] Saving: "${insight.slice(0, 80)}..."`);
+        console.log(`[VoiceTool:Learn] Saving: "${insight.slice(0, 80)}..." (user: ${userId || 'global'})`);
 
         // Generate a slug from the insight
         const slug = 'voice-' + insight
@@ -40,6 +42,7 @@ export async function POST(req: NextRequest) {
             ? insight.slice(0, 57) + '...'
             : insight;
 
+        // Save as global knowledge skill
         const skillId = await upsertSkill({
             slug,
             title,
@@ -48,6 +51,20 @@ export async function POST(req: NextRequest) {
             source: 'voice_conversation',
             tags: [...tags, 'voice', 'user-insight'],
         });
+
+        // Also save as per-user memory (fire-and-forget)
+        if (userId) {
+            const memCategory = category === 'preference' || category === 'goal' || category === 'style'
+                ? category
+                : 'fact';
+            storeUserMemory({
+                userId,
+                category: memCategory,
+                content: insight,
+                source: 'voice_call',
+                confidence: 0.8,
+            }).catch(e => console.error('[VoiceTool:Learn] User memory save failed:', e));
+        }
 
         if (!skillId) {
             return toolError("I had trouble saving that. Tell me again and I'll make sure I remember it.");

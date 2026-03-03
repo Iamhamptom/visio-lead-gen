@@ -987,7 +987,8 @@ export default function Home() {
           mode,
           webSearchEnabled,
           artistContextEnabled,
-          activeTool
+          activeTool,
+          sessionId: activeSessionId,
         })
       });
 
@@ -1630,6 +1631,7 @@ export default function Home() {
         onClose={() => setShowVoiceCall(false)}
         onCallEnd={handleVoiceCallEnd}
         accessToken={session?.access_token}
+        userId={userId || undefined}
         artistContext={artistProfile ? {
           name: artistProfile.name,
           genre: artistProfile.genre,
@@ -1850,9 +1852,15 @@ export default function Home() {
                       <div className="max-w-3xl mx-auto flex flex-col pt-6 space-y-6">
                         {activeMessages.length > 0 ? (
                           <>
-                            {activeMessages.map((msg) => (
-                              <ChatMessage key={msg.id} message={msg} onSaveLead={handleSaveLead} onLoadMore={handleLoadMore} accessToken={session?.access_token} />
-                            ))}
+                            {activeMessages.map((msg, idx) => {
+                              // Find the previous user message for feedback context
+                              const prevUserMsg = msg.role !== 'user'
+                                ? activeMessages.slice(0, idx).reverse().find(m => m.role === 'user')?.content
+                                : undefined;
+                              return (
+                                <ChatMessage key={msg.id} message={msg} onSaveLead={handleSaveLead} onLoadMore={handleLoadMore} accessToken={session?.access_token} sessionId={activeSessionId} previousUserMessage={prevUserMsg} />
+                              );
+                            })}
                             {isGeneratingLeads && (
                               <LeadGenProgress isActive={isGeneratingLeads} progress={leadGenProgress} />
                             )}

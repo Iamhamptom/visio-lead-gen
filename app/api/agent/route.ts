@@ -19,8 +19,9 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { getRelevantSkills, formatSkillsForPrompt } from '@/lib/knowledge-base';
-import { getPatternInsights, formatPatternsForPrompt, recordSuccessfulSearch, recordLearningEvent } from '@/lib/learning-engine';
+import { getPatternInsights, formatPatternsForPrompt, recordSuccessfulSearch, recordLearningEvent, generatePatternKey } from '@/lib/learning-engine';
 import { logApiError } from '@/lib/error-tracker';
+import { buildSessionContext, embedConversationTurn, extractAndStoreUserMemories } from '@/lib/memory';
 
 // Maps subscription tiers to allowed AI tiers.
 // 'standard' was removed — it didn't map to any model in Claude's MODEL_MAP or Gemini,
@@ -311,6 +312,7 @@ export async function POST(request: NextRequest) {
         const webSearchEnabled = typeof body.webSearchEnabled === 'boolean' ? body.webSearchEnabled : true;
         const artistContextEnabled = typeof body.artistContextEnabled === 'boolean' ? body.artistContextEnabled : true;
         const activeTool = typeof body.activeTool === 'string' ? body.activeTool : 'none';
+        const sessionId = typeof body.sessionId === 'string' ? body.sessionId : '';
 
         // Strip [Voice Mode] prefix so classifiers and search see clean text
         const rawMessage = message || (typeof body.query === 'string' ? body.query : '');
@@ -484,6 +486,32 @@ export async function POST(request: NextRequest) {
             logs.push('⚠️ Brain offline — using general knowledge');
         }
 
+        // d) Memory retrieval — past conversations + user preferences
+        try {
+            if (auth.user.id && userMessage) {
+                const memoryContext = await buildSessionContext({
+                    userId: auth.user.id,
+                    currentMessage: userMessage,
+                    sessionId,
+                });
+
+                if (memoryContext.conversationMemory) {
+                    knowledgeContext = knowledgeContext
+                        ? `${knowledgeContext}\n\n${memoryContext.conversationMemory}`
+                        : memoryContext.conversationMemory;
+                    logs.push('🧠 Retrieved relevant past conversations');
+                }
+                if (memoryContext.userMemory) {
+                    knowledgeContext = knowledgeContext
+                        ? `${knowledgeContext}\n\n${memoryContext.userMemory}`
+                        : memoryContext.userMemory;
+                    logs.push('💭 Loaded user preferences');
+                }
+            }
+        } catch (e) {
+            console.error('Memory retrieval error:', e);
+        }
+
         // Tier logging
         const tierLabels = {
             instant: '⚡ Instant Mode',
@@ -495,6 +523,7 @@ export async function POST(request: NextRequest) {
         else logs.push(`👤 Context: ${artistContext.identity.name}`);
 
         const hasGemini = !!process.env.GEMINI_API_KEY;
+        let detectedIntentCategory: string | undefined;
 
         // ─── RESEARCH MODE ─────────────────────────────
         if (mode === 'research') {
@@ -531,6 +560,7 @@ export async function POST(request: NextRequest) {
                 );
 
                 logs.push(`📋 Intent: ${intentResult.category} (${Math.round((intentResult.confidence || 0) * 100)}%)`);
+                detectedIntentCategory = intentResult.category;
 
                 // ═══ AUTOMATION BANK CHECK ═══
                 // Only trigger automations when Claude's intent classification agrees this is
@@ -1378,6 +1408,72 @@ Format with markdown tables for top content, bullet points for insights. End wit
             assistantMessage = total > 0
                 ? `Found ${total} results. Let me know if you want me to dig deeper or draft a pitch to any of these!`
                 : `I couldn't find results for that query. Try refining your search or let me suggest a different approach.`;
+        }
+
+        // ═══ FIRE-AND-FORGET: Learning events + Memory embedding ═══
+        const _genre = artistContext?.identity?.genre || undefined;
+        const _country = artistContext?.location?.country || undefined;
+
+        // Learning events based on intent category
+        if (detectedIntentCategory) {
+            const patternKey = generatePatternKey({ genre: _genre, country: _country, intent: detectedIntentCategory });
+
+            if (detectedIntentCategory === 'lead_generation' || detectedIntentCategory === 'deep_search') {
+                recordLearningEvent({
+                    userId: auth.user.id,
+                    sessionId,
+                    eventType: leads.length > 0 ? 'successful_search' : 'failed_search',
+                    query: userMessage,
+                    aiResponseSnippet: assistantMessage.slice(0, 300),
+                    outcome: leads.length > 0 ? 'success' : 'failure',
+                    score: leads.length > 0 ? Math.min(leads.length / 10, 1) : 0,
+                    patternKey,
+                    patternData: { genre: _genre, country: _country, leadsFound: leads.length },
+                }).catch(() => {});
+            } else if (detectedIntentCategory === 'content_creation' || detectedIntentCategory === 'strategy') {
+                recordLearningEvent({
+                    userId: auth.user.id,
+                    sessionId,
+                    eventType: 'skill_used',
+                    query: userMessage,
+                    aiResponseSnippet: assistantMessage.slice(0, 300),
+                    outcome: 'success',
+                    score: 0.7,
+                    patternKey,
+                    patternData: { genre: _genre, country: _country, tool: detectedIntentCategory },
+                }).catch(() => {});
+            } else if (detectedIntentCategory === 'web_search') {
+                recordLearningEvent({
+                    userId: auth.user.id,
+                    sessionId,
+                    eventType: webResults.length > 0 ? 'successful_search' : 'failed_search',
+                    query: userMessage,
+                    aiResponseSnippet: assistantMessage.slice(0, 300),
+                    outcome: webResults.length > 0 ? 'success' : 'failure',
+                    score: webResults.length > 0 ? Math.min(webResults.length / 5, 1) : 0,
+                    patternKey,
+                    patternData: { genre: _genre, country: _country, webResultsFound: webResults.length },
+                }).catch(() => {});
+            }
+        }
+
+        // Embed this conversation turn for future memory retrieval
+        if (auth.user.id && sessionId && userMessage && assistantMessage) {
+            embedConversationTurn({
+                userId: auth.user.id,
+                sessionId,
+                userMessageId: crypto.randomUUID(),
+                userContent: userMessage,
+                agentContent: assistantMessage.slice(0, 2000),
+            }).catch(() => {});
+
+            // Extract user facts/preferences (fire-and-forget)
+            extractAndStoreUserMemories({
+                userId: auth.user.id,
+                sessionId,
+                userMessage,
+                agentResponse: assistantMessage.slice(0, 1000),
+            }).catch(() => {});
         }
 
         return NextResponse.json({
