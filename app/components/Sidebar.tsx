@@ -221,6 +221,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     onClearUnread,
 }) => {
 
+    // Inline folder name input state (replaces window.prompt)
+    const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+    const [newFolderName, setNewFolderName] = useState('');
+
     // State for collapsible folders
     const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>(
         campaigns.reduce((acc, c) => ({ ...acc, [c.id]: true }), {})
@@ -363,17 +367,43 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <div className="flex items-center justify-between px-2 mb-2">
                         <h4 className="text-[11px] font-semibold text-white/40 uppercase tracking-wider">Campaign Folders</h4>
                         <button
-                            onClick={() => {
-                                const name = prompt('Folder name:');
-                                if (name?.trim() && onCreateFolder) {
-                                    onCreateFolder(name.trim());
-                                }
-                            }}
+                            onClick={() => setIsCreatingFolder(true)}
                             className="text-white/40 hover:text-white transition-colors p-1 hover:bg-white/10 rounded-md"
                         >
                             <Plus size={12} />
                         </button>
                     </div>
+
+                    {isCreatingFolder && (
+                        <div className="px-2 mb-2">
+                            <input
+                                autoFocus
+                                type="text"
+                                value={newFolderName}
+                                onChange={(e) => setNewFolderName(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && newFolderName.trim() && onCreateFolder) {
+                                        onCreateFolder(newFolderName.trim());
+                                        setNewFolderName('');
+                                        setIsCreatingFolder(false);
+                                    }
+                                    if (e.key === 'Escape') {
+                                        setNewFolderName('');
+                                        setIsCreatingFolder(false);
+                                    }
+                                }}
+                                onBlur={() => {
+                                    if (newFolderName.trim() && onCreateFolder) {
+                                        onCreateFolder(newFolderName.trim());
+                                    }
+                                    setNewFolderName('');
+                                    setIsCreatingFolder(false);
+                                }}
+                                placeholder="Folder name..."
+                                className="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-visio-teal/50 transition-colors"
+                            />
+                        </div>
+                    )}
 
                     <div className="space-y-1">
                         {campaigns.map(c => {

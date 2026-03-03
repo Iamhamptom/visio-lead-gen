@@ -26,6 +26,7 @@ interface DashboardOverviewProps {
     artistProfile: ArtistProfile | null;
     onNavigate: (view: any) => void;
     onNewChat: () => void;
+    onStartChatWithPrompt?: (prompt: string) => void;
     stats?: {
         leads: number;
         actions: number;
@@ -48,6 +49,7 @@ const MARKETPLACE_TOOLS = [
         color: 'text-visio-teal',
         bg: 'bg-visio-teal/10',
         credits: 2,
+        prompt: 'Find playlist curators for my genre and market. I need contact details, playlist sizes, and submission methods.',
     },
     {
         icon: Mail,
@@ -57,6 +59,7 @@ const MARKETPLACE_TOOLS = [
         color: 'text-blue-400',
         bg: 'bg-blue-500/10',
         credits: 1,
+        prompt: 'Draft a professional pitch email for my latest release. Make it concise, personalized, and compelling.',
     },
     {
         icon: Target,
@@ -66,6 +69,7 @@ const MARKETPLACE_TOOLS = [
         color: 'text-purple-400',
         bg: 'bg-purple-500/10',
         credits: 3,
+        prompt: 'Plan a full release campaign for my upcoming single. Include timeline, budget breakdown, and outreach strategy.',
     },
     {
         icon: BarChart3,
@@ -75,6 +79,7 @@ const MARKETPLACE_TOOLS = [
         color: 'text-orange-400',
         bg: 'bg-orange-500/10',
         credits: 3,
+        prompt: 'Research competitor artists in my genre. Analyze their PR strategies, playlist placements, and social media tactics.',
     },
     {
         icon: FileText,
@@ -84,6 +89,7 @@ const MARKETPLACE_TOOLS = [
         color: 'text-pink-400',
         bg: 'bg-pink-500/10',
         credits: 1,
+        prompt: 'Write a professional press release for my upcoming release. Include all standard PR formatting and quotes.',
     },
     {
         icon: TrendingUp,
@@ -93,6 +99,7 @@ const MARKETPLACE_TOOLS = [
         color: 'text-emerald-400',
         bg: 'bg-emerald-500/10',
         credits: 3,
+        prompt: 'Research viral trends in my genre right now. What sounds, challenges, and content formats are gaining traction?',
     },
 ];
 
@@ -100,6 +107,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
     artistProfile,
     onNavigate,
     onNewChat,
+    onStartChatWithPrompt,
     stats = { leads: 0, actions: 0, campaigns: 0 },
     leadLists = [],
     onExportLeadList,
@@ -301,7 +309,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.05 * i + 0.4 }}
-                            onClick={onNewChat}
+                            onClick={() => onStartChatWithPrompt ? onStartChatWithPrompt(tool.prompt) : onNewChat()}
                             className="group flex flex-col p-6 rounded-2xl bg-[#111111] border border-white/5 hover:bg-[#151515] hover:border-white/15 transition-all text-left relative overflow-hidden"
                         >
                             <div className={`absolute -right-6 -top-6 w-32 h-32 ${tool.bg} rounded-full blur-[50px] opacity-0 group-hover:opacity-40 transition-opacity duration-500`} />

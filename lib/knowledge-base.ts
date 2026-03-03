@@ -280,6 +280,128 @@ export async function seedInitialSkills(): Promise<number> {
             source: 'manual',
             tags: ['brand', 'partnership', 'sponsorship', 'outreach'],
         },
+        {
+            slug: 'afrobeats-market-ng',
+            title: 'Afrobeats Market - Nigeria',
+            category: 'genre_specific',
+            content: `Afrobeats PR in Nigeria:
+- **Key platforms**: Audiomack (dominant in NG), Apple Music, Spotify, Boomplay
+- **Top blogs & media**: NotJustOk, BellaNaija Music, Pulse Nigeria, The Native, tooXclusive
+- **Radio**: Beat FM (99.9), Cool FM (96.9), Rhythm FM, Nigeria Info
+- **Strategy**: Audiomack is king for discovery — upload early, push pre-saves. Apple Music editorial is critical for charting. Blog embeds drive SEO and Google discoverability.
+- **Influencer tiers**: Nano (5K-50K): ₦20K-₦100K. Micro (50K-200K): ₦100K-₦500K. Macro (200K+): ₦500K+
+- **Key contacts**: Music directors at radio, A&R at Mavin/Spaceship/YBNL, playlist editors at Audiomack NG
+- **Timing**: New Music Friday is critical. Submit to DSPs 4 weeks early. Blog outreach Tuesday-Thursday.`,
+            source: 'manual',
+            tags: ['afrobeats', 'nigeria', 'ng', 'africa', 'genre', 'audiomack'],
+        },
+        {
+            slug: 'hiphop-market-usa',
+            title: 'Hip-Hop Market - USA',
+            category: 'genre_specific',
+            content: `Hip-Hop PR in the USA:
+- **Key platforms**: Spotify, Apple Music, YouTube, SoundCloud, TIDAL
+- **Top media**: Complex, Pitchfork, HotNewHipHop (HNHH), XXL, The FADER, Stereogum, Hypebeast
+- **Radio**: Shade 45 (SiriusXM), Hot 97, Power 106, college radio (CMJ charts)
+- **Strategy**: College radio is an underrated launchpad — CMJ charting gets A&R attention. WorldStar/HipHopDX for viral visibility. SoundCloud for underground credibility. Lyric videos on YouTube for SEO.
+- **Key outlets for submissions**: SubmitHub (Pitchfork blogs), Groover, direct email pitches to editors
+- **Blog embeds**: HNHH, DatPiff (mixtape culture), LiveMixtapes for street credibility
+- **A&R pipeline**: Showcases (SXSW, A3C, Rolling Loud sideshows), Spotify editorial pitching, TikTok virality
+- **Pricing**: Blog features $200-$2000. Playlist placements $100-$500/week. PR retainers $1500-$5000/month.`,
+            source: 'manual',
+            tags: ['hiphop', 'hip-hop', 'rap', 'usa', 'us', 'genre', 'complex', 'pitchfork'],
+        },
+        {
+            slug: 'drill-grime-market-uk',
+            title: 'Drill & Grime Market - UK',
+            category: 'genre_specific',
+            content: `UK Drill & Grime PR:
+- **Key platforms**: YouTube (dominant), Spotify, Apple Music, SoundCloud
+- **Top channels & media**: GRM Daily, Link Up TV, SBTV, Mixtape Madness, Pressplay Media, CLASH Magazine
+- **Radio**: BBC 1Xtra (Charlie Sloth, Kenny Allstar), Rinse FM, Radar Radio, NTS
+- **Strategy**: YouTube is THE platform — GRM Daily and Link Up TV premieres are career-defining. 1Xtra playlist/fire in the booth is a major milestone. Freestyle videos on SBTV/GRM are discovery engines.
+- **Key contacts**: A&R at 0207 Def Jam, Since '93, Relentless, and independents. Promoters at Eskimo Dance, Boiler Room
+- **Blog/media**: CLASH Magazine, Notion, Dummy Mag, Trench, Complex UK
+- **Pricing**: GRM Daily video premiere £500-£2000. Link Up TV £300-£1500. Blog coverage £100-£500.
+- **Community**: Twitter/X is critical for UK scene discourse. Build presence there.`,
+            source: 'manual',
+            tags: ['drill', 'grime', 'uk', 'united kingdom', 'genre', 'grm daily', 'youtube'],
+        },
+        {
+            slug: 'rnb-soul-strategy',
+            title: 'R&B & Soul Strategy',
+            category: 'genre_specific',
+            content: `R&B & Soul PR strategy:
+- **Key platforms**: Spotify (editorial playlists are everything), Apple Music, YouTube, TIDAL
+- **Target playlists**: Spotify's "R&B X", "Are & Be", "Chill R&B". Apple Music's "R&B Now", "The New R&B"
+- **Top media**: SoulBounce, Rated R&B, Essence Magazine, Vibe Magazine, Singersroom, YouKnowIGotSoul
+- **Strategy**: R&B thrives on aesthetic — invest in visuals, lyric videos, and behind-the-scenes content. Instagram aesthetic is critical. Spotify editorial submission 4 weeks before release with compelling pitch narrative.
+- **Key events**: Essence Festival, Soul Train Awards season, GRAMMY consideration timing
+- **Playlist curators**: Independent R&B curators on Spotify have massive influence — identify and pitch directly
+- **Influencer approach**: Partner with lifestyle/fashion influencers who align with R&B aesthetic rather than just music influencers
+- **Timing**: R&B performs well with Thursday night releases. Align with "vibe" moments — cuffing season, Valentine's, summer nights.`,
+            source: 'manual',
+            tags: ['rnb', 'r&b', 'soul', 'genre', 'spotify', 'playlists'],
+        },
+        {
+            slug: 'getting-signed-strategy',
+            title: 'Getting Signed - A&R Pipeline Strategy',
+            category: 'campaign',
+            content: `Strategy for getting signed to a label:
+1. **EPK preparation**: Professional press kit with bio, high-res photos, streaming links, press clippings, social stats, and a compelling narrative
+2. **Demo submission**: Research A&R contacts at target labels. Use LinkedIn, SubmitHub Pro, and industry events. Never send unsolicited MP3 attachments — always link to private streams.
+3. **Showcase strategy**: Play industry showcases (SXSW, CMJ, A3C, The Great Escape, COLORS). These are A&R hunting grounds.
+4. **Build leverage first**: Labels sign what's already working. Hit 100K monthly listeners, build a TikTok moment, chart on college radio, or sell out a local venue before approaching.
+5. **Label etiquette**: Research the label's roster first. Explain why you fit their brand. Reference specific artists on their roster. Keep emails under 150 words.
+6. **Management first**: Consider getting a manager or entertainment lawyer before approaching labels. They have existing relationships and can make warm introductions.
+7. **Red flags**: Avoid labels asking for upfront money, 360 deals without clear value, or deals without legal review.`,
+            source: 'manual',
+            tags: ['signed', 'label', 'a&r', 'deal', 'management', 'epk', 'campaign'],
+        },
+        {
+            slug: 'sync-licensing-guide',
+            title: 'Sync Licensing & Music Supervision Guide',
+            category: 'outreach',
+            content: `Getting music placed in TV, film, and advertising:
+1. **Music supervisors**: The gatekeepers. Research credits on IMDB, Guild of Music Supervisors directory, and LinkedIn. Key supes: Alexandra Patsavas, Randall Poster, Jen Malone.
+2. **Sync agencies & libraries**: Musicbed, Artlist, Epidemic Sound (non-exclusive). For exclusive: Position Music, Terrorbird, Bank Robber Music.
+3. **PROs**: Register with ASCAP, BMI, or SESAC (USA) / PRS (UK) / SAMRO (SA). This is how you get paid for broadcast usage.
+4. **What supervisors want**: Clean masters (no uncleared samples), stems available, quick turnaround on licensing, instrumentals ready, lyrics that aren't too specific
+5. **Pitch approach**: Short email, link to a curated playlist of 5-10 tracks that fit their current projects. Reference the show/film by name.
+6. **Pricing**: Indie film $500-$5000. TV show $5000-$25000. Major ad campaign $25000-$500000+. Library placements: royalty-only to $500/track.
+7. **Metadata**: Ensure all tracks have proper ISRC codes, correct writer/publisher splits, and are registered with your PRO before pitching.`,
+            source: 'manual',
+            tags: ['sync', 'licensing', 'tv', 'film', 'music supervisor', 'outreach', 'placement'],
+        },
+        {
+            slug: 'epk-bio-writing',
+            title: 'EPK & Artist Bio Writing Guide',
+            category: 'outreach',
+            content: `Creating an effective Electronic Press Kit (EPK) and artist bio:
+1. **Bio framework**: Start with a hook (unique angle/achievement), then origin story (1-2 sentences), musical identity, notable achievements, and what's next. Three versions: 1-sentence, 1-paragraph, full page.
+2. **EPK structure**: Artist bio, high-res press photos (landscape + portrait, minimum 300dpi), music links (streaming + private previews), press clippings/quotes, social media stats, booking/contact info, upcoming releases/tour dates
+3. **One-sheet creation**: Single-page PDF with photo, key stats, streaming numbers, notable placements/press, and contact info. This is what booking agents and promoters want.
+4. **Press photo specs**: Minimum 2000x3000px, both landscape and portrait crops, plain and editorial/lifestyle options, consistent visual brand
+5. **Common mistakes**: Bios that read like Wikipedia entries. Photos that are blurry or poorly lit. Missing contact information. Broken streaming links. Stats that are outdated.
+6. **Tools**: Canva for one-sheets, Google Drive/Dropbox for hosting, Linktree or custom landing page for EPK URL
+7. **Update cadence**: Refresh EPK before every release cycle. Update stats quarterly. New photos at least twice a year.`,
+            source: 'manual',
+            tags: ['epk', 'bio', 'press kit', 'one-sheet', 'outreach', 'writing'],
+        },
+        {
+            slug: 'social-media-growth',
+            title: 'Social Media Growth Strategy for Artists',
+            category: 'platform',
+            content: `Platform-specific growth tactics for music artists:
+- **TikTok**: Post 1-3x daily. Use trending sounds + your own music. Behind-the-scenes studio content outperforms polished posts. Duets and stitches boost discovery. Hashtag research: mix genre tags (#newmusic) with niche tags (#indieartist). Best posting: 7-9am and 7-11pm.
+- **Instagram**: Reels are priority (algorithm favors video). Carousel posts for track breakdowns. Stories for daily engagement (polls, Q&A). Consistent aesthetic builds brand. Engage in comments for 15 min after posting.
+- **YouTube**: Shorts for discovery, long-form for depth. Lyric videos, visualizers, and behind-the-scenes content. SEO matters — title, description, and tags. Community tab for engagement.
+- **Twitter/X**: Real-time engagement with fans and industry. Quote-tweet other artists supportively. Spaces for live audio interactions. Thread format for storytelling.
+- **Content calendar**: Plan 2 weeks ahead. Mix content types: 40% music/promo, 30% behind-scenes, 20% engagement/personality, 10% reposts/community. Batch-create content weekly.
+- **Engagement optimization**: Reply to every comment for first 30 minutes. Use CTAs in captions. Cross-promote across platforms. Collaborate with artists at your level.`,
+            source: 'manual',
+            tags: ['social media', 'tiktok', 'instagram', 'youtube', 'twitter', 'growth', 'platform', 'content'],
+        },
     ];
 
     let created = 0;

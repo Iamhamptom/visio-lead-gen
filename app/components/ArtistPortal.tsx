@@ -101,9 +101,9 @@ export const ArtistPortal = ({ subscription, onUpgrade }: { subscription?: Subsc
 
         setIsSaving(false);
         if (success) {
-            alert('Profile saved! Context updated.');
+            window.dispatchEvent(new CustomEvent('visio-toast', { detail: 'Profile saved! Context updated.' }));
         } else {
-            alert('Failed to save profile. Please try again.');
+            window.dispatchEvent(new CustomEvent('visio-toast', { detail: 'Failed to save profile. Please try again.' }));
         }
     };
 
@@ -111,12 +111,11 @@ export const ArtistPortal = ({ subscription, onUpgrade }: { subscription?: Subsc
     const handleConnect = (platform: keyof ArtistProfile['connectedAccounts']) => {
         const isConnected = profile.connectedAccounts?.[platform];
         if (isConnected) {
-            if (confirm(`Disconnect ${platform}?`)) {
-                setProfile(prev => ({
-                    ...prev,
-                    connectedAccounts: { ...prev.connectedAccounts, [platform]: false }
-                }));
-            }
+            setProfile(prev => ({
+                ...prev,
+                connectedAccounts: { ...prev.connectedAccounts, [platform]: false }
+            }));
+            window.dispatchEvent(new CustomEvent('visio-toast', { detail: `${platform} disconnected` }));
         } else {
             // Simulate OAuth Window
             const width = 600;
@@ -206,7 +205,7 @@ export const ArtistPortal = ({ subscription, onUpgrade }: { subscription?: Subsc
                         Add Artist
                     </button>
                     <button
-                        onClick={() => setShowPublicProfile(true)}
+                        onClick={() => window.dispatchEvent(new CustomEvent('visio-toast', { detail: 'Public profiles coming soon' }))}
                         className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors text-sm font-medium flex items-center gap-2"
                     >
                         <ExternalLink size={14} />

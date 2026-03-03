@@ -58,8 +58,7 @@ const MOCK_ANALYTICS: ArtistAnalytics = {
 export const ArtistDashboard = ({ analytics }: { analytics: ArtistAnalytics }) => {
     // CSV Parser Mock
     const handleFileUpload = () => {
-        // In a real app, parse CSV here
-        alert("Simulating CSV Import... Data updated.");
+        window.dispatchEvent(new CustomEvent('visio-toast', { detail: 'CSV import coming soon' }));
     };
 
     return (
