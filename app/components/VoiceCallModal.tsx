@@ -10,6 +10,7 @@ interface VoiceCallModalProps {
     onClose: () => void;
     onCallEnd?: (transcript: { role: 'user' | 'agent'; text: string }[], durationSeconds: number) => void;
     accessToken?: string;
+    userId?: string;
     artistContext?: {
         name?: string;
         genre?: string;
@@ -27,6 +28,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
     onClose,
     onCallEnd,
     accessToken,
+    userId,
     artistContext,
 }) => {
     const [callPhase, setCallPhase] = useState<CallPhase>('idle');
@@ -116,7 +118,10 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
                     'Content-Type': 'application/json',
                     ...(token ? { Authorization: `Bearer ${token}` } : {}),
                 },
-                body: JSON.stringify({ durationSeconds }),
+                body: JSON.stringify({
+                    durationSeconds,
+                    transcript: conversationLogRef.current,
+                }),
             });
         } catch (err) {
             console.error('Failed to deduct call credits:', err);
@@ -165,7 +170,21 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
                 return;
             }
 
-            const { signedUrl } = await res.json();
+            const responseData = await res.json();
+            const { signedUrl, userMemory } = responseData;
+
+            // Build dynamic variables with artist context + user memory
+            const dynVars: Record<string, string> = {};
+            if (artistContext) {
+                dynVars.artist_name = artistContext.name || '';
+                dynVars.artist_genre = artistContext.genre || '';
+                dynVars.artist_location = artistContext.location || '';
+                dynVars.artist_goals = artistContext.goals || '';
+                dynVars.artist_story = artistContext.story || '';
+                dynVars.artist_focus = artistContext.promotionalFocus || '';
+            }
+            if (userId) dynVars.user_id = userId;
+            if (userMemory) dynVars.user_memory = userMemory;
 
             // Start the voice conversation session with rich artist context
             await conversation.startSession({
@@ -179,14 +198,7 @@ export const VoiceCallModal: React.FC<VoiceCallModalProps> = ({
                         similarityBoost: 0.72,
                     },
                 },
-                dynamicVariables: artistContext ? {
-                    artist_name: artistContext.name || '',
-                    artist_genre: artistContext.genre || '',
-                    artist_location: artistContext.location || '',
-                    artist_goals: artistContext.goals || '',
-                    artist_story: artistContext.story || '',
-                    artist_focus: artistContext.promotionalFocus || '',
-                } : undefined,
+                dynamicVariables: Object.keys(dynVars).length > 0 ? dynVars : undefined,
             });
         } catch (err: any) {
             console.error('Failed to start voice call:', err);

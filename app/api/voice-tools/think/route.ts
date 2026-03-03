@@ -3,6 +3,7 @@ import { verifyWebhookAuth, formatForSpeech, toolResponse, toolError } from '@/l
 import { getClient, getModel } from '@/lib/claude';
 import { searchKnowledgeBase } from '@/lib/rag';
 import { getRelevantSkills, formatSkillsForPrompt } from '@/lib/knowledge-base';
+import { getUserMemories, formatUserMemoryForPrompt, searchConversationMemory, formatConversationMemoryForPrompt } from '@/lib/memory';
 
 export const maxDuration = 30;
 
@@ -23,6 +24,7 @@ export async function POST(req: NextRequest) {
         const artistName = body.artist_name || '';
         const genre = body.artist_genre || '';
         const location = body.artist_location || '';
+        const userId = body.user_id || '';
 
         if (!question) {
             return toolError("I didn't catch the question. Could you repeat that?");
@@ -30,10 +32,12 @@ export async function POST(req: NextRequest) {
 
         console.log(`[VoiceTool:Think] "${question}" for ${artistName || 'unknown artist'}`);
 
-        // Pull context from knowledge systems in parallel
-        const [ragChunks, skills] = await Promise.all([
+        // Pull context from knowledge systems + memory in parallel
+        const [ragChunks, skills, userMemories, conversationMemories] = await Promise.all([
             searchKnowledgeBase(question, 3).catch(() => []),
             getRelevantSkills(genre, location, question, 3).catch(() => []),
+            userId ? getUserMemories({ userId, query: question, limit: 5 }).catch(() => []) : Promise.resolve([]),
+            userId ? searchConversationMemory({ userId, query: question, limit: 3 }).catch(() => []) : Promise.resolve([]),
         ]);
 
         // Build context
@@ -41,6 +45,8 @@ export async function POST(req: NextRequest) {
             ? ragChunks.map(c => c.content).join('\n\n')
             : '';
         const skillsContext = formatSkillsForPrompt(skills);
+        const memoryContext = formatUserMemoryForPrompt(userMemories);
+        const conversationContext = formatConversationMemoryForPrompt(conversationMemories);
 
         const systemPrompt = `You are V-Prai, an elite music publicist AI. Answer the question concisely for a voice conversation — maximum 3 sentences. No markdown, no lists, no formatting. Speak naturally as if on a phone call.
 
@@ -49,7 +55,9 @@ ${genre ? `Genre: ${genre}` : ''}
 ${location ? `Location: ${location}` : ''}
 
 ${ragContext ? `RELEVANT KNOWLEDGE:\n${ragContext}\n` : ''}
-${skillsContext ? `\n${skillsContext}` : ''}`;
+${skillsContext ? `\n${skillsContext}` : ''}
+${memoryContext ? `\n${memoryContext}` : ''}
+${conversationContext ? `\n${conversationContext}` : ''}`;
 
         const client = getClient();
         const response = await client.messages.create({

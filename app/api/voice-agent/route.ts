@@ -3,6 +3,7 @@ import { requireUser } from '@/lib/api-auth';
 import { hasElevenLabsKey, getVoiceAgentSignedUrl, VOICE_AGENT_SYSTEM_PROMPT, DEFAULT_VOICE_ID } from '@/lib/elevenlabs';
 import { getUserCredits, deductCredits, getCreditCost } from '@/lib/credits';
 import { isAdminUser } from '@/lib/api-auth';
+import { getUserMemories, formatUserMemoryForPrompt, storeVoiceCallTranscript } from '@/lib/memory';
 
 /**
  * GET /api/voice-agent
@@ -35,12 +36,19 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-        const signedUrl = await getVoiceAgentSignedUrl();
+        // Fetch signed URL and user memories in parallel
+        const [signedUrl, userMemories] = await Promise.all([
+            getVoiceAgentSignedUrl(),
+            getUserMemories({ userId: auth.user.id, limit: 10 }).catch(() => []),
+        ]);
+
+        const userMemory = formatUserMemoryForPrompt(userMemories);
 
         return NextResponse.json({
             signedUrl,
             voiceId: DEFAULT_VOICE_ID,
             systemPrompt: VOICE_AGENT_SYSTEM_PROMPT,
+            userMemory: userMemory || undefined,
         });
     } catch (error: any) {
         console.error('Voice agent error:', error?.message || error);
@@ -65,9 +73,19 @@ export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
         const durationSeconds = body?.durationSeconds;
+        const transcript = Array.isArray(body?.transcript) ? body.transcript : [];
 
         if (typeof durationSeconds !== 'number' || durationSeconds < 0) {
             return NextResponse.json({ error: 'Invalid duration' }, { status: 400 });
+        }
+
+        // Store voice transcript (fire-and-forget) if there's meaningful content
+        if (transcript.length > 1) {
+            storeVoiceCallTranscript({
+                userId: auth.user.id,
+                transcript,
+                durationSeconds,
+            }).catch(e => console.error('[VoiceAgent] Transcript storage failed:', e));
         }
 
         // Calculate minutes (round up — any partial minute counts)
