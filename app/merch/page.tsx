@@ -11,6 +11,7 @@ import {
   RefreshCw,
   ArrowLeft,
   ExternalLink,
+  CreditCard,
 } from "lucide-react";
 
 // ━━━━━━━━━━━━━ MERCH CATALOG ━━━━━━━━━━━━━
@@ -136,7 +137,7 @@ const MERCH_CATALOG: MerchItem[] = [
     sizes: ["S", "M", "L", "XL", "XXL"],
     colors: ["All White"],
     imagePrompt: "",
-    imageUrl: "/merch/piano2da-collage-3up.jpg",
+    imageUrl: "/merch/piano2da-allwhite-solo.png",
     bestSeller: true,
   },
   {
@@ -199,13 +200,18 @@ function MerchCard({
   item,
   onGenerate,
   generating,
+  onBuy,
+  buying,
 }: {
   item: MerchItem;
   onGenerate: (slug: string) => void;
   generating: string | null;
+  onBuy: (slug: string) => void;
+  buying: string | null;
 }) {
   const catCfg = CATEGORY_CONFIG[item.category];
   const isGenerating = generating === item.slug;
+  const isBuying = buying === item.slug;
 
   return (
     <div className="group rounded-xl border border-white/[0.08] bg-white/[0.03] overflow-hidden transition-all duration-300 hover:border-white/[0.15] hover:bg-white/[0.05] hover:shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
@@ -298,7 +304,7 @@ function MerchCard({
           ))}
         </div>
 
-        {/* Price */}
+        {/* Price + Buy */}
         <div className="flex items-center justify-between pt-3 border-t border-white/[0.06]">
           <span
             className="text-xl font-bold"
@@ -306,9 +312,18 @@ function MerchCard({
           >
             {formatPrice(item.price)}
           </span>
-          <span className="text-[10px] text-white/30 uppercase tracking-wider">
-            Starting price
-          </span>
+          <button
+            onClick={() => onBuy(item.slug)}
+            disabled={isBuying}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#D4A847] text-black text-xs font-bold uppercase tracking-wider transition-all hover:brightness-110 hover:shadow-[0_0_16px_rgba(212,168,71,0.4)] disabled:opacity-50"
+          >
+            {isBuying ? (
+              <Loader2 size={12} className="animate-spin" />
+            ) : (
+              <CreditCard size={12} />
+            )}
+            {isBuying ? "Loading..." : "Buy Now"}
+          </button>
         </div>
       </div>
     </div>
@@ -321,6 +336,7 @@ export default function MerchPage() {
   const [items, setItems] = useState<MerchItem[]>(MERCH_CATALOG);
   const [generating, setGenerating] = useState<string | null>(null);
   const [generatingAll, setGeneratingAll] = useState(false);
+  const [buying, setBuying] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [error, setError] = useState<string | null>(null);
 
@@ -364,6 +380,14 @@ export default function MerchPage() {
       }
     },
     [items]
+  );
+
+  const handleBuy = useCallback(
+    (slug: string) => {
+      setBuying(slug);
+      window.location.href = `/merch/checkout?item=${slug}`;
+    },
+    []
   );
 
   const handleGenerateAll = useCallback(async () => {
@@ -533,6 +557,8 @@ export default function MerchPage() {
               item={item}
               onGenerate={handleGenerate}
               generating={generating}
+              onBuy={handleBuy}
+              buying={buying}
             />
           ))}
         </div>
