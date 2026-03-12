@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { getYocoSecretKey } from "@/lib/yoco";
 
 const YOCO_API_BASE = "https://payments.yoco.com/api";
@@ -11,15 +10,31 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const supabase = getSupabaseAdmin();
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-    const { data: order, error } = await supabase
-      .from("merch_orders")
-      .select("*")
-      .eq("id", id)
-      .single();
+    if (!supabaseUrl || !serviceKey) {
+      return NextResponse.json({ error: "Database not configured" }, { status: 500 });
+    }
 
-    if (error || !order) {
+    const res = await fetch(
+      `${supabaseUrl}/rest/v1/merch_orders?id=eq.${id}&select=*`,
+      {
+        headers: {
+          "apikey": serviceKey,
+          "Authorization": `Bearer ${serviceKey}`,
+        },
+      }
+    );
+
+    if (!res.ok) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+
+    const orders = await res.json();
+    const order = orders[0];
+
+    if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
@@ -42,14 +57,19 @@ export async function GET(
             const checkout = await yocoRes.json();
             if (checkout.status === "completed" || checkout.status === "succeeded") {
               // Mark as paid
-              await supabase
-                .from("merch_orders")
-                .update({
+              await fetch(`${supabaseUrl}/rest/v1/merch_orders?id=eq.${id}`, {
+                method: "PATCH",
+                headers: {
+                  "Content-Type": "application/json",
+                  "apikey": serviceKey,
+                  "Authorization": `Bearer ${serviceKey}`,
+                },
+                body: JSON.stringify({
                   status: "paid",
                   paid_at: new Date().toISOString(),
                   yoco_payment_id: checkout.paymentId || null,
-                })
-                .eq("id", id);
+                }),
+              });
 
               order.status = "paid";
               order.paid_at = new Date().toISOString();

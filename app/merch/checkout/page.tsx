@@ -42,6 +42,33 @@ const MERCH_CATALOG: MerchItem[] = [
   { slug: "piano2da-tee-white", name: "PIANO 2DA WRLD! Tee — White", description: "White tee with gradient print. LUX Apparel.", price: 999.99, category: "apparel", sizes: ["S", "M", "L", "XL", "XXL"], colors: ["White"], imageUrl: "/merch/piano2da-grid-4up.jpg", bestSeller: true },
 ];
 
+const COUNTRIES = [
+  "South Africa",
+  "Nigeria",
+  "Kenya",
+  "Ghana",
+  "Tanzania",
+  "Uganda",
+  "Ethiopia",
+  "Botswana",
+  "Namibia",
+  "Mozambique",
+  "Zimbabwe",
+  "United States",
+  "United Kingdom",
+  "Canada",
+  "Australia",
+  "Germany",
+  "France",
+  "Netherlands",
+  "Brazil",
+  "Japan",
+  "United Arab Emirates",
+  "Saudi Arabia",
+  "India",
+  "Other",
+];
+
 const SA_PROVINCES = [
   "Eastern Cape",
   "Free State",
@@ -78,6 +105,7 @@ function CheckoutForm() {
   const [phone, setPhone] = useState("");
 
   // Address
+  const [country, setCountry] = useState("South Africa");
   const [address1, setAddress1] = useState("");
   const [address2, setAddress2] = useState("");
   const [city, setCity] = useState("");
@@ -136,6 +164,7 @@ function CheckoutForm() {
           city,
           province,
           postal_code: postalCode,
+          country,
         }),
       });
 
@@ -370,17 +399,29 @@ function CheckoutForm() {
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-white/50 mb-1 block">Province *</label>
-                    <select
-                      value={province}
-                      onChange={(e) => setProvince(e.target.value)}
-                      className="w-full px-4 py-3 rounded-lg bg-white/[0.06] border border-white/[0.08] text-white text-sm focus:border-[#D4A847]/50 focus:outline-none transition-colors appearance-none"
-                    >
-                      <option value="" className="bg-[#1a1a1a]">Select province</option>
-                      {SA_PROVINCES.map((p) => (
-                        <option key={p} value={p} className="bg-[#1a1a1a]">{p}</option>
-                      ))}
-                    </select>
+                    <label className="text-xs text-white/50 mb-1 block">
+                      {country === "South Africa" ? "Province" : "State / Province / Region"} *
+                    </label>
+                    {country === "South Africa" ? (
+                      <select
+                        value={province}
+                        onChange={(e) => setProvince(e.target.value)}
+                        className="w-full px-4 py-3 rounded-lg bg-white/[0.06] border border-white/[0.08] text-white text-sm focus:border-[#D4A847]/50 focus:outline-none transition-colors appearance-none"
+                      >
+                        <option value="" className="bg-[#1a1a1a]">Select province</option>
+                        {SA_PROVINCES.map((p) => (
+                          <option key={p} value={p} className="bg-[#1a1a1a]">{p}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        value={province}
+                        onChange={(e) => setProvince(e.target.value)}
+                        placeholder="e.g. California, London, Lagos"
+                        className="w-full px-4 py-3 rounded-lg bg-white/[0.06] border border-white/[0.08] text-white placeholder:text-white/30 text-sm focus:border-[#D4A847]/50 focus:outline-none transition-colors"
+                      />
+                    )}
                   </div>
                   <div>
                     <label className="text-xs text-white/50 mb-1 block">Postal Code *</label>
@@ -389,9 +430,21 @@ function CheckoutForm() {
                       value={postalCode}
                       onChange={(e) => setPostalCode(e.target.value)}
                       placeholder="e.g. 2000"
-                      maxLength={5}
+                      maxLength={10}
                       className="w-full px-4 py-3 rounded-lg bg-white/[0.06] border border-white/[0.08] text-white placeholder:text-white/30 text-sm focus:border-[#D4A847]/50 focus:outline-none transition-colors"
                     />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="text-xs text-white/50 mb-1 block">Country *</label>
+                    <select
+                      value={country}
+                      onChange={(e) => { setCountry(e.target.value); setProvince(""); }}
+                      className="w-full px-4 py-3 rounded-lg bg-white/[0.06] border border-white/[0.08] text-white text-sm focus:border-[#D4A847]/50 focus:outline-none transition-colors appearance-none"
+                    >
+                      {COUNTRIES.map((c) => (
+                        <option key={c} value={c} className="bg-[#1a1a1a]">{c}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
@@ -440,6 +493,7 @@ function CheckoutForm() {
                     <p className="text-sm font-medium">{name}</p>
                     <p className="text-xs text-white/60">{address1}{address2 ? `, ${address2}` : ""}</p>
                     <p className="text-xs text-white/60">{city}, {province} {postalCode}</p>
+                    <p className="text-xs text-white/60">{country}</p>
                     <p className="text-xs text-white/60">{email}{phone ? ` · ${phone}` : ""}</p>
                   </div>
                 </div>
@@ -538,7 +592,7 @@ function CheckoutForm() {
                 <div className="grid grid-cols-2 gap-2 pt-2">
                   {[
                     { icon: Shield, label: "Secure Payment" },
-                    { icon: Truck, label: "Free Shipping SA" },
+                    { icon: Truck, label: "Worldwide Shipping" },
                   ].map(({ icon: Icon, label }) => (
                     <div key={label} className="flex items-center gap-1.5 text-[10px] text-white/40">
                       <Icon size={12} />

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getYocoSecretKey } from "@/lib/yoco";
-import { getSupabaseAdmin } from "@/lib/supabase/admin";
 
 const YOCO_API_BASE = "https://payments.yoco.com/api";
 
@@ -27,6 +26,7 @@ export async function POST(req: NextRequest) {
       city,
       province,
       postal_code,
+      country = "South Africa",
     } = body;
 
     // Validate required fields
@@ -42,12 +42,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
     }
 
-    // Create order in DB
-    const supabase = getSupabaseAdmin();
-    const { data: order, error: dbError } = await supabase
-      .from("merch_orders")
-      .insert({
-        order_number: "", // trigger will generate
+    // Create order in DB using direct Supabase REST API (avoids admin client issues)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !serviceKey) {
+      return NextResponse.json({ error: "Database not configured" }, { status: 500 });
+    }
+
+    const insertRes = await fetch(`${supabaseUrl}/rest/v1/merch_orders`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": serviceKey,
+        "Authorization": `Bearer ${serviceKey}`,
+        "Prefer": "return=representation",
+      },
+      body: JSON.stringify({
         item_slug,
         item_name,
         size,
@@ -62,12 +73,21 @@ export async function POST(req: NextRequest) {
         city,
         province,
         postal_code,
-      })
-      .select("id, order_number")
-      .single();
+        country,
+      }),
+    });
 
-    if (dbError) {
-      console.error("Order creation failed:", dbError);
+    if (!insertRes.ok) {
+      const errBody = await insertRes.text();
+      console.error("Supabase insert error:", insertRes.status, errBody);
+      return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
+    }
+
+    const orders = await insertRes.json();
+    const order = orders[0];
+
+    if (!order?.id) {
+      console.error("No order returned from insert");
       return NextResponse.json({ error: "Failed to create order" }, { status: 500 });
     }
 
@@ -103,8 +123,15 @@ export async function POST(req: NextRequest) {
 
     if (!yocoRes.ok) {
       const err = await yocoRes.json().catch(() => ({ message: "Unknown error" }));
+      console.error("Yoco checkout error:", err);
       // Clean up the order
-      await supabase.from("merch_orders").delete().eq("id", order.id);
+      await fetch(`${supabaseUrl}/rest/v1/merch_orders?id=eq.${order.id}`, {
+        method: "DELETE",
+        headers: {
+          "apikey": serviceKey,
+          "Authorization": `Bearer ${serviceKey}`,
+        },
+      });
       return NextResponse.json(
         { error: (err as any).message || "Payment gateway error" },
         { status: 500 }
@@ -114,10 +141,15 @@ export async function POST(req: NextRequest) {
     const checkout = await yocoRes.json();
 
     // Save checkout ID to order
-    await supabase
-      .from("merch_orders")
-      .update({ yoco_checkout_id: checkout.id })
-      .eq("id", order.id);
+    await fetch(`${supabaseUrl}/rest/v1/merch_orders?id=eq.${order.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": serviceKey,
+        "Authorization": `Bearer ${serviceKey}`,
+      },
+      body: JSON.stringify({ yoco_checkout_id: checkout.id }),
+    });
 
     return NextResponse.json({
       success: true,
