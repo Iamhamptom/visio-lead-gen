@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import Link from "next/link";
 import {
   Crown,
@@ -313,15 +313,6 @@ export default function MerchPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [error, setError] = useState<string | null>(null);
 
-  // Override body overflow:hidden from globals.css — merch page needs scrolling
-  useEffect(() => {
-    document.body.style.overflow = "auto";
-    document.documentElement.style.overflow = "auto";
-    return () => {
-      document.body.style.overflow = "";
-      document.documentElement.style.overflow = "";
-    };
-  }, []);
 
   const filtered =
     categoryFilter === "all"
