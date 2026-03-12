@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export const maxDuration = 60;
 
@@ -15,25 +14,38 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "prompt and item_slug required" }, { status: 400 });
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash-exp",
+    // Use Gemini REST API directly for image generation
+    // The @google/generative-ai SDK doesn't fully support responseModalities
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${apiKey}`;
+
+    const body = {
+      contents: [{ parts: [{ text: prompt }] }],
       generationConfig: {
-        responseModalities: ["TEXT", "IMAGE"] as any,
-      } as any,
+        responseModalities: ["TEXT", "IMAGE"],
+      },
+    };
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
     });
 
-    const result = await model.generateContent(prompt);
-    const response = result.response;
-    const parts = response.candidates?.[0]?.content?.parts || [];
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const errorMsg = (errorData as any)?.error?.message || `Gemini API error: ${response.status}`;
+      return NextResponse.json({ error: errorMsg }, { status: 500 });
+    }
+
+    const data = await response.json();
+    const parts = data.candidates?.[0]?.content?.parts || [];
 
     // Find inline image data
     const imagePart = parts.find((p: any) => p.inlineData?.mimeType?.startsWith("image/"));
-    if (!imagePart || !("inlineData" in imagePart) || !imagePart.inlineData) {
-      return NextResponse.json({ error: "No image generated. Try again." }, { status: 500 });
+    if (!imagePart?.inlineData) {
+      return NextResponse.json({ error: "No image generated. Try a more descriptive prompt." }, { status: 500 });
     }
 
-    // Return base64 image directly — no storage dependency
     const base64 = imagePart.inlineData.data;
     const mimeType = imagePart.inlineData.mimeType;
 
