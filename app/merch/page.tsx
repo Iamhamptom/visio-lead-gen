@@ -25,6 +25,7 @@ interface MerchItem {
   colors: string[];
   imagePrompt: string;
   imageUrl: string | null;
+  bestSeller?: boolean;
 }
 
 const MERCH_CATALOG: MerchItem[] = [
@@ -126,40 +127,56 @@ const MERCH_CATALOG: MerchItem[] = [
   },
   // ━━━━━━━━━━━━━ PIANO 2DA WRLD! COLLECTION ━━━━━━━━━━━━━
   {
+    slug: "piano2da-tee-allwhite",
+    name: "PIANO 2DA WRLD! Tee — All White",
+    description:
+      "Premium all-white embossed tee. Tone-on-white 'PIANO 2DA WRLD!' raised lettering with embossed piano keys. LUX Apparel tag. The cleanest piece in the collection.",
+    price: 1500,
+    category: "apparel",
+    sizes: ["S", "M", "L", "XL", "XXL"],
+    colors: ["All White"],
+    imagePrompt: "",
+    imageUrl: "/merch/piano2da-collage-3up.jpg",
+    bestSeller: true,
+  },
+  {
+    slug: "piano2da-tee-cream",
+    name: "PIANO 2DA WRLD! Tee — Cream",
+    description:
+      "Cream heavyweight tee with purple-to-gold gradient 'PIANO 2DA WRLD!' print. Piano keys patch on sleeve. LUX Apparel woven label. The original.",
+    price: 999.99,
+    category: "apparel",
+    sizes: ["S", "M", "L", "XL", "XXL"],
+    colors: ["Cream"],
+    imagePrompt: "",
+    imageUrl: "/merch/piano2da-tee-cream.jpg",
+    bestSeller: true,
+  },
+  {
     slug: "piano2da-tee-black",
     name: "PIANO 2DA WRLD! Tee — Black",
     description:
-      "Bold black tee with 'PIANO 2DA WRLD!' in neon electric blue across the chest. Piano keys graphic running down the spine. Amapiano energy, global statement.",
+      "Black heavyweight tee with gold 'PIANO 2DA WRLD!' print and piano keys graphic. LUX Apparel tag. Amapiano energy, global statement.",
     price: 999.99,
     category: "apparel",
     sizes: ["S", "M", "L", "XL", "XXL"],
     colors: ["Black"],
     imagePrompt: "",
-    imageUrl: "/merch/piano2da-tee-black.png",
+    imageUrl: "/merch/piano2da-stacked.jpg",
+    bestSeller: true,
   },
   {
     slug: "piano2da-tee-white",
     name: "PIANO 2DA WRLD! Tee — White",
     description:
-      "Clean white tee with 'PIANO 2DA WRLD!' in deep purple and gold gradient. Piano keys motif on sleeve. The daytime flex.",
+      "White tee with purple-to-gold gradient 'PIANO 2DA WRLD!' print. Piano keys patch on sleeve. LUX Apparel woven label. The daytime flex.",
     price: 999.99,
     category: "apparel",
     sizes: ["S", "M", "L", "XL", "XXL"],
     colors: ["White"],
     imagePrompt: "",
-    imageUrl: "/merch/piano2da-tee-white.png",
-  },
-  {
-    slug: "piano2da-tee-red",
-    name: "PIANO 2DA WRLD! Tee — Red",
-    description:
-      "Fire red tee with 'PIANO 2DA WRLD!' in white and gold foil. Piano keys shattered across the front like broken glass. The stage piece.",
-    price: 999.99,
-    category: "apparel",
-    sizes: ["S", "M", "L", "XL", "XXL"],
-    colors: ["Red"],
-    imagePrompt: "",
-    imageUrl: "/merch/piano2da-tee-red.png",
+    imageUrl: "/merch/piano2da-grid-4up.jpg",
+    bestSeller: true,
   },
 ];
 
@@ -246,6 +263,11 @@ function MerchCard({
         >
           {catCfg.label}
         </div>
+        {item.bestSeller && (
+          <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-red-500/90 text-white shadow-[0_0_12px_rgba(239,68,68,0.4)]">
+            Best Seller
+          </div>
+        )}
       </div>
 
       {/* Info */}
@@ -423,7 +445,7 @@ export default function MerchPage() {
                   Starting from R800
                 </span>
                 <span className="px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-visio-teal/15 text-visio-teal border border-visio-teal/25">
-                  11 Items
+                  12 Items
                 </span>
               </div>
             </div>
