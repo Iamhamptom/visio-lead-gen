@@ -345,7 +345,7 @@ function CheckoutForm() {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="e.g. Nkululeko Nciza"
-                      className="w-full px-4 py-3 rounded-lg bg-white/[0.06] border border-white/[0.08] text-white placeholder:text-white/30 text-sm focus:border-[#D4A847]/50 focus:outline-none transition-colors"
+                      className="w-full px-4 py-3 rounded-lg bg-white/[0.06] border border-white/[0.08] text-white placeholder:text-white/30 text-sm focus:border-[#D4A847]/50 focus:outline-none transition-colors autofill:shadow-[inset_0_0_0px_1000px_rgba(255,255,255,0.06)] autofill:[-webkit-text-fill-color:white]"
                     />
                   </div>
                   <div>
@@ -355,7 +355,7 @@ function CheckoutForm() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="your@email.com"
-                      className="w-full px-4 py-3 rounded-lg bg-white/[0.06] border border-white/[0.08] text-white placeholder:text-white/30 text-sm focus:border-[#D4A847]/50 focus:outline-none transition-colors"
+                      className="w-full px-4 py-3 rounded-lg bg-white/[0.06] border border-white/[0.08] text-white placeholder:text-white/30 text-sm focus:border-[#D4A847]/50 focus:outline-none transition-colors autofill:shadow-[inset_0_0_0px_1000px_rgba(255,255,255,0.06)] autofill:[-webkit-text-fill-color:white]"
                     />
                   </div>
                   <div>
@@ -365,7 +365,7 @@ function CheckoutForm() {
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="+27 XX XXX XXXX"
-                      className="w-full px-4 py-3 rounded-lg bg-white/[0.06] border border-white/[0.08] text-white placeholder:text-white/30 text-sm focus:border-[#D4A847]/50 focus:outline-none transition-colors"
+                      className="w-full px-4 py-3 rounded-lg bg-white/[0.06] border border-white/[0.08] text-white placeholder:text-white/30 text-sm focus:border-[#D4A847]/50 focus:outline-none transition-colors autofill:shadow-[inset_0_0_0px_1000px_rgba(255,255,255,0.06)] autofill:[-webkit-text-fill-color:white]"
                     />
                   </div>
                   <div className="sm:col-span-2">
@@ -375,7 +375,7 @@ function CheckoutForm() {
                       value={address1}
                       onChange={(e) => setAddress1(e.target.value)}
                       placeholder="Street address"
-                      className="w-full px-4 py-3 rounded-lg bg-white/[0.06] border border-white/[0.08] text-white placeholder:text-white/30 text-sm focus:border-[#D4A847]/50 focus:outline-none transition-colors"
+                      className="w-full px-4 py-3 rounded-lg bg-white/[0.06] border border-white/[0.08] text-white placeholder:text-white/30 text-sm focus:border-[#D4A847]/50 focus:outline-none transition-colors autofill:shadow-[inset_0_0_0px_1000px_rgba(255,255,255,0.06)] autofill:[-webkit-text-fill-color:white]"
                     />
                   </div>
                   <div className="sm:col-span-2">
@@ -385,7 +385,7 @@ function CheckoutForm() {
                       value={address2}
                       onChange={(e) => setAddress2(e.target.value)}
                       placeholder="Apartment, suite, unit (optional)"
-                      className="w-full px-4 py-3 rounded-lg bg-white/[0.06] border border-white/[0.08] text-white placeholder:text-white/30 text-sm focus:border-[#D4A847]/50 focus:outline-none transition-colors"
+                      className="w-full px-4 py-3 rounded-lg bg-white/[0.06] border border-white/[0.08] text-white placeholder:text-white/30 text-sm focus:border-[#D4A847]/50 focus:outline-none transition-colors autofill:shadow-[inset_0_0_0px_1000px_rgba(255,255,255,0.06)] autofill:[-webkit-text-fill-color:white]"
                     />
                   </div>
                   <div>
@@ -395,7 +395,7 @@ function CheckoutForm() {
                       value={city}
                       onChange={(e) => setCity(e.target.value)}
                       placeholder="e.g. Johannesburg"
-                      className="w-full px-4 py-3 rounded-lg bg-white/[0.06] border border-white/[0.08] text-white placeholder:text-white/30 text-sm focus:border-[#D4A847]/50 focus:outline-none transition-colors"
+                      className="w-full px-4 py-3 rounded-lg bg-white/[0.06] border border-white/[0.08] text-white placeholder:text-white/30 text-sm focus:border-[#D4A847]/50 focus:outline-none transition-colors autofill:shadow-[inset_0_0_0px_1000px_rgba(255,255,255,0.06)] autofill:[-webkit-text-fill-color:white]"
                     />
                   </div>
                   <div>
@@ -419,7 +419,7 @@ function CheckoutForm() {
                         value={province}
                         onChange={(e) => setProvince(e.target.value)}
                         placeholder="e.g. California, London, Lagos"
-                        className="w-full px-4 py-3 rounded-lg bg-white/[0.06] border border-white/[0.08] text-white placeholder:text-white/30 text-sm focus:border-[#D4A847]/50 focus:outline-none transition-colors"
+                        className="w-full px-4 py-3 rounded-lg bg-white/[0.06] border border-white/[0.08] text-white placeholder:text-white/30 text-sm focus:border-[#D4A847]/50 focus:outline-none transition-colors autofill:shadow-[inset_0_0_0px_1000px_rgba(255,255,255,0.06)] autofill:[-webkit-text-fill-color:white]"
                       />
                     )}
                   </div>
@@ -431,7 +431,7 @@ function CheckoutForm() {
                       onChange={(e) => setPostalCode(e.target.value)}
                       placeholder="e.g. 2000"
                       maxLength={10}
-                      className="w-full px-4 py-3 rounded-lg bg-white/[0.06] border border-white/[0.08] text-white placeholder:text-white/30 text-sm focus:border-[#D4A847]/50 focus:outline-none transition-colors"
+                      className="w-full px-4 py-3 rounded-lg bg-white/[0.06] border border-white/[0.08] text-white placeholder:text-white/30 text-sm focus:border-[#D4A847]/50 focus:outline-none transition-colors autofill:shadow-[inset_0_0_0px_1000px_rgba(255,255,255,0.06)] autofill:[-webkit-text-fill-color:white]"
                     />
                   </div>
                   <div className="sm:col-span-2">
