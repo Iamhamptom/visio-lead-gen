@@ -132,12 +132,53 @@ const MERCH_CATALOG: MerchItem[] = [
       "Professional product photography of a premium varsity jacket with black wool body and black leather sleeves on a dark background. Features a large chenille 'TD' letter patch on the front left chest and 'VISIOCORP' embroidered in gold across the back. Snap button closure, ribbed cuffs. American collegiate luxury style, studio lighting, 8k quality",
     imageUrl: null,
   },
+  // ━━━━━━━━━━━━━ PIANO 2DA WRLD! COLLECTION ━━━━━━━━━━━━━
+  {
+    slug: "piano2da-tee-black",
+    name: "PIANO 2DA WRLD! Tee — Black",
+    description:
+      "Bold black tee with 'PIANO 2DA WRLD!' in neon electric blue across the chest. Piano keys graphic running down the spine. Amapiano energy, global statement.",
+    price: 999.99,
+    category: "apparel",
+    sizes: ["S", "M", "L", "XL", "XXL"],
+    colors: ["Black"],
+    imagePrompt:
+      "Professional product photography of a premium black heavyweight cotton t-shirt on a dark background. The front features bold text 'PIANO 2DA WRLD!' in electric neon blue with a glowing effect. Below the text is a stylized piano keys graphic in white and blue. The back has piano keys running vertically down the spine. Amapiano music culture streetwear, vibrant, energetic, studio lighting, high-end fashion photography, 8k quality",
+    imageUrl: null,
+  },
+  {
+    slug: "piano2da-tee-white",
+    name: "PIANO 2DA WRLD! Tee — White",
+    description:
+      "Clean white tee with 'PIANO 2DA WRLD!' in deep purple and gold gradient. Piano keys motif on sleeve. The daytime flex.",
+    price: 999.99,
+    category: "apparel",
+    sizes: ["S", "M", "L", "XL", "XXL"],
+    colors: ["White"],
+    imagePrompt:
+      "Professional product photography of a premium white heavyweight cotton t-shirt on a dark charcoal background. The front features bold text 'PIANO 2DA WRLD!' in a deep purple to gold gradient with elegant typography. A subtle piano keys motif runs along the left sleeve. Amapiano music culture meets luxury streetwear, clean and vibrant, studio lighting, high-end fashion photography, 8k quality",
+    imageUrl: null,
+  },
+  {
+    slug: "piano2da-tee-red",
+    name: "PIANO 2DA WRLD! Tee — Red",
+    description:
+      "Fire red tee with 'PIANO 2DA WRLD!' in white and gold foil. Piano keys shattered across the front like broken glass. The stage piece.",
+    price: 999.99,
+    category: "apparel",
+    sizes: ["S", "M", "L", "XL", "XXL"],
+    colors: ["Red"],
+    imagePrompt:
+      "Professional product photography of a premium deep red heavyweight cotton t-shirt on a dark background. The front features bold text 'PIANO 2DA WRLD!' in white with gold foil accents. Shattered piano keys graphic scattered across the front like broken glass fragments in white and gold. Amapiano music culture streetwear, bold and fiery, stage-ready design, studio lighting, high-end fashion photography, 8k quality",
+    imageUrl: null,
+  },
 ];
 
 // ━━━━━━━━━━━━━ HELPERS ━━━━━━━━━━━━━
 
 function formatPrice(amount: number): string {
-  return `R${amount.toLocaleString("en-ZA")}.00`;
+  if (amount % 1 === 0) return `R${amount.toLocaleString("en-ZA")}.00`;
+  return `R${amount.toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 const CATEGORY_CONFIG: Record<string, { label: string; color: string }> = {
@@ -392,7 +433,7 @@ export default function MerchPage() {
                   Starting from R800
                 </span>
                 <span className="px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-visio-teal/15 text-visio-teal border border-visio-teal/25">
-                  8 Items
+                  11 Items
                 </span>
               </div>
             </div>
@@ -407,7 +448,7 @@ export default function MerchPage() {
             { label: "Total Items", value: `${items.length}`, color: "#fff" },
             {
               label: "Price Range",
-              value: "R800 — R4,500",
+              value: "R999 — R4,500",
               color: "#D4A847",
             },
             {
