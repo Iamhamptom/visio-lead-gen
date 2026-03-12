@@ -17,8 +17,10 @@ import {
     HelpCircle,
     Coins,
     Store,
-    LayoutTemplate
+    LayoutTemplate,
+    Crown,
 } from 'lucide-react';
+import Link from 'next/link';
 import { Campaign, ViewMode, Session, Subscription, ArtistProfile } from '../types';
 import { PLAN_LIMITS } from '../config/plans';
 import { TIER_DETAILS } from '../data/pricing';
@@ -317,6 +319,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         active={activeView === 'marketplace'}
                         onClick={() => onNavigate('marketplace')}
                     />
+                    <Link href="/merch" className="block">
+                        <NavItem
+                            icon={<Crown size={16} />}
+                            label="TD x VC Merch"
+                            active={false}
+                            onClick={() => {}}
+                        />
+                    </Link>
                 </div>
 
                 {/* Drafts / Inbox (Unfiled) */}
