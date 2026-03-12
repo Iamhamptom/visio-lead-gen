@@ -37,9 +37,8 @@ const MERCH_CATALOG: MerchItem[] = [
     category: "apparel",
     sizes: ["S", "M", "L", "XL", "XXL"],
     colors: ["Black", "White"],
-    imagePrompt:
-      "Professional product photography of a premium black heavyweight cotton t-shirt on a clean dark background. The shirt features a gold metallic embroidered logo 'TD x VC' on the chest with elegant typography. Luxury streetwear aesthetic, studio lighting, high-end fashion photography, 8k quality, minimalist presentation",
-    imageUrl: null,
+    imagePrompt: "",
+    imageUrl: "/merch/td-vc-tshirt-black.png",
   },
   {
     slug: "td-vc-tshirt-white",
@@ -50,9 +49,8 @@ const MERCH_CATALOG: MerchItem[] = [
     category: "apparel",
     sizes: ["S", "M", "L", "XL", "XXL"],
     colors: ["White"],
-    imagePrompt:
-      "Professional product photography of a premium white heavyweight cotton t-shirt on a dark charcoal background. Features a matte black printed logo 'TD x VC' on the chest with sleek modern typography. Luxury minimalist streetwear, studio lighting, high-end fashion photography, 8k quality",
-    imageUrl: null,
+    imagePrompt: "",
+    imageUrl: "/merch/td-vc-tshirt-white.png",
   },
   {
     slug: "td-vc-cap-snapback",
@@ -63,9 +61,8 @@ const MERCH_CATALOG: MerchItem[] = [
     category: "headwear",
     sizes: ["One Size"],
     colors: ["Black/Gold", "Navy/Gold"],
-    imagePrompt:
-      "Professional product photography of a premium black structured snapback cap on a dark background. Features a 3D gold embroidered monogram 'TD' on the front panel with a small corporate patch on the side. Luxury streetwear accessories, studio lighting, fashion photography, 8k quality, floating presentation angle",
-    imageUrl: null,
+    imagePrompt: "",
+    imageUrl: "/merch/td-vc-cap-snapback.png",
   },
   {
     slug: "td-vc-beanie",
@@ -76,9 +73,8 @@ const MERCH_CATALOG: MerchItem[] = [
     category: "headwear",
     sizes: ["One Size"],
     colors: ["Black", "Charcoal"],
-    imagePrompt:
-      "Professional product photography of a premium black ribbed knit beanie on a dark background. Features a small woven gold label with 'TD x VC' on the fold. Luxury streetwear accessories, merino wool texture visible, studio lighting, fashion photography, 8k quality",
-    imageUrl: null,
+    imagePrompt: "",
+    imageUrl: "/merch/td-vc-beanie.png",
   },
   {
     slug: "td-vc-hoodie",
@@ -89,9 +85,8 @@ const MERCH_CATALOG: MerchItem[] = [
     category: "outerwear",
     sizes: ["S", "M", "L", "XL", "XXL"],
     colors: ["Black", "Cream"],
-    imagePrompt:
-      "Professional product photography of a premium oversized black hoodie on a dark background. Features a large puff-print crest logo on the back reading 'Tony Duardo x VisioCorp' in gold with a crown emblem. Heavyweight 400GSM cotton, luxury streetwear, studio lighting, fashion photography, 8k quality",
-    imageUrl: null,
+    imagePrompt: "",
+    imageUrl: "/merch/td-vc-hoodie.png",
   },
   {
     slug: "td-vc-bomber",
@@ -102,9 +97,8 @@ const MERCH_CATALOG: MerchItem[] = [
     category: "outerwear",
     sizes: ["S", "M", "L", "XL", "XXL"],
     colors: ["Black/Gold", "Navy/Gold"],
-    imagePrompt:
-      "Professional product photography of a premium black satin bomber jacket on a dark background. Features an embroidered gold crest on the left chest and 'VISIOCORP' in gold chain-stitch lettering across the back. Ribbed black cuffs and collar. Luxury fashion, studio lighting, high-end photography, 8k quality",
-    imageUrl: null,
+    imagePrompt: "",
+    imageUrl: "/merch/td-vc-bomber.png",
   },
   {
     slug: "td-vc-tracksuit",
@@ -115,9 +109,8 @@ const MERCH_CATALOG: MerchItem[] = [
     category: "outerwear",
     sizes: ["S", "M", "L", "XL", "XXL"],
     colors: ["Black/Gold"],
-    imagePrompt:
-      "Professional product photography of a premium black tracksuit set (jacket and joggers) on a dark background. Features gold piping along the sleeves and legs, 'TD' embroidered on chest, 'VISIOCORP' text down the left leg. Luxury athletic wear, studio lighting, fashion photography, 8k quality",
-    imageUrl: null,
+    imagePrompt: "",
+    imageUrl: "/merch/td-vc-tracksuit.png",
   },
   {
     slug: "td-vc-varsity",
@@ -128,9 +121,8 @@ const MERCH_CATALOG: MerchItem[] = [
     category: "outerwear",
     sizes: ["S", "M", "L", "XL", "XXL"],
     colors: ["Black/Gold", "Cream/Black"],
-    imagePrompt:
-      "Professional product photography of a premium varsity jacket with black wool body and black leather sleeves on a dark background. Features a large chenille 'TD' letter patch on the front left chest and 'VISIOCORP' embroidered in gold across the back. Snap button closure, ribbed cuffs. American collegiate luxury style, studio lighting, 8k quality",
-    imageUrl: null,
+    imagePrompt: "",
+    imageUrl: "/merch/td-vc-varsity.png",
   },
   // ━━━━━━━━━━━━━ PIANO 2DA WRLD! COLLECTION ━━━━━━━━━━━━━
   {
@@ -142,9 +134,8 @@ const MERCH_CATALOG: MerchItem[] = [
     category: "apparel",
     sizes: ["S", "M", "L", "XL", "XXL"],
     colors: ["Black"],
-    imagePrompt:
-      "Professional product photography of a premium black heavyweight cotton t-shirt on a dark background. The front features bold text 'PIANO 2DA WRLD!' in electric neon blue with a glowing effect. Below the text is a stylized piano keys graphic in white and blue. The back has piano keys running vertically down the spine. Amapiano music culture streetwear, vibrant, energetic, studio lighting, high-end fashion photography, 8k quality",
-    imageUrl: null,
+    imagePrompt: "",
+    imageUrl: "/merch/piano2da-tee-black.png",
   },
   {
     slug: "piano2da-tee-white",
@@ -155,9 +146,8 @@ const MERCH_CATALOG: MerchItem[] = [
     category: "apparel",
     sizes: ["S", "M", "L", "XL", "XXL"],
     colors: ["White"],
-    imagePrompt:
-      "Professional product photography of a premium white heavyweight cotton t-shirt on a dark charcoal background. The front features bold text 'PIANO 2DA WRLD!' in a deep purple to gold gradient with elegant typography. A subtle piano keys motif runs along the left sleeve. Amapiano music culture meets luxury streetwear, clean and vibrant, studio lighting, high-end fashion photography, 8k quality",
-    imageUrl: null,
+    imagePrompt: "",
+    imageUrl: "/merch/piano2da-tee-white.png",
   },
   {
     slug: "piano2da-tee-red",
@@ -168,9 +158,8 @@ const MERCH_CATALOG: MerchItem[] = [
     category: "apparel",
     sizes: ["S", "M", "L", "XL", "XXL"],
     colors: ["Red"],
-    imagePrompt:
-      "Professional product photography of a premium deep red heavyweight cotton t-shirt on a dark background. The front features bold text 'PIANO 2DA WRLD!' in white with gold foil accents. Shattered piano keys graphic scattered across the front like broken glass fragments in white and gold. Amapiano music culture streetwear, bold and fiery, stage-ready design, studio lighting, high-end fashion photography, 8k quality",
-    imageUrl: null,
+    imagePrompt: "",
+    imageUrl: "/merch/piano2da-tee-red.png",
   },
 ];
 
