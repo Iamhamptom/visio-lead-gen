@@ -59,11 +59,11 @@ export const BookingsDepartment: React.FC<BookingsDepartmentProps> = ({ subscrip
     const [newTourDates, setNewTourDates] = useState('');
     const [creating, setCreating] = useState(false);
 
-    const getAuthHeaders = async () => {
+    const getAuthHeaders = async (): Promise<Record<string, string>> => {
         const { data: { session } } = await supabase.auth.getSession();
-        return session?.access_token
-            ? { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' }
-            : { 'Content-Type': 'application/json' };
+        const h: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (session?.access_token) h['Authorization'] = `Bearer ${session.access_token}`;
+        return h;
     };
 
     // Load campaigns
