@@ -295,7 +295,7 @@ export const BookingsDepartment: React.FC<Props> = ({ subscriptionTier, onUpgrad
     // ═══════════════════════════════════════════════════════════════
     if (!isVip) {
         return (
-            <div className="h-full flex items-center justify-center p-8 bg-[#0A0A0A]">
+            <div className="min-h-full flex items-center justify-center p-8 bg-[#0A0A0A]">
                 <div className="max-w-2xl text-center space-y-8">
                     <div className="relative">
                         <div className="absolute inset-0 bg-visio-accent/5 rounded-full blur-[100px]" />
@@ -354,7 +354,7 @@ export const BookingsDepartment: React.FC<Props> = ({ subscriptionTier, onUpgrad
     // MAIN UI
     // ═══════════════════════════════════════════════════════════════
     return (
-        <div className="h-full overflow-y-auto bg-[#0A0A0A]">
+        <div className="min-h-full bg-[#0A0A0A]">
             {/* Toast */}
             {toast && (
                 <div className="fixed top-4 right-4 z-50 px-4 py-3 bg-green-500/10 border border-green-500/20 rounded-xl text-green-400 text-sm flex items-center gap-2 animate-in slide-in-from-top fade-in">
