@@ -6,7 +6,27 @@ import {
     Building2, Users, Calendar, Send, Mail, ArrowRight, BarChart3, Eye,
     MessageSquare, Star, Lock, Zap, RefreshCw, Trash2, ExternalLink
 } from 'lucide-react';
-import { BookingCampaign, BookingContact, BookingCampaignStatus, SubscriptionTier } from '../types';
+import { BookingCampaignStatus, SubscriptionTier } from '../types';
+
+// DB rows come back as snake_case from Supabase
+interface BookingCampaignRow {
+    id: string; user_id: string; title: string; description?: string;
+    target_regions: string[]; target_types: string[]; genres: string[];
+    tour_dates?: string; status: string; contact_count: number;
+    sent_count: number; replied_count: number; booked_count: number;
+    outreach_email_subject?: string; outreach_email_body?: string;
+    approved_by_admin: boolean; approved_at?: string;
+    created_at: string; updated_at: string;
+}
+
+interface BookingContactRow {
+    id: string; campaign_id: string; name: string; email?: string;
+    phone?: string; company: string; role: string; type: string;
+    city: string; country: string; region?: string; website?: string;
+    linkedin?: string; capacity?: number; genres: string[];
+    verified: boolean; notes?: string; outreach_status: string;
+    last_contacted_at?: string; created_at: string;
+}
 import { supabase } from '@/lib/supabase/client';
 
 interface BookingsDepartmentProps {
@@ -41,9 +61,9 @@ const OUTREACH_STATUS_COLORS: Record<string, string> = {
 export const BookingsDepartment: React.FC<BookingsDepartmentProps> = ({ subscriptionTier, onUpgrade }) => {
     const isVip = subscriptionTier === 'agency' || subscriptionTier === 'enterprise';
 
-    const [campaigns, setCampaigns] = useState<BookingCampaign[]>([]);
-    const [selectedCampaign, setSelectedCampaign] = useState<BookingCampaign | null>(null);
-    const [contacts, setContacts] = useState<BookingContact[]>([]);
+    const [campaigns, setCampaigns] = useState<BookingCampaignRow[]>([]);
+    const [selectedCampaign, setSelectedCampaign] = useState<BookingCampaignRow | null>(null);
+    const [contacts, setContacts] = useState<BookingContactRow[]>([]);
     const [loading, setLoading] = useState(true);
     const [contactsLoading, setContactsLoading] = useState(false);
     const [showNewCampaign, setShowNewCampaign] = useState(false);
