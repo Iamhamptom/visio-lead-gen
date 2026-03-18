@@ -330,14 +330,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         onClick={() => onNavigate('bookings')}
                         badge={subscription.tier === 'agency' || subscription.tier === 'enterprise' ? undefined : 'VIP'}
                     />
-                    <Link href="/merch" className="block">
-                        <NavItem
-                            icon={<Crown size={16} />}
-                            label="TD x VC Merch"
-                            active={false}
-                            onClick={() => {}}
-                        />
-                    </Link>
+                    {/* Merch link removed from main nav — available via private link at /merch */}
                 </div>
 
                 {/* Drafts / Inbox (Unfiled) */}
