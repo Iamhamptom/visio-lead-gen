@@ -476,7 +476,7 @@ export default function AdminPage() {
     }
 
     return (
-        <div className="min-h-screen bg-visio-bg text-white font-outfit flex">
+        <div className="h-screen bg-visio-bg text-white font-outfit flex overflow-hidden">
             <BackgroundBeams className="fixed inset-0 z-0 opacity-20 pointer-events-none" />
 
             {/* Toast */}
@@ -559,7 +559,7 @@ export default function AdminPage() {
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 ml-64 p-10 z-10">
+            <div className="flex-1 ml-64 p-10 z-10 overflow-y-auto">
                 <header className="flex justify-between items-center mb-8">
                     <div>
                         <h1 className="text-3xl font-bold">
