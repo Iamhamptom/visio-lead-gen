@@ -28,7 +28,7 @@ interface ContactRow {
     city: string; country: string; region?: string; website?: string;
     linkedin?: string; capacity?: number; genres: string[];
     verified: boolean; notes?: string; outreach_status: string;
-    last_contacted_at?: string; created_at: string;
+    last_contacted_at?: string; created_at: string; featured?: boolean;
 }
 
 interface CampaignTemplate {
@@ -80,7 +80,7 @@ export const BookingsDepartment: React.FC<Props> = ({ subscriptionTier, onUpgrad
     const [templates, setTemplates] = useState<CampaignTemplate[]>([]);
     const [loading, setLoading] = useState(true);
     const [contactsLoading, setContactsLoading] = useState(false);
-    const [view, setView] = useState<'list' | 'templates' | 'detail' | 'email'>('list');
+    const [view, setView] = useState<'list' | 'templates' | 'detail' | 'email' | 'directory'>('list');
     const [searchQuery, setSearchQuery] = useState('');
     const [filterType, setFilterType] = useState('all');
     const [filterStatus, setFilterStatus] = useState('all');
@@ -101,6 +101,16 @@ export const BookingsDepartment: React.FC<Props> = ({ subscriptionTier, onUpgrad
     const [emailSubject, setEmailSubject] = useState('');
     const [emailBody, setEmailBody] = useState('');
     const [savingEmail, setSavingEmail] = useState(false);
+
+    // Directory browser
+    const [dirContacts, setDirContacts] = useState<ContactRow[]>([]);
+    const [dirTotal, setDirTotal] = useState(0);
+    const [dirPage, setDirPage] = useState(1);
+    const [dirLoading, setDirLoading] = useState(false);
+    const [dirSearch, setDirSearch] = useState('');
+    const [dirType, setDirType] = useState('all');
+    const [dirRegion, setDirRegion] = useState('');
+    const [dirIsVip, setDirIsVip] = useState(false);
 
     const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
 
@@ -125,6 +135,27 @@ export const BookingsDepartment: React.FC<Props> = ({ subscriptionTier, onUpgrad
             setLoading(false);
         })();
     }, [isVip, getHeaders]);
+
+    // Load directory
+    useEffect(() => {
+        if (view !== 'directory') return;
+        setDirLoading(true);
+        (async () => {
+            const headers = await getHeaders();
+            const params = new URLSearchParams({ page: String(dirPage) });
+            if (dirType !== 'all') params.set('type', dirType);
+            if (dirRegion) params.set('region', dirRegion);
+            if (dirSearch) params.set('q', dirSearch);
+            const res = await fetch(`/api/bookings/directory?${params}`, { headers });
+            if (res.ok) {
+                const data = await res.json();
+                setDirContacts(data.contacts || []);
+                setDirTotal(data.total || 0);
+                setDirIsVip(data.isVip || false);
+            }
+            setDirLoading(false);
+        })();
+    }, [view, dirPage, dirType, dirRegion, dirSearch, getHeaders]);
 
     useEffect(() => {
         if (!selectedCampaign) return;
@@ -345,7 +376,7 @@ export const BookingsDepartment: React.FC<Props> = ({ subscriptionTier, onUpgrad
                         </div>
                         <div>
                             <h1 className="text-lg font-bold text-white">
-                                {view === 'detail' ? selectedCampaign?.title : view === 'templates' ? 'Campaign Templates' : 'Bookings Department'}
+                                {view === 'detail' ? selectedCampaign?.title : view === 'templates' ? 'Campaign Templates' : view === 'directory' ? 'Global Directory' : 'Bookings Department'}
                             </h1>
                             <p className="text-[11px] text-white/30">
                                 {view === 'detail' ? `${contacts.length} contacts · ${selectedCampaign?.target_regions?.join(', ')}` : 'Tour planning · Venue research · Promoter outreach'}
@@ -355,6 +386,9 @@ export const BookingsDepartment: React.FC<Props> = ({ subscriptionTier, onUpgrad
                     <div className="flex items-center gap-2">
                         {view === 'list' && (
                             <>
+                                <button onClick={() => { setView('directory'); setDirPage(1); }} className="px-3 py-2 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white rounded-xl text-xs font-medium transition-colors flex items-center gap-1.5">
+                                    <Building2 size={13} /> Directory ({dirTotal || '...'})
+                                </button>
                                 <button onClick={() => setView('templates')} className="px-3 py-2 bg-white/5 hover:bg-white/10 text-white/60 hover:text-white rounded-xl text-xs font-medium transition-colors flex items-center gap-1.5">
                                     <Sparkles size={13} /> Templates
                                 </button>
@@ -363,7 +397,7 @@ export const BookingsDepartment: React.FC<Props> = ({ subscriptionTier, onUpgrad
                                 </button>
                             </>
                         )}
-                        {view === 'templates' && (
+                        {(view === 'templates' || view === 'directory') && (
                             <button onClick={() => setView('list')} className="px-3 py-2 bg-white/5 text-white/60 rounded-xl text-xs hover:text-white transition-colors">
                                 ← Back
                             </button>
@@ -426,6 +460,110 @@ export const BookingsDepartment: React.FC<Props> = ({ subscriptionTier, onUpgrad
                                 </div>
                             ))}
                         </div>
+                    </div>
+                )}
+
+                {/* ═══ DIRECTORY BROWSER ═══ */}
+                {view === 'directory' && (
+                    <div className="space-y-5">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h2 className="text-lg font-bold text-white">Global Venue & Promoter Directory</h2>
+                                <p className="text-xs text-white/30">{dirTotal} contacts across {dirContacts.length > 0 ? [...new Set(dirContacts.map(c => c.country))].length : 0}+ countries</p>
+                            </div>
+                            {!dirIsVip && (
+                                <div className="px-3 py-1.5 bg-amber-500/10 border border-amber-500/15 rounded-xl text-[10px] text-amber-400 flex items-center gap-1.5">
+                                    <Lock size={10} /> Emails masked — upgrade to Agency for full access
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Directory Filters */}
+                        <div className="flex flex-wrap gap-2 items-center">
+                            <div className="relative flex-1 min-w-[200px]">
+                                <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20" />
+                                <input value={dirSearch} onChange={e => { setDirSearch(e.target.value); setDirPage(1); }} placeholder="Search venues, promoters, agencies..."
+                                    className="w-full pl-9 pr-4 py-2.5 bg-white/[0.03] border border-white/[0.06] rounded-xl text-xs text-white placeholder:text-white/15 focus:outline-none focus:border-visio-accent/30" />
+                            </div>
+                            <select value={dirRegion} onChange={e => { setDirRegion(e.target.value); setDirPage(1); }}
+                                className="px-3 py-2.5 bg-white/[0.03] border border-white/[0.06] rounded-xl text-xs text-white/60 cursor-pointer">
+                                <option value="">All Regions</option>
+                                {['South Africa', 'UK', 'Nigeria', 'Ghana', 'Kenya', 'USA', 'Jamaica', 'Netherlands', 'France', 'Germany'].map(r => (
+                                    <option key={r} value={r}>{r}</option>
+                                ))}
+                            </select>
+                            <div className="flex gap-1">
+                                {['all', ...Object.keys(TYPE_CONFIG)].map(t => (
+                                    <button key={t} onClick={() => { setDirType(t); setDirPage(1); }}
+                                        className={`px-2.5 py-2 rounded-lg text-[10px] font-medium transition-colors ${
+                                            dirType === t ? 'bg-visio-accent/15 text-visio-accent' : 'bg-white/[0.03] text-white/25 hover:text-white/40'
+                                        }`}>
+                                        {t === 'all' ? 'All' : TYPE_CONFIG[t]?.label || t}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Directory Contacts */}
+                        {dirLoading ? (
+                            <div className="flex items-center justify-center py-16"><Loader2 size={20} className="animate-spin text-white/15" /></div>
+                        ) : dirContacts.length === 0 ? (
+                            <div className="text-center py-16 space-y-3">
+                                <Globe size={48} className="text-white/[0.06] mx-auto" />
+                                <p className="text-white/30 text-sm">{dirSearch || dirRegion || dirType !== 'all' ? 'No contacts match your filters' : 'Directory is being populated — check back soon'}</p>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="space-y-1.5">
+                                    {dirContacts.map(contact => {
+                                        const tc = TYPE_CONFIG[contact.type] || { label: contact.type, color: 'bg-white/10 text-white/40' };
+                                        return (
+                                            <div key={contact.id} className="bg-white/[0.015] border border-white/[0.03] rounded-xl px-4 py-3.5 hover:border-white/[0.08] transition-colors">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2 mb-0.5">
+                                                            <h4 className="text-[13px] font-semibold text-white truncate">{contact.name}</h4>
+                                                            {contact.verified && <CheckCircle2 size={11} className="text-green-400/60 shrink-0" />}
+                                                            <span className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${tc.color}`}>{tc.label}</span>
+                                                            {contact.featured && <Star size={10} className="text-amber-400/60 shrink-0" />}
+                                                        </div>
+                                                        <p className="text-[11px] text-white/30 truncate">{contact.company}{contact.role !== 'Contact' ? ` · ${contact.role}` : ''}</p>
+                                                    </div>
+                                                    <div className="hidden md:flex items-center gap-3 text-[11px] text-white/20 shrink-0">
+                                                        {contact.city && <span className="flex items-center gap-1"><MapPin size={10} />{contact.city}, {contact.country}</span>}
+                                                        {contact.email && <span className="flex items-center gap-1"><Mail size={10} />{contact.email}</span>}
+                                                        {contact.capacity && <span>{contact.capacity.toLocaleString()} cap.</span>}
+                                                        {contact.website && (
+                                                            <a href={contact.website} target="_blank" rel="noopener" onClick={e => e.stopPropagation()} className="hover:text-white/40">
+                                                                <ExternalLink size={11} />
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                    {contact.genres && contact.genres.length > 0 && (
+                                                        <div className="hidden lg:flex gap-1 shrink-0">
+                                                            {contact.genres.slice(0, 2).map(g => (
+                                                                <span key={g} className="px-1.5 py-0.5 bg-purple-500/8 text-purple-400/50 text-[9px] rounded">{g}</span>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Pagination */}
+                                {dirTotal > 50 && (
+                                    <div className="flex items-center justify-center gap-3 pt-4">
+                                        <button onClick={() => setDirPage(p => Math.max(1, p - 1))} disabled={dirPage === 1}
+                                            className="px-3 py-2 bg-white/5 rounded-xl text-xs text-white/40 disabled:opacity-20 hover:text-white transition-colors">← Prev</button>
+                                        <span className="text-xs text-white/20">Page {dirPage} of {Math.ceil(dirTotal / 50)}</span>
+                                        <button onClick={() => setDirPage(p => p + 1)} disabled={dirPage >= Math.ceil(dirTotal / 50)}
+                                            className="px-3 py-2 bg-white/5 rounded-xl text-xs text-white/40 disabled:opacity-20 hover:text-white transition-colors">Next →</button>
+                                    </div>
+                                )}
+                            </>
+                        )}
                     </div>
                 )}
 
