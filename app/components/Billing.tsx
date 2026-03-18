@@ -95,6 +95,12 @@ export const Billing: React.FC<BillingProps> = ({
                 throw new Error(data.error || 'Failed to create checkout');
             }
 
+            // Store checkoutId so payment-success page can verify the payment
+            // (Yoco does not append it to the redirect URL)
+            if (data.checkoutId) {
+                sessionStorage.setItem('visio:checkoutId', data.checkoutId);
+            }
+
             // Redirect to Yoco checkout page
             window.location.href = data.redirectUrl;
         } catch (err: any) {

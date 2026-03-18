@@ -17,7 +17,8 @@ function PaymentSuccessContent() {
     const checkoutId =
         searchParams.get('checkoutId') ||
         searchParams.get('checkout_id') ||
-        searchParams.get('id');
+        searchParams.get('id') ||
+        (typeof window !== 'undefined' ? sessionStorage.getItem('visio:checkoutId') : null);
 
     // Update Supabase with new subscription via secure server route
     useEffect(() => {

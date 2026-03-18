@@ -39,6 +39,8 @@ export async function POST(request: NextRequest) {
             'http://localhost:3000';
 
         // Create Yoco checkout session
+        // Yoco does NOT append checkoutId to successUrl on redirect,
+        // so the client stores it in sessionStorage before redirecting.
         const checkout = await createYocoCheckout({
             tier: tier as PlanTier,
             userId: auth.user.id,
