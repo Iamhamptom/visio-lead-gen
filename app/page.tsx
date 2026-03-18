@@ -518,23 +518,18 @@ export default function Home() {
     return () => { cancelled = true; };
   }, [user, authLoading, session?.access_token, subscription.tier]);
 
-  // Show upgrade banner for free-tier users after some usage
+  // Show upgrade banner immediately for free-tier users on login
   useEffect(() => {
     if (!user || authLoading) return;
     if (effectiveSubscription.tier !== 'artist') return;
-    if (currentView !== 'dashboard') return;
 
     const dismissed = sessionStorage.getItem('visio:upgrade_banner_dismissed');
     if (dismissed) return;
 
-    const totalUserMessages = sessions.reduce((acc, s) =>
-      acc + s.messages.filter(m => m.role === Role.USER).length, 0);
-
-    if (totalUserMessages >= 3) {
-      const timer = setTimeout(() => setShowUpgradeBanner(true), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [user, authLoading, effectiveSubscription.tier, currentView, sessions]);
+    // Show immediately (500ms delay for smooth UX) — don't wait for usage
+    const timer = setTimeout(() => setShowUpgradeBanner(true), 500);
+    return () => clearTimeout(timer);
+  }, [user, authLoading, effectiveSubscription.tier]);
 
   // Also trigger upgrade banner when credits are low
   useEffect(() => {
