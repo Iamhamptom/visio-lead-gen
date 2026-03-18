@@ -10,6 +10,7 @@ export type ViewMode =
     | 'overview' // New Dashboard Overview
     | 'dashboard' // Chat Interface
     | 'leads'
+    | 'bookings' // Bookings Department — VIP only
     | 'templates' // Campaign Templates
     | 'marketplace' // Marketplace - Browse pages & contacts
     | 'billing'
@@ -332,4 +333,55 @@ export interface BatchReachResult {
         high: ReachScenario;
     };
     timestamp: number;
+}
+
+// ─── Bookings Department Types (VIP — agency/enterprise only) ───
+
+export type BookingCampaignStatus = 'draft' | 'researching' | 'contacts_ready' | 'review' | 'outreach_sent' | 'active' | 'completed';
+
+export interface BookingContact {
+    id: string;
+    campaignId: string;
+    name: string;
+    email?: string;
+    phone?: string;
+    company: string;
+    role: string; // "Promoter", "Venue Manager", "Booking Agent", etc.
+    type: 'venue' | 'promoter' | 'agency' | 'events_company' | 'club' | 'festival';
+    city: string;
+    country: string;
+    region?: string; // "UK", "West Africa", "SA Gauteng", etc.
+    website?: string;
+    linkedin?: string;
+    socials?: SocialLinks;
+    capacity?: number; // Venue capacity
+    genres?: string[]; // Genres they book
+    verified: boolean;
+    enrichedAt?: string;
+    notes?: string;
+    outreachStatus: 'pending' | 'sent' | 'opened' | 'replied' | 'booked' | 'declined';
+    lastContactedAt?: string;
+    createdAt: string;
+}
+
+export interface BookingCampaign {
+    id: string;
+    userId: string;
+    title: string; // e.g., "UK Tour 2026 — Venue & Promoter Outreach"
+    description?: string;
+    targetRegions: string[]; // ["UK", "London", "Manchester", "Birmingham"]
+    targetTypes: ('venue' | 'promoter' | 'agency' | 'events_company' | 'club' | 'festival')[];
+    genres: string[]; // ["Dancehall", "Afrobeats"]
+    tourDates?: string; // "June 15 - July 10, 2026"
+    status: BookingCampaignStatus;
+    contactCount: number;
+    sentCount: number;
+    repliedCount: number;
+    bookedCount: number;
+    outreachEmailSubject?: string;
+    outreachEmailBody?: string;
+    approvedByAdmin: boolean;
+    approvedAt?: string;
+    createdAt: string;
+    updatedAt: string;
 }

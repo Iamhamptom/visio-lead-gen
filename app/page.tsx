@@ -22,6 +22,7 @@ import ReachPage from './reach/page';
 import { Toast } from './components/Toast';
 import { ToolsPanel } from './components/ToolsPanel';
 import { UpgradeBanner } from './components/UpgradeBanner';
+import { BookingsDepartment } from './components/BookingsDepartment';
 import { LeadGenWizard, LeadGenConfig } from './components/LeadGenWizard';
 import { LeadGenProgress } from './components/LeadGenProgress';
 import { VoiceCallModal } from './components/VoiceCallModal';
@@ -360,6 +361,7 @@ export default function Home() {
       else if (path === '/pending') targetView = 'pending';
       else if (path === '/help') targetView = 'help';
       else if (path === '/marketplace') targetView = 'marketplace';
+      else if (path === '/bookings') targetView = 'bookings';
       else if (path === '/landing') targetView = 'landing';
 
       // 2. Auth Guards
@@ -1763,7 +1765,8 @@ export default function Home() {
                     currentView === 'overview' ? 'Dashboard' :
                     currentView === 'billing' ? 'Billing' :
                     currentView === 'settings' ? 'Settings' :
-                    currentView === 'marketplace' ? 'Marketplace' : 'Artist Portal'}
+                    currentView === 'marketplace' ? 'Marketplace' :
+                    currentView === 'bookings' ? 'Bookings' : 'Artist Portal'}
                 </h2>
                 {isLoading && (
                   <div className="flex items-center gap-2 ml-3 px-3 py-1 rounded-full bg-visio-accent/10 border border-visio-accent/20">
@@ -2002,6 +2005,11 @@ export default function Home() {
               <Marketplace
                 onNewChat={handleNewChat}
                 subscriptionTier={effectiveSubscription.tier}
+              />
+            ) : currentView === 'bookings' ? (
+              <BookingsDepartment
+                subscriptionTier={effectiveSubscription.tier}
+                onUpgrade={() => navigateTo('billing')}
               />
             ) : currentView === 'help' ? (
               <HowToUsePage

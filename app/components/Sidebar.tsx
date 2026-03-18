@@ -19,6 +19,7 @@ import {
     Store,
     LayoutTemplate,
     Crown,
+    Globe,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Campaign, ViewMode, Session, Subscription, ArtistProfile } from '../types';
@@ -156,13 +157,15 @@ interface NavItemProps {
     label: string;
     active?: boolean;
     onClick: () => void;
+    badge?: string;
 }
 
 const NavItem: React.FC<NavItemProps> = ({
     icon,
     label,
     active = false,
-    onClick
+    onClick,
+    badge
 }) => (
     <button
         onClick={onClick}
@@ -173,6 +176,7 @@ const NavItem: React.FC<NavItemProps> = ({
         }`}>
         <span className={`relative z-10 transition-colors duration-200 ${active ? 'text-white' : 'text-white/50 group-hover:text-white/90'}`}>{icon}</span>
         <span className="relative z-10 text-sm tracking-wide">{label}</span>
+        {badge && <span className="ml-auto px-1.5 py-0.5 bg-visio-accent/20 text-visio-accent text-[9px] font-bold rounded uppercase tracking-wider">{badge}</span>}
         {active && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-white rounded-r-full shadow-[0_0_8px_rgba(255,255,255,0.3)]" />}
     </button>
 );
@@ -318,6 +322,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         label="Marketplace"
                         active={activeView === 'marketplace'}
                         onClick={() => onNavigate('marketplace')}
+                    />
+                    <NavItem
+                        icon={<Globe size={16} />}
+                        label="Bookings"
+                        active={activeView === 'bookings'}
+                        onClick={() => onNavigate('bookings')}
+                        badge={subscription.tier === 'agency' || subscription.tier === 'enterprise' ? undefined : 'VIP'}
                     />
                     <Link href="/merch" className="block">
                         <NavItem
