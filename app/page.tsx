@@ -291,11 +291,33 @@ export default function Home() {
     return Array.from(byId.values()).sort((a, b) => b.lastUpdated - a.lastUpdated);
   }, []);
 
-  // Handle Initial Load & PopState  
+  // Track whether initial auth routing has been done to prevent re-running on user flickers
+  const initialAuthDoneRef = useRef(false);
+
+  // Handle Initial Load & PopState
   // Handle Initial Load & Auth State check
   useEffect(() => {
     // Don't run until auth is loaded
     if (authLoading) return;
+
+    const mapPathToView = (path: string): ViewMode => {
+      if (path === '/' || path === '/overview') return 'overview';
+      if (path === '/dashboard') return 'dashboard';
+      if (path === '/auth' || path === '/login' || path === '/signin') return 'auth';
+      if (path === '/onboarding') return 'onboarding';
+      if (path === '/artist-portal') return 'settings';
+      if (path === '/billing') return 'billing';
+      if (path === '/settings') return 'settings';
+      if (path === '/leads') return 'leads';
+      if (path === '/reason') return 'reason';
+      if (path === '/reach') return 'reach';
+      if (path === '/pending') return 'pending';
+      if (path === '/help') return 'help';
+      if (path === '/marketplace') return 'marketplace';
+      if (path === '/bookings') return 'bookings';
+      if (path === '/landing') return 'landing';
+      return 'landing';
+    };
 
     const checkUserStatus = async () => {
       const path = window.location.pathname;
@@ -346,25 +368,9 @@ export default function Home() {
         }
       }
 
-      // 1. Map URL to View
-      let targetView: ViewMode = 'landing';
-      if (path === '/' || path === '/overview') targetView = 'overview';
-      else if (path === '/dashboard') targetView = 'dashboard';
-      else if (path === '/auth' || path === '/login' || path === '/signin') targetView = 'auth';
-      else if (path === '/onboarding') targetView = 'onboarding';
-      else if (path === '/artist-portal') targetView = 'settings'; // Portal deferred; route to settings
-      else if (path === '/billing') targetView = 'billing';
-      else if (path === '/settings') targetView = 'settings';
-      else if (path === '/leads') targetView = 'leads';
-      else if (path === '/reason') targetView = 'reason';
-      else if (path === '/reach') targetView = 'reach';
-      else if (path === '/pending') targetView = 'pending';
-      else if (path === '/help') targetView = 'help';
-      else if (path === '/marketplace') targetView = 'marketplace';
-      else if (path === '/bookings') targetView = 'bookings';
-      else if (path === '/landing') targetView = 'landing';
+      const targetView = mapPathToView(path);
 
-      // 2. Auth Guards
+      // Auth Guards
       if (!isLoggedIn) {
         // Allow landing and auth, otherwise force landing
         if (targetView !== 'auth' && targetView !== 'landing') {
@@ -381,15 +387,43 @@ export default function Home() {
         }
         setCurrentView(targetView);
       }
-
-
     };
 
-    checkUserStatus();
+    // Only run full auth check on initial load, NOT on every user reference change.
+    // This prevents the "random logout" bug where a token refresh briefly sets user=null,
+    // re-triggers this effect, and kicks the user to the landing page.
+    if (!initialAuthDoneRef.current) {
+      initialAuthDoneRef.current = true;
+      checkUserStatus();
+    }
 
-    // Listen for back/forward (simplified)
-    window.addEventListener('popstate', checkUserStatus);
-    return () => window.removeEventListener('popstate', checkUserStatus);
+    // Popstate handler reads user at call time via ref-like closure
+    const handlePopstate = () => {
+      const path = window.location.pathname;
+      const targetView = mapPathToView(path);
+      // For popstate (back/forward), just update the view without re-running auth checks.
+      // The user is already authenticated if they were before.
+      setCurrentView(targetView);
+    };
+
+    window.addEventListener('popstate', handlePopstate);
+    return () => window.removeEventListener('popstate', handlePopstate);
+  }, [user, authLoading]);
+
+  // Separate effect: handle real sign-outs (user goes from truthy to null, not during loading)
+  const prevUserRef = useRef<typeof user>(undefined);
+  useEffect(() => {
+    if (authLoading) return;
+    // On first render, just store the user
+    if (prevUserRef.current === undefined) {
+      prevUserRef.current = user;
+      return;
+    }
+    // Real sign-out: user was truthy, now null
+    if (prevUserRef.current && !user) {
+      navigateTo('landing');
+    }
+    prevUserRef.current = user;
   }, [user, authLoading]);
 
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signup');
